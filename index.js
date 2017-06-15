@@ -15,9 +15,16 @@ pool.query = (sql, values, callback) => {
       return callback(err, null)
     }
 
+    if (callback) {
+      //
+    } else {
+      callback = values
+      values = undefined
+    }
+
     connection.query(sql, values, (err, result) => {
-      connection.release()
       callback(err, result)
+      connection.release()
     })
   })
 }
