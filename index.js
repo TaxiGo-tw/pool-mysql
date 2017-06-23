@@ -32,13 +32,36 @@ pool.query = (sql, values, callback) => {
 pool.createConnection = () => {
   return new Promise((resolve, reject) => {
     pool.getConnection(function (err, connection) {
-      if (err) {
+      if (err) { // return reject(err)
         console.log(err)
-        return reject(err)
       }
+
+      connection.q = (sql, values) => {
+        return new Promise((resolve, reject) => {
+          if (values) {
+            connection.query(sql, values, (err, result) => {
+              if (err) {
+                reject(err)
+              } else {
+                resolve(result)
+              }
+            })
+          } else {
+            connection.query(sql, (err, result) => {
+              if (err) {
+                reject(err)
+              } else {
+                resolve(result)
+              }
+            })
+          }
+        })
+      }
+
       resolve(connection)
     })
   })
 }
+
 
 module.exports = pool
