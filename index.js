@@ -58,7 +58,7 @@ pool.createConnection = () => {
         })
       }
 
-      connection.trasaction = () => {
+      connection.startTransaction = () => {
         return new Promise((resolve, reject) => {
           connection.beginTransaction((err) => {
             if (err) {
