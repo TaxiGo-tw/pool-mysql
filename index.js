@@ -64,7 +64,7 @@ pool.createConnection = () => {
             if (err) {
               reject(err)
             } else {
-              resolve(result)
+              resolve(connection)
             }
           })
         })
@@ -76,7 +76,7 @@ pool.createConnection = () => {
             if (err) {
               reject(err)
             } else {
-              resolve(result)
+              resolve(connection)
             }
           })
         })
