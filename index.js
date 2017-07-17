@@ -58,6 +58,30 @@ pool.createConnection = () => {
         })
       }
 
+      connection.trasaction = () => {
+        return new Promise((resolve, reject) => {
+          connection.beginTransaction((err) => {
+            if (err) {
+              reject(err)
+            } else {
+              resolve(result)
+            }
+          })
+        })
+      }
+
+      connection.commitChange = () => {
+        return new Promise((resolve, reject) => {
+          connection.commit((err) => {
+            if (err) {
+              reject(err)
+            } else {
+              resolve(result)
+            }
+          })
+        })
+      }
+
       resolve(connection)
     })
   })
