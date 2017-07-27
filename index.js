@@ -30,7 +30,8 @@ class Manager {
 		}
 	}
 	query(sql, values, cb) {
-		this.getConnection(sql).query(sql, values, cb)
+		let q = this.getConnection(sql).query(sql, values, cb)
+		console.log(q.sql)
 	}
 	commit() {
 		this.reader.commit()
@@ -47,11 +48,6 @@ class Manager {
 
 	getConnection(sql) {
 		return (/(SELECT|select)/).test(sql) ? this.reader : this.writer
-
-		if (sql.match(/(SELECT|select)/)) {
-			return this.reader
-		}
-		return this.writer
 	}
 }
 
@@ -171,6 +167,10 @@ async function a() {
 	m.query('select * from user_info', (e, r) => {
 		console.log(r[0])
 
+		m.rollback()
+		m.rollback()
+		m.rollback()
+		m.commit()
 		m.release()
 	})
 }
