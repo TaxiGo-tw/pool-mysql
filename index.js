@@ -26,7 +26,7 @@ class Manager {
 		this.writer = writer
 	}
 
-	async startTransaction(err, cb) {
+	async beginTransaction(cb) {
 		try {
 			await reader.startTransaction()
 			await writer.startTransaction()
@@ -169,20 +169,21 @@ function setConnection(connection) {
 
 let app = require('express')()
 app.use('*', async (req, res, cb) => {
-	let m = await manager.createConnection()
+	let connection = await manager.createConnection()
 
-	let date = new Date()
-	m.query('select * from user_info', (e, r) => {
-		console.log(r[0])
+	connection.beginTransaction((e) => {
+		let date = new Date()
+		connection.query('select * from user_info where uid = ?', 101, (e, r) => {
+			console.log(r[0])
 
-		m.rollback()
-		m.release()
-		m.commit()
+			connection.rollback()
+			connection.release()
+			connection.commit()
 
-
-		let x = new Date() - date
-		console.log(x)
-		res.send({ x: x })
+			let x = new Date() - date
+			console.log(x)
+			res.send({ x: x })
+		})
 	})
 })
 app.listen(3000)
