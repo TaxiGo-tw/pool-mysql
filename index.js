@@ -79,6 +79,10 @@ class kerkerPool {
 			}
 		})
 	}
+
+	query(sql, values, callback) {
+		writerPool.query(sql, values, callback)
+	}
 }
 
 manager = new kerkerPool()
