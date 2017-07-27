@@ -1,7 +1,7 @@
 var mysql = require('mysql');
 
 const writerPool = mysql.createPool({
-	connectionLimit: process.env.CONNECTION_LIMIT || 50,
+	connectionLimit: process.env.CONNECTION_LIMIT || 30,
 	host: process.env.SQL_HOST || '127.0.0.1',
 	user: process.env.SQL_USER || 'root',
 	password: process.env.SQL_PASSWORD || '123',
@@ -11,7 +11,7 @@ const writerPool = mysql.createPool({
 setPool(writerPool)
 
 const readerPool = mysql.createPool({
-	connectionLimit: process.env.CONNECTION_LIMIT_READER || process.env.CONNECTION_LIMIT || 50,
+	connectionLimit: process.env.CONNECTION_LIMIT_READER || process.env.CONNECTION_LIMIT || 30,
 	host: process.env.SQL_HOST_READER || process.env.SQL_HOST || '127.0.0.1',
 	user: process.env.SQL_USER_READER || process.env.SQL_USER || 'root',
 	password: process.env.SQL_PASSWORD_READER || process.env.SQL_PASSWORD || '123',
@@ -58,7 +58,6 @@ class Manager {
 }
 
 //manager
-
 class kerkerPool {
 	constructor() {
 
@@ -168,18 +167,23 @@ function setConnection(connection) {
 	}
 }
 
-async function a() {
+let app = require('express')()
+app.use('*', async (req, res, cb) => {
 	let m = await manager.createConnection()
+
+	let date = new Date()
 	m.query('select * from user_info', (e, r) => {
 		console.log(r[0])
 
 		m.rollback()
-		m.rollback()
-		m.rollback()
-		m.commit()
 		m.release()
-	})
-}
+		m.commit()
 
-a()
+
+		let x = new Date() - date
+		console.log(x)
+		res.send({ x: x })
+	})
+})
+app.listen(3000)
 
