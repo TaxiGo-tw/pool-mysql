@@ -1,14 +1,14 @@
 {
-  "name": "pool-mysql",
-  "version": "1.0.7",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "mysql": "^2.13.0"
-  }
+	"name": "pool-mysql",
+	"version": "1.1.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"mysql": "^2.13.0"
+	}
 }
