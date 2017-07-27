@@ -46,6 +46,8 @@ class Manager {
 	}
 
 	getConnection(sql) {
+		return (/(SELECT|select)/).test(sql) ? this.reader : this.writer
+
 		if (sql.match(/(SELECT|select)/)) {
 			return this.reader
 		}
@@ -53,18 +55,20 @@ class Manager {
 	}
 }
 
-
-
 //manager
-let manager = {
-	createConnection: () => {
+
+class kerkerPool {
+	constructor() {
+
+	}
+
+	createConnection() {
 		return new Promise(async (resolve, reject) => {
 			try {
 				let reader = await readerPool.createConnection()
 				setConnection(reader)
 				let writer = await writerPool.createConnection()
 				setConnection(writer)
-
 
 				let manager = new Manager(reader, writer)
 
@@ -75,6 +79,8 @@ let manager = {
 		})
 	}
 }
+
+manager = new kerkerPool()
 module.exports = manager
 
 function setPool(pool) {
