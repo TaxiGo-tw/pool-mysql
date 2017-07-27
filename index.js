@@ -14,31 +14,46 @@ setPool(readerPool)
 const writerPool = mysql.createPool(options);
 setPool(writerPool)
 
-function getConnection(sql) {
-	// console.log(this.reader)
-	// console.log(this.writer)
-
-	if (sql.match(/(SELECT|select)/)) {
-		return this.reader
+class Manager {
+	constructor(reader, writer) {
+		this.reader = reader
+		this.writer = writer
 	}
 
-	return this.writer
+	async startTransaction(err, cb) {
+		try {
+			await reader.startTransaction()
+			await writer.startTransaction()
+			cb(undefined)
+		} catch (e) {
+			cb(e)
+		}
+	}
+	query(sql, values, cb) {
+		this.getConnection(sql).query(sql, values, cb)
+	}
+	commit() {
+		this.reader.commit()
+		this.writer.commit()
+	}
+	rollback() {
+		this.reader.rollback()
+		this.writer.rollback()
+	}
+	release() {
+		this.reader.release()
+		this.writer.release()
+	}
+
+	getConnection(sql) {
+		if (sql.match(/(SELECT|select)/)) {
+			return this.reader
+		}
+		return this.writer
+	}
 }
 
-function query(sql, values, cb) {
-	console.log('1')
-	// if (callback) {
-	// 	console.log('2')
-	// } else {
-	// 	console.log('3')
-	// 	cb = values
-	// 	values = undefined
-	// }
-	console.log(this.getConnection(sql))
-	// getConnection(sql).query(sql, cb)
-	// console.log(query.sql)
 
-}
 
 //manager
 let manager = {
@@ -50,33 +65,10 @@ let manager = {
 				let writer = await writerPool.createConnection()
 				setConnection(writer)
 
-				resolve({
-					reader: reader,
-					writer: writer,
-					startTransaction: async (err, cb) => {
-						try {
-							await reader.startTransaction()
-							await writer.startTransaction()
-							cb(undefined)
-						} catch (e) {
-							cb(e)
-						}
-					},
-					query: query,
-					commit: () => {
-						reader.commit()
-						writer.commit()
-					},
-					rollback: () => {
-						reader.rollback()
-						writer.rollback()
-					},
-					release: () => {
-						reader.release()
-						writer.release()
-					},
-					getConnection: getConnection
-				})
+
+				let manager = new Manager(reader, writer)
+
+				resolve(manager)
 			} catch (e) {
 				reject(e)
 			}
@@ -171,7 +163,7 @@ function setConnection(connection) {
 async function a() {
 	let m = await manager.createConnection()
 	m.query('select * from user_info', (e, r) => {
-		// console.log(r[0])
+		console.log(r[0])
 
 		m.release()
 	})
