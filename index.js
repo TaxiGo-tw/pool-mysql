@@ -35,19 +35,45 @@ class Manager {
 			cb(e)
 		}
 	}
+
 	query(sql, values, cb) {
-		let q = this.getConnection(sql).query(sql, values, cb)
-		console.log(q.sql)
+		let connection = this.getConnection(sql)
+		let q = connection.query(sql, values, cb)
+		console.log('[' + (connection.threadId || 'default') + '] :' + q.sql)
 	}
+
 	commit() {
-		this.reader.commit()
-		this.writer.commit()
+		return new Promise((resolve, reject) => {
+			this.reader.commit(() => {
+				console.log('commit 1')
+				this.writer.commit(() => {
+					console.log('commit 2')
+
+					this.reader.release()
+					this.writer.release()
+					resolve()
+				})
+			})
+		})
 	}
+
 	rollback() {
-		this.reader.rollback()
-		this.writer.rollback()
+		return new Promise((resolve, reject) => {
+			this.reader.rollback(() => {
+				console.log('rollback 1')
+				this.writer.rollback(() => {
+					console.log('rollback 2')
+
+					this.reader.release()
+					this.writer.release()
+					resolve()
+				})
+			})
+		})
 	}
+
 	release() {
+		console.log('release')
 		this.reader.release()
 		this.writer.release()
 	}
@@ -58,11 +84,7 @@ class Manager {
 }
 
 //manager
-class kerkerPool {
-	constructor() {
-
-	}
-
+class KerkerPool {
 	createConnection() {
 		return new Promise(async (resolve, reject) => {
 			try {
@@ -85,17 +107,16 @@ class kerkerPool {
 	}
 }
 
-manager = new kerkerPool()
+manager = new KerkerPool()
 module.exports = manager
 
 function setPool(pool) {
 	pool.createConnection = () => {
 		return new Promise((resolve, reject) => {
 			pool.getConnection(function (err, connection) {
-				if (err) { // return reject(err)
-					console.log(err)
+				if (err) {
+					return reject(err)
 				}
-
 				setConnection(connection)
 				resolve(connection)
 			})
@@ -104,13 +125,6 @@ function setPool(pool) {
 
 	pool.query = (sql, values, callback) => {
 		pool.getConnection((err, connection) => {
-			if (callback) {
-				//
-			} else {
-				callback = values
-				values = undefined
-			}
-
 			if (err) {
 				return callback(err, null)
 			}
@@ -126,23 +140,13 @@ function setPool(pool) {
 function setConnection(connection) {
 	connection.q = (sql, values) => {
 		return new Promise((resolve, reject) => {
-			if (values) {
-				connection.query(sql, values, (err, result) => {
-					if (err) {
-						reject(err)
-					} else {
-						resolve(result)
-					}
-				})
-			} else {
-				connection.query(sql, (err, result) => {
-					if (err) {
-						reject(err)
-					} else {
-						resolve(result)
-					}
-				})
-			}
+			connection.query(sql, values, (err, result) => {
+				if (err) {
+					reject(err)
+				} else {
+					resolve(result)
+				}
+			})
 		})
 	}
 
@@ -176,17 +180,16 @@ app.use('*', async (req, res, cb) => {
 	let connection = await manager.createConnection()
 
 	connection.beginTransaction((e) => {
-		let date = new Date()
-		connection.query('select * from user_info where uid = ?', 101, (e, r) => {
-			console.log(r[0])
-
-			connection.rollback()
-			connection.release()
-			connection.commit()
-
-			let x = new Date() - date
-			console.log(x)
-			res.send({ x: x })
+		connection.query('insert into test_users SET ?', { user_id: 343 }, async (e, r) => {
+			if (e) {
+				console.log(e)
+				connection.rollback()
+				return res.status(400).send({ err: e })
+			}
+			// connection.commit()
+			// connection.rollback()
+			// connection.release()
+			res.send()
 		})
 	})
 })
