@@ -5,7 +5,7 @@ const options = {
 	host: process.env.SQL_HOST || '127.0.0.1',
 	user: process.env.SQL_USER || 'root',
 	password: process.env.SQL_PASSWORD || '123',
-	database: process.env.SQL_TABLE || 'taxigo_dev',
+	database: process.env.SQL_TABLE || 'test',
 	multipleStatements: true,
 }
 
