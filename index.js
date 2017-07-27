@@ -1,18 +1,24 @@
 var mysql = require('mysql');
 
-const options = {
+const writerPool = mysql.createPool({
 	connectionLimit: process.env.CONNECTION_LIMIT || 50,
 	host: process.env.SQL_HOST || '127.0.0.1',
 	user: process.env.SQL_USER || 'root',
 	password: process.env.SQL_PASSWORD || '123',
 	database: process.env.SQL_TABLE || 'test',
 	multipleStatements: true,
-}
-
-const readerPool = mysql.createPool(options)
-setPool(readerPool)
-const writerPool = mysql.createPool(options);
+});
 setPool(writerPool)
+
+const readerPool = mysql.createPool({
+	connectionLimit: process.env.CONNECTION_LIMIT_READER || process.env.CONNECTION_LIMIT || 50,
+	host: process.env.SQL_HOST_READER || process.env.SQL_HOST || '127.0.0.1',
+	user: process.env.SQL_USER_READER || process.env.SQL_USER || 'root',
+	password: process.env.SQL_PASSWORD_READER || process.env.SQL_PASSWORD || '123',
+	database: process.env.SQL_TABLE || 'test',
+	multipleStatements: true,
+})
+setPool(readerPool)
 
 class Manager {
 	constructor(reader, writer) {
