@@ -79,7 +79,6 @@ class Manager {
 	}
 
 	commit(cb) {
-
 		this.writer.commit((e) => {
 			if (cb) {
 				cb(e)
@@ -87,17 +86,6 @@ class Manager {
 
 			logger(this.writer.logPrefix + ' : commit')
 			this.release()
-		})
-
-		return
-
-		return new Promise((resolve, reject) => {
-			this.reader.commit(() => {
-				this.writer.commit(() => {
-					this.release()
-					resolve()
-				})
-			})
 		})
 	}
 
@@ -127,7 +115,7 @@ class Manager {
 	}
 
 	getReaderOrWriter(sql) {
-		if (typeof stringValue == 'string' && (/select/).test(sql.toLowerCase()) && sql.toLowerCase().indexOf('for update') == -1) {
+		if ((/select/).test(sql.toLowerCase()) && sql.toLowerCase().indexOf('for update') == -1) {
 			return this.reader
 		}
 
