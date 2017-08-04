@@ -22,7 +22,6 @@ setPool(readerPool)
 
 var logger = nothing
 
-
 function nothing(a, b, c, d, e, f, g) {
 
 }
@@ -126,7 +125,7 @@ class Manager {
 //manager
 class KerkerPool {
 	set logger(fn) {
-		logger = fn
+		logger = fn || nothing
 	}
 
 	get logger() {
@@ -227,5 +226,5 @@ function setConnection(connection) {
 		})
 	}
 
-	connection.logPrefix = `\x1b[1m[${(connection.threadId || 'default')}] ${connection.role}\x1b[0m`
+	connection.logPrefix = `[${(connection.threadId || 'default')}] ${connection.role}`
 }
