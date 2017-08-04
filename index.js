@@ -20,11 +20,23 @@ const readerPool = mysql.createPool({
 })
 setPool(readerPool)
 
-var logger = nothing
 
-function nothing(a, b, c, d, e, f, g) {
+var logLevel = {
+	all: (err, toPrint) => {
+		console.log(toPrint)
+	},
+	error: (err, toPrint) => {
+		if (!err) {
+			return
+		}
+		console.log(toPrint)
+	},
+	none: (err, toPrint) => {
 
+	}
 }
+
+var logger = logLevel.error
 
 class Manager {
 	constructor(reader, writer) {
@@ -57,7 +69,7 @@ class Manager {
 	query(sql, values, cb) {
 		let connection = this.getReaderOrWriter(sql)
 		let q = connection.query(sql, values, cb)
-		logger(connection.logPrefix + ' : ' + q.sql)
+		logger(null, connection.logPrefix + ' : ' + q.sql)
 	}
 
 
@@ -65,10 +77,10 @@ class Manager {
 		return new Promise((reslove, reject) => {
 			let connection = this.getReaderOrWriter(sql)
 			let q = connection.query(sql, values, (e, r) => {
-				logger(connection.logPrefix + ' : ' + q.sql)
+				logger(null, connection.logPrefix + ' : ' + q.sql)
 				if (e) {
-					logger(connection.logPrefix + '<SQL Error> :' + e.message)
-					process.env.NODE_ENV != 'development' ? logger(e) : 'nothing'
+					logger(null, connection.logPrefix + '<SQL Error> :' + e.message)
+					// process.env.NODE_ENV != 'development' ? logger(e) : 'nothing'
 					reject(e)
 				} else {
 					reslove(r)
@@ -83,7 +95,7 @@ class Manager {
 				cb(e)
 			}
 
-			logger(this.writer.logPrefix + ' : commit')
+			logger(e, this.writer.logPrefix + ' : commit')
 			this.release()
 		})
 	}
@@ -92,8 +104,8 @@ class Manager {
 		return new Promise((resolve, reject) => {
 			let x = this.reader.rollback(() => {
 				let y = this.writer.rollback(() => {
-					logger('[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
-					logger('[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
+					logger(null, '[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
+					logger(null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
 					this.release()
 					resolve()
 				})
@@ -104,12 +116,12 @@ class Manager {
 	release() {
 		if (readerPool._freeConnections.indexOf(this.reader) == -1) {
 			this.reader.release()
-			logger(this.reader.logPrefix + ' : Release')
+			logger(null, this.reader.logPrefix + ' : Release')
 		}
 
 		if (writerPool._freeConnections.indexOf(this.writer) == -1) {
 			this.writer.release()
-			logger(this.writer.logPrefix + ' : Release')
+			logger(null, this.writer.logPrefix + ' : Release')
 		}
 	}
 
@@ -124,8 +136,18 @@ class Manager {
 
 //manager
 class KerkerPool {
-	set logger(fn) {
-		logger = fn || nothing
+	set logger(string) {
+		switch (string) {
+			case 'all':
+				logger = logLevel.all
+				break
+			case 'error':
+				logger = logLevel.error
+				break
+			case 'none':
+				logger = logLevel.none
+				break;
+		}
 	}
 
 	get logger() {
@@ -176,10 +198,10 @@ function setPool(pool) {
 
 	pool.query = (sql, values, callback) => {
 		pool.getConnection((err, connection) => {
+			logger(err, 'pool.query')
 			if (err) {
 				return callback(err, null)
 			}
-			logger('pool.query')
 
 			connection.query(sql, values, (err, result) => {
 				callback(err, result)
@@ -206,6 +228,7 @@ function setConnection(connection) {
 		return new Promise((resolve, reject) => {
 			connection.beginTransaction((err) => {
 				if (err) {
+					logger(err, undefined)
 					reject(err)
 				} else {
 					resolve(connection)
@@ -218,6 +241,7 @@ function setConnection(connection) {
 		return new Promise((resolve, reject) => {
 			connection.commit((err) => {
 				if (err) {
+					logger(err, undefined)
 					reject(err)
 				} else {
 					resolve(connection)
