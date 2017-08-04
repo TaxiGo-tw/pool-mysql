@@ -24,16 +24,12 @@ setPool(readerPool)
 var logLevel = {
 	all: (err, toPrint) => {
 		console.log(toPrint)
-		if (err) {
-			console.log(err)
-		}
 	},
 	error: (err, toPrint) => {
 		if (!err) {
 			return
 		}
 		console.log(toPrint)
-		console.log(err)
 	},
 	none: (err, toPrint) => {
 
@@ -72,10 +68,12 @@ class Manager {
 
 	query(sql, values, cb) {
 		let connection = this.getReaderOrWriter(sql)
-		let q = connection.query(sql, values, cb)
+		let q = connection.query(sql, values, (a, b, c) => {
+			cb(a, b, c)
+		})
+
 		logger(null, connection.logPrefix + ' : ' + q.sql)
 	}
-
 
 	q(sql, values) {
 		return new Promise((reslove, reject) => {
@@ -84,7 +82,6 @@ class Manager {
 				logger(null, connection.logPrefix + ' : ' + q.sql)
 				if (e) {
 					logger(null, connection.logPrefix + '<SQL Error> :' + e.message)
-					// process.env.NODE_ENV != 'development' ? logger(e) : 'nothing'
 					reject(e)
 				} else {
 					reslove(r)
@@ -95,12 +92,13 @@ class Manager {
 
 	commit(cb) {
 		this.writer.commit((e) => {
+			if (this.writer) {
+				logger(e, this.writer.logPrefix + ' : COMMIT')
+			}
+
 			if (cb) {
 				cb(e)
 			}
-
-			logger(e, this.writer.logPrefix + ' : Commit')
-			this.release()
 		})
 	}
 
@@ -110,7 +108,7 @@ class Manager {
 				let y = this.writer.rollback(() => {
 					logger(null, '[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
 					logger(null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
-					this.release()
+					// this.release()
 					resolve()
 				})
 			})
@@ -118,14 +116,16 @@ class Manager {
 	}
 
 	release() {
-		if (readerPool._freeConnections.indexOf(this.reader) == -1) {
+		if (this.reader && readerPool._freeConnections.indexOf(this.reader)) {
+			logger(null, this.reader.logPrefix + ' : RELEASE')
 			this.reader.release()
-			logger(null, this.reader.logPrefix + ' : Release')
+			// this.reader = undefined
 		}
 
-		if (writerPool._freeConnections.indexOf(this.writer) == -1) {
+		if (this.writer && writerPool._freeConnections.indexOf(this.writer)) {
+			logger(null, this.writer.logPrefix + ' : RELEASE')
 			this.writer.release()
-			logger(null, this.writer.logPrefix + ' : Release')
+			// this.writer = undefined
 		}
 	}
 
@@ -212,6 +212,9 @@ function setPool(pool) {
 				connection.release()
 			})
 		})
+	}
+
+	pool.release = () => {
 	}
 }
 
