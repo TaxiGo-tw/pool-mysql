@@ -24,12 +24,16 @@ setPool(readerPool)
 var logLevel = {
 	all: (err, toPrint) => {
 		console.log(toPrint)
+		if (err) {
+			console.log(err)
+		}
 	},
 	error: (err, toPrint) => {
 		if (!err) {
 			return
 		}
 		console.log(toPrint)
+		console.log(err)
 	},
 	none: (err, toPrint) => {
 
@@ -95,7 +99,7 @@ class Manager {
 				cb(e)
 			}
 
-			logger(e, this.writer.logPrefix + ' : commit')
+			logger(e, this.writer.logPrefix + ' : Commit')
 			this.release()
 		})
 	}
