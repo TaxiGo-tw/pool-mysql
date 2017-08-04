@@ -7,7 +7,7 @@ const writerPool = mysql.createPool({
 	password: process.env.SQL_PASSWORD || '123',
 	database: process.env.SQL_TABLE || 'test',
 	multipleStatements: true,
-});
+})
 setPool(writerPool)
 
 const readerPool = mysql.createPool({
@@ -19,6 +19,13 @@ const readerPool = mysql.createPool({
 	multipleStatements: true,
 })
 setPool(readerPool)
+
+var logger = nothing
+
+
+function nothing(a, b, c, d, e, f, g) {
+
+}
 
 class Manager {
 	constructor(reader, writer) {
@@ -51,7 +58,7 @@ class Manager {
 	query(sql, values, cb) {
 		let connection = this.getReaderOrWriter(sql)
 		let q = connection.query(sql, values, cb)
-		console.log(connection.logPrefix + '<SQL> : ' + q.sql)
+		logger(connection.logPrefix + ' : ' + q.sql)
 	}
 
 
@@ -59,10 +66,10 @@ class Manager {
 		return new Promise((reslove, reject) => {
 			let connection = this.getReaderOrWriter(sql)
 			let q = connection.query(sql, values, (e, r) => {
-				console.log(connection.logPrefix + '<SQL> : ' + q.sql)
+				logger(connection.logPrefix + ' : ' + q.sql)
 				if (e) {
-					console.log(connection.logPrefix + '<SQL Error> :' + e.message)
-					process.env.NODE_ENV != 'development' ? console.log(e) : 'nothing'
+					logger(connection.logPrefix + '<SQL Error> :' + e.message)
+					process.env.NODE_ENV != 'development' ? logger(e) : 'nothing'
 					reject(e)
 				} else {
 					reslove(r)
@@ -71,8 +78,18 @@ class Manager {
 		})
 	}
 
-	commit() {
-		console.log('commit')
+	commit(cb) {
+
+		this.writer.commit((e) => {
+			if (cb) {
+				cb(e)
+			}
+
+			logger(this.writer.logPrefix + ' : commit')
+			this.release()
+		})
+
+		return
 
 		return new Promise((resolve, reject) => {
 			this.reader.commit(() => {
@@ -88,8 +105,8 @@ class Manager {
 		return new Promise((resolve, reject) => {
 			let x = this.reader.rollback(() => {
 				let y = this.writer.rollback(() => {
-					console.log('[' + (x._connection.threadId || 'default') + '] <SQL> : ' + x.sql)
-					console.log('[' + (y._connection.threadId || 'default') + '] <SQL> : ' + y.sql)
+					logger('[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
+					logger('[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
 					this.release()
 					resolve()
 				})
@@ -100,34 +117,43 @@ class Manager {
 	release() {
 		if (readerPool._freeConnections.indexOf(this.reader) == -1) {
 			this.reader.release()
-			console.log(this.reader.logPrefix + '<SQL> : Release')
+			logger(this.reader.logPrefix + ' : Release')
 		}
 
 		if (writerPool._freeConnections.indexOf(this.writer) == -1) {
 			this.writer.release()
-			console.log(this.writer.logPrefix + '<SQL> : Release')
+			logger(this.writer.logPrefix + ' : Release')
 		}
 	}
 
 	getReaderOrWriter(sql) {
-		if ((/(SELECT|select)/).test(sql)) {
-			console.log('get Reader')
+		if (typeof stringValue == 'string' && (/select/).test(sql.toLowerCase()) && sql.toLowerCase().indexOf('for update') == -1) {
 			return this.reader
-		} else {
-			console.log('get Writer')
-			return this.writer
 		}
+
+		return this.writer
 	}
 }
 
 //manager
 class KerkerPool {
+	set logger(fn) {
+		logger = fn
+	}
+
+	get logger() {
+		return logger
+	}
+
 	createConnection() {
 		return new Promise(async (resolve, reject) => {
 			try {
 				let reader = await readerPool.createConnection()
+				reader.role = 'Reader'
 				setConnection(reader)
+
 				let writer = await writerPool.createConnection()
+				writer.role = 'Writer'
 				setConnection(writer)
 
 				let manager = new Manager(reader, writer)
@@ -152,7 +178,7 @@ function setPool(pool) {
 		return new Promise((resolve, reject) => {
 			pool.getConnection((err, connection) => {
 				if (err) {
-					console.log(err)
+					logger(err)
 					return reject(err)
 				}
 				setConnection(connection)
@@ -166,7 +192,7 @@ function setPool(pool) {
 			if (err) {
 				return callback(err, null)
 			}
-			console.log('pool.query')
+			logger('pool.query')
 
 			connection.query(sql, values, (err, result) => {
 				callback(err, result)
@@ -213,26 +239,5 @@ function setConnection(connection) {
 		})
 	}
 
-	connection.logPrefix = '[' + (connection.threadId || 'default') + '] '
+	connection.logPrefix = `\x1b[1m[${(connection.threadId || 'default')}] ${connection.role}\x1b[0m`
 }
-
-
-// let app = require('express')()
-// app.use('*', async (req, res, cb) => {
-// 	let connection = await manager.createConnection()
-
-// 	connection.beginTransaction((e) => {
-// 		connection.query('insert into test_users SET ?', { user_id: 343 }, async (e, r) => {
-// 			if (e) {
-// 				console.log(e)
-// 				connection.rollback()
-// 				return res.status(400).send({ err: e })
-// 			}
-// 			// connection.commit()
-// 			// connection.rollback()
-// 			connection.release()
-// 			res.send()
-// 		})
-// 	})
-// })
-// app.listen(3000)
