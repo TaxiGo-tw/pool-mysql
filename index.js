@@ -73,6 +73,7 @@ class Manager {
 		})
 
 		logger(null, connection.logPrefix + ' : ' + q.sql)
+		return {}
 	}
 
 	q(sql, values) {
@@ -180,6 +181,8 @@ class KerkerPool {
 
 	query(sql, values, callback) {
 		writerPool.query(sql, values, callback)
+
+		return {}
 	}
 }
 
@@ -212,6 +215,8 @@ function setPool(pool) {
 				connection.release()
 			})
 		})
+
+		return {}
 	}
 
 	pool.release = () => {
