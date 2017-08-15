@@ -21,7 +21,7 @@ Print all
 	pool.logger = 'all'
 ```
 
-Print only error sql command
+Print if error
 ```
 	pool.logger = 'error'
 ```
