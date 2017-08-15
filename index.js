@@ -155,7 +155,7 @@ class KerkerPool {
 			case 'error':
 				logger = logLevel.error
 				break
-			case 'none':
+			default:
 				logger = logLevel.none
 				break;
 		}
