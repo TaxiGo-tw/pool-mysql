@@ -137,7 +137,7 @@ class Manager {
 	}
 
 	getReaderOrWriter(sql) {
-		if ((/^select/).test(sql.toLowerCase()) && sql.toLowerCase().indexOf('for update') == -1) {
+		if (((/^select/).test(sql.toLowerCase()) && sql.toLowerCase().indexOf('for update') == -1) || sql.indexOf(';;')) {
 			return this.reader
 		}
 
