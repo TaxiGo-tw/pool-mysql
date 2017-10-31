@@ -82,9 +82,10 @@ class Manager {
 		return {}
 	}
 
-	q(sql, values) {
+	q(sql, values, options) {
 		return new Promise((reslove, reject) => {
-			let connection = this.getReaderOrWriter(sql)
+			let connection = this.forceWriter ? this.writer : this.getReaderOrWriter(sql)
+			this.forceWriter = false
 			let q = connection.query(sql, values, (e, r) => {
 				logger(null, connection.logPrefix + ' : ' + q.sql)
 				if (e) {
@@ -142,6 +143,11 @@ class Manager {
 		}
 
 		return this.writer
+	}
+
+	forceWriter() {
+		this.forceWriter = true
+		return this
 	}
 }
 
