@@ -44,10 +44,11 @@ var logLevel = {
 
 var logger = logLevel.error
 
-class Manager {
+class Connection {
 	constructor(reader, writer) {
 		this.reader = reader
 		this.writer = writer
+		this.useWriter = false
 	}
 
 	async beginTransaction(cb) {
@@ -85,7 +86,7 @@ class Manager {
 	q(sql, values, options) {
 		return new Promise((reslove, reject) => {
 			let connection = this.forceWriter ? this.writer : this.getReaderOrWriter(sql)
-			this.forceWriter = false
+			this.useWriter = false
 			let q = connection.query(sql, values, (e, r) => {
 				logger(null, connection.logPrefix + ' : ' + q.sql)
 				if (e) {
@@ -116,7 +117,6 @@ class Manager {
 				let y = this.writer.rollback(() => {
 					logger(null, '[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
 					logger(null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
-					// this.release()
 					resolve()
 				})
 			})
@@ -127,13 +127,11 @@ class Manager {
 		if (this.reader && readerPool._freeConnections.indexOf(this.reader)) {
 			logger(null, this.reader.logPrefix + ' : RELEASE')
 			this.reader.release()
-			// this.reader = undefined
 		}
 
 		if (this.writer && writerPool._freeConnections.indexOf(this.writer)) {
 			logger(null, this.writer.logPrefix + ' : RELEASE')
 			this.writer.release()
-			// this.writer = undefined
 		}
 	}
 
@@ -145,14 +143,14 @@ class Manager {
 		return this.writer
 	}
 
-	forceWriter() {
-		this.forceWriter = true
+	get forceWriter() {
+		this.useWriter = true
 		return this
 	}
 }
 
 //manager
-class KerkerPool {
+class Pool {
 	set logger(string) {
 		switch (string) {
 			case 'all':
@@ -182,7 +180,7 @@ class KerkerPool {
 				writer.role = 'Writer'
 				setConnection(writer)
 
-				let manager = new Manager(reader, writer)
+				let manager = new Connection(reader, writer)
 
 				resolve(manager)
 			} catch (e) {
@@ -198,8 +196,7 @@ class KerkerPool {
 	}
 }
 
-manager = new KerkerPool()
-module.exports = manager
+module.exports = new Pool()
 
 function setPool(pool) {
 	pool.createConnection = () => {
