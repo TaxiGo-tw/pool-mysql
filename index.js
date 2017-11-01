@@ -174,11 +174,6 @@ class Pool {
 	}
 
 	createConnection(cb) {
-		if (cb) {
-			return Promise.all([
-				readerPool.createConnection()
-			]).then()
-		}
 
 		return new Promise(async (resolve, reject) => {
 			try {
@@ -193,7 +188,6 @@ class Pool {
 				let connection = new Connection(reader, writer, this.connectionExtens)
 
 				connection.extens = this.connectionExtens
-
 				resolve(connection)
 			} catch (e) {
 				reject(e)
@@ -208,10 +202,8 @@ class Pool {
 
 	setExtens(...extensions) {
 		for (var key in extensions) {
-			if (extensions.hasOwnProperty(key)) {
-				var element = extensions[key];
-				this.connectionExtens = Object.assign(this.connectionExtens, element)
-			}
+			var element = extensions[key]
+			this.connectionExtens = Object.assign(this.connectionExtens, element)
 		}
 	}
 }
