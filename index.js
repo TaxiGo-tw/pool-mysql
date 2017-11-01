@@ -151,6 +151,10 @@ class Connection {
 
 //manager
 class Pool {
+	constructor(extens) {
+		this.connectionExtens = extens || {}
+	}
+
 	set logger(string) {
 		switch (string) {
 			case 'all':
@@ -169,20 +173,28 @@ class Pool {
 		return logger
 	}
 
-	createConnection() {
+	createConnection(cb) {
+		if (cb) {
+			return Promise.all([
+				readerPool.createConnection()
+			]).then()
+		}
+
 		return new Promise(async (resolve, reject) => {
 			try {
 				let reader = await readerPool.createConnection()
 				reader.role = 'Reader'
-				setConnection(reader)
+				reader = setConnection(reader, this.connectionExtens)
 
 				let writer = await writerPool.createConnection()
 				writer.role = 'Writer'
-				setConnection(writer)
+				writer = setConnection(writer, this.connectionExtens)
 
-				let manager = new Connection(reader, writer)
+				let connection = new Connection(reader, writer, this.connectionExtens)
 
-				resolve(manager)
+				connection.extens = this.connectionExtens
+
+				resolve(connection)
 			} catch (e) {
 				reject(e)
 			}
@@ -191,12 +203,21 @@ class Pool {
 
 	query(sql, values, callback) {
 		writerPool.query(sql, values, callback)
-
 		return {}
+	}
+
+	setExtens(...extensions) {
+		for (var key in extensions) {
+			if (extensions.hasOwnProperty(key)) {
+				var element = extensions[key];
+				this.connectionExtens = Object.assign(this.connectionExtens, element)
+			}
+		}
 	}
 }
 
-module.exports = new Pool()
+let poolManager = new Pool()
+module.exports = poolManager
 
 function setPool(pool) {
 	pool.createConnection = () => {
@@ -206,7 +227,7 @@ function setPool(pool) {
 					logger(err)
 					return reject(err)
 				}
-				setConnection(connection)
+				setConnection(connection, poolManager.connectionExtens)
 				resolve(connection)
 			})
 		})
@@ -228,11 +249,10 @@ function setPool(pool) {
 		return {}
 	}
 
-	pool.release = () => {
-	}
+	pool.release = () => { }
 }
 
-function setConnection(connection) {
+function setConnection(connection, connectionExtension) {
 	connection.q = (sql, values) => {
 		return new Promise((resolve, reject) => {
 			connection.query(sql, values, (err, result) => {
@@ -272,4 +292,6 @@ function setConnection(connection) {
 	}
 
 	connection.logPrefix = `[${(connection.threadId || 'default')}] ${connection.role}`
+
+	return connection
 }
