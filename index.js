@@ -44,6 +44,10 @@ var logLevel = {
 
 var logger = logLevel.error
 
+function trimed(params) {
+	return params.replace(/\t/g, '').replace(/\n/g, ' ').trim()
+}
+
 class Connection {
 	constructor(reader, writer) {
 		this.reader = reader
@@ -87,7 +91,7 @@ class Connection {
 		return new Promise((reslove, reject) => {
 			let connection = this.forceWriter ? this.writer : this.getReaderOrWriter(sql)
 			this.useWriter = false
-			let q = connection.query(sql, values, (e, r) => {
+			let q = connection.query(trimed(sql), values, (e, r) => {
 				logger(null, connection.logPrefix + ' : ' + q.sql)
 				if (e) {
 					logger(null, connection.logPrefix + '<SQL Error> :' + e.message)
@@ -151,10 +155,6 @@ class Connection {
 
 //manager
 class Pool {
-	constructor(extens) {
-		this.connectionExtens = extens || {}
-	}
-
 	set logger(string) {
 		switch (string) {
 			case 'all':
@@ -173,22 +173,20 @@ class Pool {
 		return logger
 	}
 
-	createConnection(cb) {
-
+	createConnection() {
 		return new Promise(async (resolve, reject) => {
 			try {
 				let reader = await readerPool.createConnection()
 				reader.role = 'Reader'
-				reader = setConnection(reader, this.connectionExtens)
+				setConnection(reader)
 
 				let writer = await writerPool.createConnection()
 				writer.role = 'Writer'
-				writer = setConnection(writer, this.connectionExtens)
+				setConnection(writer)
 
-				let connection = new Connection(reader, writer, this.connectionExtens)
+				let manager = new Connection(reader, writer)
 
-				connection.extens = this.connectionExtens
-				resolve(connection)
+				resolve(manager)
 			} catch (e) {
 				reject(e)
 			}
@@ -197,19 +195,12 @@ class Pool {
 
 	query(sql, values, callback) {
 		writerPool.query(sql, values, callback)
-		return {}
-	}
 
-	setExtens(...extensions) {
-		for (var key in extensions) {
-			var element = extensions[key]
-			this.connectionExtens = Object.assign(this.connectionExtens, element)
-		}
+		return {}
 	}
 }
 
-let poolManager = new Pool()
-module.exports = poolManager
+module.exports = new Pool()
 
 function setPool(pool) {
 	pool.createConnection = () => {
@@ -219,7 +210,7 @@ function setPool(pool) {
 					logger(err)
 					return reject(err)
 				}
-				setConnection(connection, poolManager.connectionExtens)
+				setConnection(connection)
 				resolve(connection)
 			})
 		})
@@ -241,10 +232,11 @@ function setPool(pool) {
 		return {}
 	}
 
-	pool.release = () => { }
+	pool.release = () => {
+	}
 }
 
-function setConnection(connection, connectionExtension) {
+function setConnection(connection) {
 	connection.q = (sql, values) => {
 		return new Promise((resolve, reject) => {
 			connection.query(sql, values, (err, result) => {
@@ -284,6 +276,4 @@ function setConnection(connection, connectionExtension) {
 	}
 
 	connection.logPrefix = `[${(connection.threadId || 'default')}] ${connection.role}`
-
-	return connection
 }
