@@ -39,6 +39,10 @@ var logLevel = {
 	},
 	none: (err, toPrint) => {
 
+	},
+	oneTime: (err, toPrint) => {
+		console.log(toPrint)
+		logger = logLevel.error
 	}
 }
 
@@ -87,7 +91,7 @@ class Connection {
 		return {}
 	}
 
-	q(sql, values, options) {
+	q(sql, values) {
 		return new Promise((reslove, reject) => {
 			let connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
 			this.useWriter = false
@@ -149,6 +153,11 @@ class Connection {
 
 	get forceWriter() {
 		this.useWriter = true
+		return this
+	}
+
+	get print() {
+		logger = logLevel.oneTime
 		return this
 	}
 }
