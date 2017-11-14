@@ -89,7 +89,7 @@ class Connection {
 
 	q(sql, values, options) {
 		return new Promise((reslove, reject) => {
-			let connection = this.forceWriter ? this.writer : this.getReaderOrWriter(sql)
+			let connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
 			this.useWriter = false
 			let q = connection.query(trimed(sql), values, (e, r) => {
 				logger(null, connection.logPrefix + ' : ' + q.sql)
