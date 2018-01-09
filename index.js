@@ -7,6 +7,7 @@ const writerOptions = {
 	password: process.env.SQL_PASSWORD || '123',
 	database: process.env.SQL_TABLE || 'test',
 	multipleStatements: true,
+	charset: 'utf8mb4'
 }
 const writerPool = mysql.createPool(writerOptions)
 setPool(writerPool)
@@ -18,6 +19,7 @@ const readerOptions = {
 	password: process.env.SQL_PASSWORD_READER || process.env.SQL_PASSWORD || '123',
 	database: process.env.SQL_TABLE || 'test',
 	multipleStatements: true,
+	charset: 'utf8mb4'
 }
 
 const readerPool = mysql.createPool(readerOptions)
@@ -160,6 +162,11 @@ class Connection {
 		logger = logLevel.oneTime
 		return this
 	}
+
+	get mustAffected() {
+		this.mustAffected = true
+		return this
+	}
 }
 
 //manager
@@ -241,8 +248,7 @@ function setPool(pool) {
 		return {}
 	}
 
-	pool.release = () => {
-	}
+	pool.release = () => { }
 }
 
 function setConnection(connection) {
