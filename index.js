@@ -1,4 +1,4 @@
-var mysql = require('mysql');
+const mysql = require('mysql')
 
 const writerOptions = {
 	connectionLimit: process.env.CONNECTION_LIMIT || 30,
@@ -29,7 +29,7 @@ setPool(readerPool)
 console.log('pool-mysql writer domain: ', writerOptions.host)
 console.log('pool-mysql reader domain: ', readerOptions.host)
 
-var logLevel = {
+const logLevel = {
 	all: (err, toPrint) => {
 		console.log(toPrint)
 	},
@@ -48,7 +48,7 @@ var logLevel = {
 	}
 }
 
-var logger = logLevel.error
+let logger = logLevel.error
 
 function trimed(params) {
 	return params.replace(/\t/g, '').replace(/\n/g, ' ').trim()
@@ -84,8 +84,8 @@ class Connection {
 	}
 
 	query(sql, values, cb) {
-		let connection = this.getReaderOrWriter(sql)
-		let q = connection.query(sql, values, (a, b, c) => {
+		const connection = this.getReaderOrWriter(sql)
+		const q = connection.query(sql, values, (a, b, c) => {
 			cb(a, b, c)
 		})
 
@@ -95,9 +95,9 @@ class Connection {
 
 	q(sql, values) {
 		return new Promise((reslove, reject) => {
-			let connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
+			const connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
 			this.useWriter = false
-			let q = connection.query(trimed(sql), values, (e, r) => {
+			const q = connection.query(trimed(sql), values, (e, r) => {
 				logger(null, connection.logPrefix + ' : ' + q.sql)
 				if (e) {
 					logger(null, connection.logPrefix + '<SQL Error> :' + e.message)
@@ -123,8 +123,8 @@ class Connection {
 
 	rollback() {
 		return new Promise((resolve, reject) => {
-			let x = this.reader.rollback(() => {
-				let y = this.writer.rollback(() => {
+			const x = this.reader.rollback(() => {
+				const y = this.writer.rollback(() => {
 					logger(null, '[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
 					logger(null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
 					resolve()
@@ -181,7 +181,7 @@ class Pool {
 				break
 			default:
 				logger = logLevel.none
-				break;
+				break
 		}
 	}
 
@@ -192,15 +192,15 @@ class Pool {
 	createConnection() {
 		return new Promise(async (resolve, reject) => {
 			try {
-				let reader = await readerPool.createConnection()
+				const reader = await readerPool.createConnection()
 				reader.role = 'Reader'
 				setConnection(reader)
 
-				let writer = await writerPool.createConnection()
+				const writer = await writerPool.createConnection()
 				writer.role = 'Writer'
 				setConnection(writer)
 
-				let manager = new Connection(reader, writer)
+				const manager = new Connection(reader, writer)
 
 				resolve(manager)
 			} catch (e) {
