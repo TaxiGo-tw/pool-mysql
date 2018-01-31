@@ -6,7 +6,7 @@ const writerOptions = {
 	user: process.env.SQL_USER || 'root',
 	password: process.env.SQL_PASSWORD || '123',
 	database: process.env.SQL_TABLE || 'test',
-	multipleStatements: true,
+	multipleStatements: false,
 	charset: 'utf8mb4'
 }
 const writerPool = mysql.createPool(writerOptions)
@@ -18,7 +18,7 @@ const readerOptions = {
 	user: process.env.SQL_USER_READER || process.env.SQL_USER || 'root',
 	password: process.env.SQL_PASSWORD_READER || process.env.SQL_PASSWORD || '123',
 	database: process.env.SQL_TABLE || 'test',
-	multipleStatements: true,
+	multipleStatements: false,
 	charset: 'utf8mb4'
 }
 
@@ -234,6 +234,8 @@ function setPool(pool) {
 
 	pool.query = (sql, values, callback) => {
 		pool.getConnection((err, connection) => {
+			connection.release()
+
 			logger(err, 'pool.query')
 			if (err) {
 				return callback(err, null)
@@ -241,7 +243,6 @@ function setPool(pool) {
 
 			connection.query(sql, values, (err, result) => {
 				callback(err, result)
-				connection.release()
 			})
 		})
 
