@@ -234,14 +234,14 @@ function setPool(pool) {
 
 	pool.query = (sql, values, callback) => {
 		pool.getConnection((err, connection) => {
-			connection.release()
-
 			logger(err, 'pool.query')
 			if (err) {
+				connection.release()
 				return callback(err, null)
 			}
 
 			connection.query(sql, values, (err, result) => {
+				connection.release()
 				callback(err, result)
 			})
 		})
