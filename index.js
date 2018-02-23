@@ -196,15 +196,12 @@ class Pool {
 				reader.role = 'Reader'
 				setConnection(reader)
 
-				if (options.noCache) {
-					await reader.q('SET SESSION query_cache_type = OFF')
-				}
-
 				const writer = await writerPool.createConnection()
 				writer.role = 'Writer'
 				setConnection(writer)
 
-				if (options.noCache) {
+				if (options && options.noCache) {
+					await reader.q('SET SESSION query_cache_type = OFF')
 					await reader.q('SET SESSION query_cache_type = OFF')
 				}
 
