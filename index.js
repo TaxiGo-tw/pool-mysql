@@ -98,8 +98,8 @@ class Connection {
 			const connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
 			this.useWriter = false
 
-			const prefix = this.noCache ? 'SET SESSION query_cache_type = OFF;' : ''
-			this.noCache = false
+			const prefix = this.no_cache ? 'SET SESSION query_cache_type = OFF;' : ''
+			this.no_cache = false
 
 			const q = connection.query(trimed(prefix + sql), values, (e, r) => {
 				logger(null, connection.logPrefix + ' : ' + q.sql)
@@ -168,7 +168,7 @@ class Connection {
 	}
 
 	get noCache() {
-		this.noCache = true
+		this.no_cache = true
 		return this
 	}
 
