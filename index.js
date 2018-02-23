@@ -6,7 +6,7 @@ const writerOptions = {
 	user: process.env.SQL_USER || 'root',
 	password: process.env.SQL_PASSWORD || '123',
 	database: process.env.SQL_TABLE || 'test',
-	multipleStatements: false,
+	multipleStatements: true,
 	charset: 'utf8mb4'
 }
 const writerPool = mysql.createPool(writerOptions)
@@ -18,7 +18,7 @@ const readerOptions = {
 	user: process.env.SQL_USER_READER || process.env.SQL_USER || 'root',
 	password: process.env.SQL_PASSWORD_READER || process.env.SQL_PASSWORD || '123',
 	database: process.env.SQL_TABLE || 'test',
-	multipleStatements: false,
+	multipleStatements: true,
 	charset: 'utf8mb4'
 }
 
@@ -84,30 +84,31 @@ class Connection {
 	}
 
 	query(sql, values, cb) {
-		const connection = this.getReaderOrWriter(sql)
-		const q = connection.query(sql, values, (a, b, c) => {
+		const connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
+		this.useWriter = false
+
+		let command = sql
+
+		if (connection == this.reader && this._noCache) {
+			command = sql.replace(/select/gi, 'SELECT SQL_NO_CACHE ')
+		}
+		this._noCache = false
+
+		const q = connection.query(trimed(command), values, (a, b, c) => {
 			cb(a, b, c)
 		})
-
 		logger(null, connection.logPrefix + ' : ' + q.sql)
+
 		return {}
 	}
 
 	q(sql, values) {
 		return new Promise((reslove, reject) => {
-			const connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
-			this.useWriter = false
-
-			const prefix = this.no_cache ? 'SET SESSION query_cache_type = OFF;' : ''
-			this.no_cache = false
-
-			const q = connection.query(trimed(prefix + sql), values, (e, r) => {
-				logger(null, connection.logPrefix + ' : ' + q.sql)
-				if (e) {
-					logger(null, connection.logPrefix + '<SQL Error> :' + e.message)
-					reject(e)
+			this.query(sql, values, (err, res) => {
+				if (err) {
+					reject(err)
 				} else {
-					reslove(r)
+					reslove(res)
 				}
 			})
 		})
@@ -150,7 +151,7 @@ class Connection {
 	}
 
 	getReaderOrWriter(sql) {
-		if ((/^select/).test(sql.toLowerCase()) && sql.toLowerCase().indexOf('for update') == -1) {
+		if ((/^select/i).test(sql) && sql.toLowerCase().indexOf('for update') == -1) {
 			return this.reader
 		}
 
@@ -168,12 +169,12 @@ class Connection {
 	}
 
 	get noCache() {
-		this.no_cache = true
+		this._noCache = true
 		return this
 	}
 
 	get mustAffected() {
-		this.mustAffected = true
+		this._mustAffected = true
 		return this
 	}
 }
@@ -198,7 +199,7 @@ class Pool {
 		return logger
 	}
 
-	createConnection(options) {
+	createConnection() {
 		return new Promise(async (resolve, reject) => {
 			try {
 				const reader = await readerPool.createConnection()
@@ -208,11 +209,6 @@ class Pool {
 				const writer = await writerPool.createConnection()
 				writer.role = 'Writer'
 				setConnection(writer)
-
-				if (options && options.noCache) {
-					await reader.q('SET SESSION query_cache_type = OFF')
-					await reader.q('SET SESSION query_cache_type = OFF')
-				}
 
 				const manager = new Connection(reader, writer)
 
@@ -225,7 +221,6 @@ class Pool {
 
 	query(sql, values, callback) {
 		writerPool.query(sql, values, callback)
-
 		return {}
 	}
 }
