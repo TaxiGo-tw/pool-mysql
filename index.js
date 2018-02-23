@@ -88,9 +88,9 @@ class Connection {
 		this.useWriter = false
 
 		let command = sql
-
-		if (connection == this.reader && this._noCache) {
+		if (this.isSelect(sql) && this._noCache) {
 			command = sql.replace(/select/gi, 'SELECT SQL_NO_CACHE ')
+			// console.log(command)
 		}
 		this._noCache = false
 
@@ -150,12 +150,15 @@ class Connection {
 		}
 	}
 
-	getReaderOrWriter(sql) {
+	isSelect(sql) {
 		if ((/^select/i).test(sql) && sql.toLowerCase().indexOf('for update') == -1) {
-			return this.reader
+			return true
 		}
+		return false
+	}
 
-		return this.writer
+	getReaderOrWriter(sql) {
+		return this.isSelect(sql) ? this.reader : this.writer
 	}
 
 	get forceWriter() {
