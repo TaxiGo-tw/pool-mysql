@@ -97,7 +97,11 @@ class Connection {
 		return new Promise((reslove, reject) => {
 			const connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
 			this.useWriter = false
-			const q = connection.query(trimed(sql), values, (e, r) => {
+
+			const prefix = this.noCache ? 'SET SESSION query_cache_type = OFF;' : ''
+			this.noCache = false
+
+			const q = connection.query(trimed(prefix + sql), values, (e, r) => {
 				logger(null, connection.logPrefix + ' : ' + q.sql)
 				if (e) {
 					logger(null, connection.logPrefix + '<SQL Error> :' + e.message)
@@ -160,6 +164,11 @@ class Connection {
 
 	get print() {
 		logger = logLevel.oneTime
+		return this
+	}
+
+	get noCache() {
+		this.noCache = true
 		return this
 	}
 
