@@ -189,16 +189,24 @@ class Pool {
 		return logger
 	}
 
-	createConnection() {
+	createConnection(options) {
 		return new Promise(async (resolve, reject) => {
 			try {
 				const reader = await readerPool.createConnection()
 				reader.role = 'Reader'
 				setConnection(reader)
 
+				if (options.noCache) {
+					await reader.q('SET SESSION query_cache_type = OFF')
+				}
+
 				const writer = await writerPool.createConnection()
 				writer.role = 'Writer'
 				setConnection(writer)
+
+				if (options.noCache) {
+					await reader.q('SET SESSION query_cache_type = OFF')
+				}
 
 				const manager = new Connection(reader, writer)
 
