@@ -151,7 +151,9 @@ class Connection {
 	}
 
 	isSelect(sql) {
-		if ((/^select/i).test(sql) && sql.toLowerCase().indexOf('for update') == -1) {
+		const command = trimed(sql.toLowerCase())
+
+		if ((/^select/i).test(command) && command.indexOf('for update') == -1) {
 			return true
 		}
 		return false
