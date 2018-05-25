@@ -90,11 +90,22 @@ class Connection {
 		let command = sql
 		if (this.isSelect(sql) && this._noCache) {
 			command = sql.replace(/select/gi, 'SELECT SQL_NO_CACHE ')
-			// console.log(command)
 		}
 		this._noCache = false
 
+
+		const mustUpdateOneRow = this._mustUpdateOneRow
+		this._mustUpdateOneRow = false
+
 		const q = connection.query(trimed(command), values, (a, b, c) => {
+			if (mustUpdateOneRow && b && b.changedRows != 1) {
+				// console.log(a, b, c)
+				return cb(a || Error('MUST_UPDATE_ONE_ROW'), b, c)
+			} else if (mustUpdateOneRow && b && b.changedRows == 1) {
+				// console.log(a, b, c)
+				// console.log('changed a row')
+			}
+
 			cb(a, b, c)
 		})
 		logger(null, connection.logPrefix + ' : ' + q.sql)
@@ -180,6 +191,11 @@ class Connection {
 
 	get mustAffected() {
 		this._mustAffected = true
+		return this
+	}
+
+	get mustUpdateOneRow() {
+		this._mustUpdateOneRow = true
 		return this
 	}
 }
