@@ -108,7 +108,10 @@ class Connection {
 
 			cb(a, b, c)
 		})
-		logger(null, connection.logPrefix + ' : ' + q.sql)
+
+		const string = mustUpdateOneRow ? 'mustUpdateOneRow' : ''
+
+		logger(null, `${connection.logPrefix} : (${string}) ${q.sql}`)
 
 		return {}
 	}
