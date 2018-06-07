@@ -83,6 +83,18 @@ class Connection {
 		})
 	}
 
+	async awaitCommit() {
+		return new Promise(async (resolve, reject) => {
+			try {
+				await this.reader.commit()
+				await this.writer.commit()
+				resolve()
+			} catch (e) {
+				reject(e)
+			}
+		})
+	}
+
 	query(sql, values, cb) {
 		const connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
 		this.useWriter = false
