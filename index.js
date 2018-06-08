@@ -110,10 +110,10 @@ class Connection {
 		this._mustUpdateOneRow = false
 
 		const q = connection.query(trimed(command), values, (a, b, c) => {
-			if (mustUpdateOneRow && b && b.changedRows != 1) {
+			if (mustUpdateOneRow && b && b.affectedRows != 1) {
 				// console.log(a, b, c)
 				return cb(a || Error('MUST_UPDATE_ONE_ROW'), b, c)
-			} else if (mustUpdateOneRow && b && b.changedRows == 1) {
+			} else if (mustUpdateOneRow && b && b.affectedRows == 1) {
 				// console.log(a, b, c)
 				// console.log('changed a row')
 			}
