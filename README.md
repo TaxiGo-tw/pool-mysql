@@ -3,6 +3,8 @@ which made for migrating to features
 * connection pool
 * connection writer/reader
 * async/await
+* model.query
+* log print
 
 ### Installation
 
