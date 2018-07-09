@@ -107,4 +107,4 @@ Print nothing
 	pool.logger = 'none'
 ```
 
-![Taxigo](https://raw.githubusercontent.com/vivalalova/pool-mysql/master/resource/app_icon-1024x1024.png)
+![Taxigo](https://raw.githubusercontent.com/vivalalova/pool-mysql/master/resource/taxigo.png)
