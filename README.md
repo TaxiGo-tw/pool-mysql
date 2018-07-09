@@ -8,7 +8,7 @@ which made for migrating to features
 
 ### Installation
 
-```js
+```bash
   npm i pool-mysql --save
 ```
 
