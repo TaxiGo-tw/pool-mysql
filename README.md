@@ -14,16 +14,6 @@ which made for migrating to features
 
 ### Usage
 
-Require pool-mysql
-
-```js
-  const pool = reqiure('pool-mysql')
-
-  pool.query(sql, value, (err, data) => {
-
-  })
-```
-
 ##### Settings
 
 pool-mysql loads settings from process.env
@@ -39,6 +29,18 @@ SQL_TABLE={{table name}}
 ```
 
 ##### Query
+
+Require pool-mysql
+
+```js
+  const pool = reqiure('pool-mysql')
+
+  pool.query(sql, value, (err, data) => {
+
+  })
+```
+
+Create connection
 
 ```js
   const connection = await pool.createConnection()
@@ -104,3 +106,5 @@ Print nothing
 ```js
 	pool.logger = 'none'
 ```
+
+![Taxigo](https://raw.githubusercontent.com/vivalalova/pool-mysql/master/resource/app_icon-1024x1024.png)
