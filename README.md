@@ -106,5 +106,3 @@ Print nothing
 ```js
 	pool.logger = 'none'
 ```
-
-![Taxigo](https://raw.githubusercontent.com/vivalalova/pool-mysql/master/resource/taxigo.png)
