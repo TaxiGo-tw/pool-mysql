@@ -140,7 +140,7 @@ class Connection {
 		})
 	}
 
-	async q(sql, values, { key, EX, isJSON, cacheToResult, shouldRefreshInCache /*= (someThing) => { return true }*/, map, queryToResult, queryToCache, print } = {}) {
+	async q(sql, values, { key, EX, isJSON, cachedToResult, shouldRefreshInCache /*= (someThing) => { return true }*/, map, queryToResult, queryToCache, print } = {}) {
 		if (!key || !EX) {
 			return await this._q(sql, values)
 		} else if (!pool.redisClient && key && EX) {
@@ -153,12 +153,17 @@ class Connection {
 			: await pool.redisClient.getAsync(key)
 
 		//if cached
-		someThing = cacheToResult ? cacheToResult(someThing) : someThing
-		const shoueldRefresh = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
-		if (someThing && shoueldRefresh) {
+		const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
+		if (someThing && keepCache) {
 			if (print) {
 				console.log('cached', someThing)
 			}
+
+			if (someThing.isNull) {
+				return null
+			}
+
+			someThing = cachedToResult ? cachedToResult(someThing) : someThing
 			return someThing
 		}
 
@@ -168,16 +173,20 @@ class Connection {
 			console.log('queried', result)
 		}
 
-
-		const toCache = map
+		let toCache = map
 			? map(result)
-			: queryToCache ? queryToCache(result) : result
+			: queryToCache
+				? queryToCache(result)
+				: result
 
-		if (toCache !== null) {
-			isJSON
-				? await pool.redisClient.setJSONAsync(key, toCache, 'EX', EX)
-				: await pool.redisClient.setAsync(key, toCache, 'EX', EX)
+
+		if (toCache === null) {
+			toCache = { isNull: true }
 		}
+
+		isJSON
+			? await pool.redisClient.setJSONAsync(key, toCache, 'EX', EX)
+			: await pool.redisClient.setAsync(key, toCache, 'EX', EX)
 
 		return map
 			? map(result)
@@ -297,9 +306,9 @@ class Pool {
 			}
 		}
 
-		if (!this._redisClient.getJSONAsync) {
+		if (!this._redisClient.setJSONAsync) {
 			this._redisClient.setJSONAsync = async (...args) => {
-				args[1] = JSON.stringify(args[0])
+				args[1] = JSON.stringify(args[1])
 				return await pool.redisClient.setAsync(...args)
 			}
 		}
