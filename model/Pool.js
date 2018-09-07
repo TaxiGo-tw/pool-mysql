@@ -128,7 +128,7 @@ class Connection {
 		return {}
 	}
 
-	q(sql, values) {
+	_q(sql, values) {
 		return new Promise((reslove, reject) => {
 			this.query(sql, values, (err, res) => {
 				if (err) {
@@ -138,6 +138,50 @@ class Connection {
 				}
 			})
 		})
+	}
+
+	async q(sql, values, { key, EX, isJSON, cacheToResult, shouldRefreshInCache /*= (someThing) => { return true }*/, map, queryToResult, queryToCache, print } = {}) {
+		if (!key || !EX) {
+			return await this._q(sql, values)
+		} else if (!pool.redisClient && key && EX) {
+			console.error('should assign redis client to pool.redisClient')
+			return await this._q(sql, values)
+		}
+
+		let someThing = isJSON
+			? await pool.redisClient.getJSONAsync(key)
+			: await pool.redisClient.getAsync(key)
+
+		//if cached
+		someThing = cacheToResult ? cacheToResult(someThing) : someThing
+		const shoueldRefresh = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
+		if (someThing && shoueldRefresh) {
+			if (print) {
+				console.log('cached', someThing)
+			}
+			return someThing
+		}
+
+		const result = await this._q(sql, values)
+
+		if (print) {
+			console.log('queried', result)
+		}
+
+
+		const toCache = map
+			? map(result)
+			: queryToCache ? queryToCache(result) : result
+
+		if (toCache !== null) {
+			isJSON
+				? await pool.redisClient.setJSONAsync(key, toCache, 'EX', EX)
+				: await pool.redisClient.setAsync(key, toCache, 'EX', EX)
+		}
+
+		return map
+			? map(result)
+			: queryToResult ? queryToResult(result) : result
 	}
 
 	commit(cb) {
@@ -235,6 +279,32 @@ class Pool {
 		return logger
 	}
 
+	get redisClient() {
+		return this._redisClient
+	}
+
+	set redisClient(newValue) {
+		this._redisClient = newValue
+
+		if (!this._redisClient) {
+			return
+		}
+
+		if (!this._redisClient.getJSONAsync) {
+			this._redisClient.getJSONAsync = async (...args) => {
+				const result = await pool.redisClient.getAsync(...args)
+				return JSON.parse(result)
+			}
+		}
+
+		if (!this._redisClient.getJSONAsync) {
+			this._redisClient.setJSONAsync = async (...args) => {
+				args[1] = JSON.stringify(args[0])
+				return await pool.redisClient.setAsync(...args)
+			}
+		}
+	}
+
 	createConnection() {
 		return new Promise(async (resolve, reject) => {
 			try {
@@ -261,7 +331,8 @@ class Pool {
 	}
 }
 
-module.exports = new Pool()
+const pool = new Pool()
+module.exports = pool
 
 function setPool(pool) {
 	pool.createConnection = () => {
