@@ -99,9 +99,10 @@ class Connection {
 		const connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
 		this.useWriter = false
 
-		let command = sql
-		if (this.isSelect(sql) && this._noCache) {
-			command = sql.replace(/select/gi, 'SELECT SQL_NO_CACHE ')
+		let command = sql.sql || sql
+
+		if (this.isSelect(command) && this._noCache) {
+			command = command.replace(/select/gi, 'SELECT SQL_NO_CACHE ')
 		}
 		this._noCache = false
 
@@ -109,7 +110,12 @@ class Connection {
 		const mustUpdateOneRow = this._mustUpdateOneRow
 		this._mustUpdateOneRow = false
 
-		const q = connection.query(trimed(command), values, (a, b, c) => {
+		const query = {
+			sql: trimed(command),
+			nestTables: sql.nestTables
+		}
+
+		const q = connection.query(query, values, (a, b, c) => {
 			if (mustUpdateOneRow && b && b.affectedRows != 1) {
 				// console.log(a, b, c)
 				return cb(a || Error('MUST_UPDATE_ONE_ROW'), b, c)
@@ -230,7 +236,7 @@ class Connection {
 	}
 
 	isSelect(sql) {
-		const command = trimed(sql.toLowerCase())
+		const command = trimed((sql.sql || sql).toLowerCase())
 
 		if ((/^select/i).test(command) && command.indexOf('for update') == -1) {
 			return true
