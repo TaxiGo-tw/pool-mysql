@@ -107,7 +107,6 @@ Print nothing
 	pool.logger = 'none'
 ```
 
-
 ### cache
 
 ```js
@@ -129,8 +128,8 @@ Print nothing
 
 	const connection = await pool.createConnection
 
-	await connection.q('SELECT first_name, phone_number FROM user_info WHERE uid = ?', userID, {
-		key: `api:getPassengerInfo:user:${userID}`,
+	await connection.q('SELECT id FROM user WHERE uid = ?', userID, {
+		key: `api:user:id:${userID}`,
 		EX: process.env.NODE_ENV == 'production' ? 240 : 12,
 		isJSON: true,
 	})
