@@ -129,8 +129,10 @@ Print nothing
 	const connection = await pool.createConnection
 
 	await connection.q('SELECT id FROM user WHERE uid = ?', userID, {
-		key: `api:user:id:${userID}`,
-		EX: process.env.NODE_ENV == 'production' ? 240 : 12,
-		isJSON: true,
+		key: `api:user:id:${userID}`, //optional , default to queryString
+		EX: process.env.NODE_ENV == 'production' ? 240 : 12, //default to 0 , it's required if need cache
+		isJSON: true, //default to true
 	})
+
+	await connection.q('SELECT id FROM user WHERE uid = ?', userID, { EX: 60})
 ```

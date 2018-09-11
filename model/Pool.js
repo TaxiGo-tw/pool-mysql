@@ -147,16 +147,20 @@ class Connection {
 	}
 
 	async q(sql, values, { key, EX, isJSON = true, cachedToResult, shouldRefreshInCache /*= (someThing) => { return true }*/, map, queryToResult, queryToCache, print } = {}) {
-		if (!key || !EX) {
+
+		if (!EX) {
 			return await this._q(sql, values)
-		} else if (!pool.redisClient && key && EX) {
+		} else if (!pool.redisClient && EX) {
 			console.error('should assign redis client to pool.redisClient')
 			return await this._q(sql, values)
 		}
 
+		const queryString = mysql.format((sql.sql || sql), values).split('\n').join(' ')
+		const cacheKey = key || queryString
+
 		let someThing = isJSON
-			? await pool.redisClient.getJSONAsync(key)
-			: await pool.redisClient.getAsync(key)
+			? await pool.redisClient.getJSONAsync(cacheKey)
+			: await pool.redisClient.getAsync(cacheKey)
 
 		//if cached
 		const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
@@ -191,8 +195,8 @@ class Connection {
 		}
 
 		isJSON
-			? await pool.redisClient.setJSONAsync(key, toCache, 'EX', EX)
-			: await pool.redisClient.setAsync(key, toCache, 'EX', EX)
+			? await pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
+			: await pool.redisClient.setAsync(cacheKey, toCache, 'EX', EX)
 
 		return map
 			? map(result)
