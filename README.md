@@ -106,3 +106,32 @@ Print nothing
 ```js
 	pool.logger = 'none'
 ```
+
+
+### cache
+
+```js
+	const redis = require('redis')
+	const bluebird = require('bluebird')
+	bluebird.promisifyAll(redis.RedisClient.prototype)
+	bluebird.promisifyAll(redis.Multi.prototype)
+
+	const client = redis.createClient({
+		host: ...,
+		port: ...,
+		db: ...
+	})
+
+	pool.redisClient = Redis
+
+
+	//...
+
+	const connection = await pool.createConnection
+
+	await connection.q('SELECT first_name, phone_number FROM user_info WHERE uid = ?', userID, {
+		key: `api:getPassengerInfo:user:${userID}`,
+		EX: process.env.NODE_ENV == 'production' ? 240 : 12,
+		isJSON: true,
+	})
+```
