@@ -146,7 +146,7 @@ class Connection {
 		})
 	}
 
-	async q(sql, values, { key, EX, isJSON, cachedToResult, shouldRefreshInCache /*= (someThing) => { return true }*/, map, queryToResult, queryToCache, print } = {}) {
+	async q(sql, values, { key, EX, isJSON = true, cachedToResult, shouldRefreshInCache /*= (someThing) => { return true }*/, map, queryToResult, queryToCache, print } = {}) {
 		if (!key || !EX) {
 			return await this._q(sql, values)
 		} else if (!pool.redisClient && key && EX) {
