@@ -42,7 +42,9 @@ module.exports = class Base {
 		switch (columns) {
 			case null: {
 				const keys = this.columns
-					? Object.keys(this.columns).filter(column => !(this.columns[column] instanceof Array)).join(', ')
+					? Object.keys(this.columns)
+						.filter(column => !(this.columns[column] instanceof Array) && !(typeof this.columns[column] == 'object'))
+						.join(', ')
 					: '*'
 
 				this._query = `SELECT ${keys} `
@@ -129,11 +131,6 @@ module.exports = class Base {
 		return this
 	}
 
-	WRITER() {
-		this._forceWriter = true
-		return this
-	}
-
 	EXPLAIN() {
 		this._query = 'EXPLAIN ' + this._query
 		return this
@@ -163,7 +160,6 @@ module.exports = class Base {
 					for (let i = 0; i < this._populadtes.length; i++) {
 						const column = this._populadtes[i]
 						const populateType = this.columns[column]
-
 						if (populateType instanceof Array) {//coupons: [Coupons]
 							const type = populateType[0]
 
@@ -178,13 +174,27 @@ module.exports = class Base {
 							})
 						} else {// coupon: Coupons
 							let ids
+							let refType = populateType
+							let refColumn = column
+
 							if (results instanceof Array) {
-								ids = results.filter(result => result[column]).map(result => result[column])
+								if (typeof populateType == 'object') {
+									// {
+									// 	ref: require('...')
+									// 	column:...
+									// }
+									refColumn = populateType.column
+									refType = populateType.ref
+									ids = results.filter(result => result[refColumn]).map(result => result[refColumn])
+								} else {
+									ids = results.filter(result => result[refColumn]).map(result => result[refColumn])
+								}
+
 								if (!ids.length) {
 									continue
 								}
-							} else if (results && results[column]) {
-								ids = [results[column]]
+							} else if (results && results[refColumn]) {
+								ids = [results[refColumn]]
 								if (!ids) {
 									continue
 								}
@@ -192,12 +202,12 @@ module.exports = class Base {
 								continue
 							}
 
-							const PKColumn = Object.keys(populateType.columns).filter(column => populateType.columns[column] == Base.Types.PK)[0]
-							const populates = await populateType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).exec(this._connection)
+							const PKColumn = Object.keys(refType.columns).filter(column => refType.columns[column] == Base.Types.PK)[0]
+							const populates = await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).exec(this._connection)
 
 							results = results.map(result => {
-								if (result[column]) {
-									result[column] = populates.filter(populate => result[column] == populate[PKColumn])[0] || result[column]
+								if (result[refColumn]) {
+									result[column] = populates.filter(populate => result[refColumn] == populate[PKColumn])[0] || result[refColumn]
 								}
 								return result
 							})

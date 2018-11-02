@@ -67,7 +67,12 @@ const Posts = class posts extends Schema {
   get columns() {
     return {
       id: Schema.Types.PK,
-      user: require('./user') // one to one reference
+			user: require('./user') // one to one reference
+			//or
+			user2: {
+				ref: require('./user'), // one to one reference
+				column: 'user'
+			}
     }
 }
 
