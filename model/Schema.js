@@ -136,6 +136,24 @@ module.exports = class Base {
 		return this
 	}
 
+	NESTTABLES() {
+		this._nestTables = true
+		return this
+	}
+
+	MAP(mapCallback) {
+		this._mapCallback = mapCallback
+		return this
+	}
+
+	EX(expireSecond, cacheKey) {
+		this._EX = {
+			key: cacheKey,
+			EX: expireSecond
+		}
+		return this
+	}
+
 	async exec(outSideConnection = null) {
 		this._connection = outSideConnection || await pool.createConnection()
 		try {
@@ -144,15 +162,25 @@ module.exports = class Base {
 			this._connection.useWriter = this._forceWriter
 			this._forceWriter = false
 
-			if (this._print) {
-				this._print = false
-				results = await this._connection.print.q(this._query, this._queryValues)
-			} else {
-				results = await this._connection.q(this._query, this._queryValues)
+			if (this._nestTables) {
+				this._nestTables = false
+				this._query = {
+					sql: this._query,
+					nestTables: true
+				}
 			}
 
-			if (this._connection.isSelect(this._query)) {
-				results = results.map(result => new this.constructor(result))
+			const ex = this._EX
+			this._EX = {}
+
+			if (this._print) {
+				this._print = false
+				results = await this._connection.print.q(this._query, this._queryValues, ex)
+			} else {
+				results = await this._connection.q(this._query, this._queryValues, ex)
+			}
+
+			if (this._connection.isSelect(this._query.sql || this._query)) {
 
 				//populate
 				if (this._populadtes.length && results.length) {
@@ -215,8 +243,17 @@ module.exports = class Base {
 					}
 				}
 
-				results.forEach(this.constructor.REMOVE_PRIVATE_VARIABLE)
+
+				//for MAP()
+				if (this._mapCallback) {
+					const cb = this._mapCallback
+					delete this._mapCallback
+					results = results.map(cb)
+				}
 			}
+
+			results = results.map(result => new this.constructor(result))
+			results.forEach(this.constructor.REMOVE_PRIVATE_VARIABLE)
 
 			return results
 		} catch (error) {
