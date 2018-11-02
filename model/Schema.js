@@ -91,6 +91,13 @@ module.exports = class Base {
 		return this
 	}
 
+	OFFSET(numbers) {
+		if (numbers) {
+			this._query += ` OFFSET ${numbers} `
+		}
+		return this
+	}
+
 	POPULATE(...fileds) {
 		this._populadtes = fileds
 		return this
