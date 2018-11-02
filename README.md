@@ -30,32 +30,32 @@ SQL_TABLE={{table name}}
 
 ##### Query
 
-Require pool-mysql
+Require `pool-mysql`
 
 ```js
-  const pool = reqiure('pool-mysql')
+const pool = reqiure('pool-mysql')
 
-  pool.query(sql, value, (err, data) => {
+pool.query(sql, value, (err, data) => {
 
-  })
+})
 ```
 
 Create connection
 
 ```js
-  const connection = await pool.createConnection()
+const connection = await pool.createConnection()
 
-  //callback query
-  connection.query(sql, values, (err,data) => {
+//callback query
+connection.query(sql, values, (err,data) => {
 
-  })
+})
 
-  //support async/await
-  try {
-    const result = await connection.q(sql,value)
-  } catch(err) {
-    console.log(err)
-  }
+//support async/await
+try {
+	const result = await connection.q(sql,value)
+} catch(err) {
+	console.log(err)
+}
 ```
 
 After model setting
@@ -67,12 +67,12 @@ const Posts = class posts extends Schema {
   get columns() {
     return {
       id: Schema.Types.PK,
-			user: require('./user') // one to one reference
-			//or
-			user2: {
-				ref: require('./user'), // one to one reference
-				column: 'user'
-			}
+      user: require('./user') // one to one reference
+      //or
+      user2: {
+        ref: require('./user'), // one to one reference
+        column: 'user'
+      }
     }
 }
 
@@ -98,46 +98,48 @@ await Posts
 ### log level
 
 Print all
+
 ```js
-	pool.logger = 'all'
+pool.logger = 'all'
 ```
 
 Print if error
+
 ```js
-	pool.logger = 'error'
+pool.logger = 'error'
 ```
 
 Print nothing
+
 ```js
-	pool.logger = 'none'
+pool.logger = 'none'
 ```
 
 ### cache
 
 ```js
-	const redis = require('redis')
-	const bluebird = require('bluebird')
-	bluebird.promisifyAll(redis.RedisClient.prototype)
-	bluebird.promisifyAll(redis.Multi.prototype)
+const redis = require('redis')
+const bluebird = require('bluebird')
+bluebird.promisifyAll(redis.RedisClient.prototype)
+bluebird.promisifyAll(redis.Multi.prototype)
 
-	const client = redis.createClient({
-		host: ...,
-		port: ...,
-		db: ...
-	})
+const client = redis.createClient({
+  host: ...,
+  port: ...,
+  db: ...
+})
 
-	pool.redisClient = Redis
+pool.redisClient = Redis
 
+//...
 
-	//...
+const connection = await pool.createConnection
 
-	const connection = await pool.createConnection
+await connection.q('SELECT id FROM user WHERE uid = ?', userID, {
+  key: `api:user:id:${userID}`, //optional , default to queryString
+  EX: process.env.NODE_ENV == 'production' ? 240 : 12, //default to 0 , it's required if need cache
+  isJSON: true, //default to true
+})
 
-	await connection.q('SELECT id FROM user WHERE uid = ?', userID, {
-		key: `api:user:id:${userID}`, //optional , default to queryString
-		EX: process.env.NODE_ENV == 'production' ? 240 : 12, //default to 0 , it's required if need cache
-		isJSON: true, //default to true
-	})
-
-	await connection.q('SELECT id FROM user WHERE uid = ?', userID, { EX: 60})
+await connection.q('SELECT id FROM user WHERE uid = ?', userID, { EX: 60})
 ```
