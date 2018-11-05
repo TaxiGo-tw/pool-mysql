@@ -196,10 +196,10 @@ module.exports = class Base {
 		return this
 	}
 
-	MAPPED() {
-		this._mapped = true
-		return this
-	}
+	// MAPPED() {
+	// 	this._mapped = true
+	// 	return this
+	// }
 
 	EX(expireSecond, cacheKey) {
 		this._EX = { key: cacheKey, EX: expireSecond }
@@ -216,7 +216,7 @@ module.exports = class Base {
 
 			const query = {
 				sql: this._q.map(q => `${q.type} ${q.command}`).join(' '),
-				nestTables: this._nestTables || this._mapped
+				nestTables: this._nestTables
 			}
 			this._nestTables = false
 
