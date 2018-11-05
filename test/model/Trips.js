@@ -1,4 +1,4 @@
-const Base = require('pool-mysql').Schema
+const Base = require('../../index').Schema
 
 module.exports = class trips extends Base {
 	get columns() {

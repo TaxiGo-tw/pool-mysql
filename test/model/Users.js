@@ -1,5 +1,4 @@
-const Base = require('pool-mysql').Schema
-
+const Base = require('../../index').Schema
 module.exports = class user_info extends Base {
 	get columns() {
 		return {
