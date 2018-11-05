@@ -1,5 +1,6 @@
 const pool = require('./Pool')
 const Types = require('./Types')
+const mysql = require('mysql')
 
 module.exports = class Base {
 	constructor(dict) {
@@ -13,6 +14,11 @@ module.exports = class Base {
 		this._query = ''
 
 		this._populadtes = []
+
+		this._q = []
+
+		// this._q.map(q => q.query).join(' ')
+		// this._q.flatMap(q => q.values)
 	}
 
 	static async native(outSideConnection, sql, values) {
@@ -44,34 +50,54 @@ module.exports = class Base {
 				const keys = this.columns
 					? Object.keys(this.columns)
 						.filter(column => !(this.columns[column] instanceof Array) && !(typeof this.columns[column] == 'object'))
+						.map(column => `${this.constructor.name}.${column}`)
 						.join(', ')
 					: '*'
 
-				this._query = `SELECT ${keys} `
+				this._q.push({ type: 'SELECT', command: `SELECT ${keys}` })
 				break
 			}
 			case '*':
-				this._query = 'SELECT * '
+				this._q.push({ type: 'SELECT', command: 'SELECT *' })
 				break
 			default:
-				this._query = `SELECT ${columns} `
+				this._q.push({ type: 'SELECT', command: `SELECT ${columns}` })
 		}
 
 		return this
 	}
 
 	SQL_NO_CACHE() {
-		this._query += ' SQL_NO_CACHE '
+		this._q.push({ type: 'SQL_NO_CACHE', command: `SQL_NO_CACHE` })
 		return this
 	}
 
 	FROM(table = this.constructor.name) {
-		this._query += ` FROM ${table} `
+		this._q.push({ type: 'FROM', command: `FROM ${table}` })
 		return this
 	}
 
-	JOIN(whereCaluse, whereCaluse2) { return addQuery.bind(this)('JOIN', whereCaluse, whereCaluse2, false) }
-	LEFTJOIN(whereCaluse, whereCaluse2) { return addQuery.bind(this)('LEFT JOIN', whereCaluse, whereCaluse2, false) }
+	JOIN(whereCaluse, whereCaluse2) {
+		const tableName = whereCaluse.split(' ')[0]
+		for (const q of this._q) {
+			if (q.type == 'SELECT') {
+				q.command += `, ${tableName}.*`
+				break
+			}
+		}
+		return addQuery.bind(this)('JOIN', whereCaluse, whereCaluse2, false)
+	}
+
+	LEFTJOIN(whereCaluse, whereCaluse2) {
+		const tableName = whereCaluse.split(' ')[0]
+		for (const q of this._q) {
+			if (q.type == 'SELECT' && !q.value) {
+				q.command += `, ${tableName}.*`
+				break
+			}
+		}
+		return addQuery.bind(this)('LEFT JOIN', whereCaluse, whereCaluse2, false)
+	}
 	WHERE(whereCaluse, whereCaluse2) { return addQuery.bind(this)('WHERE', whereCaluse, whereCaluse2) }
 	AND(whereCaluse, whereCaluse2) { return addQuery.bind(this)('AND', whereCaluse, whereCaluse2) }
 	OR(whereCaluse, whereCaluse2) { return addQuery.bind(this)('OR', whereCaluse, whereCaluse2) }
@@ -79,21 +105,21 @@ module.exports = class Base {
 
 	ORDER_BY(column, sort = 'ASC') {
 		if (column) {
-			this._query += ` ORDER BY ${column} ${sort}`
+			this._q.push({ type: 'ORDER_BY', command: `ORDER BY ${column} ${sort}` })
 		}
 		return this
 	}
 
 	LIMIT(numbers) {
 		if (numbers) {
-			this._query += ` LIMIT ${numbers} `
+			this._q.push({ type: 'LIMIT', command: `LIMIT ${numbers}` })
 		}
 		return this
 	}
 
 	OFFSET(numbers) {
 		if (numbers) {
-			this._query += ` OFFSET ${numbers} `
+			this._q.push({ type: 'OFFSET', command: `OFFSET ${numbers}` })
 		}
 		return this
 	}
@@ -104,7 +130,8 @@ module.exports = class Base {
 	}
 
 	INSERT(ignore = false) {
-		this._query = `INSERT ${ignore ? 'IGNORE' : ''} `
+		const ig = ignore ? 'IGNORE' : ''
+		this._q.push({ type: 'INSERT', command: `INSERT ${ig}` })
 		return this
 	}
 
@@ -114,7 +141,7 @@ module.exports = class Base {
 	}
 
 	INTO(table = this.constructor.name) {
-		this._query += ` INTO ${table}`
+		this._q.push({ type: 'INTO', command: `INTO ${table}` })
 		return this
 	}
 
@@ -124,7 +151,7 @@ module.exports = class Base {
 	}
 
 	DELETE() {
-		this._query = 'DELETE '
+		this._q.push({ command: `DELETE`, type: 'DELETE' })
 		return this
 	}
 
@@ -139,7 +166,8 @@ module.exports = class Base {
 	}
 
 	EXPLAIN() {
-		this._query = 'EXPLAIN ' + this._query
+		this._q.splice(0, 0, { command: `EXPLAIN`, type: 'EXPLAIN' })
+		// this._query
 		return this
 	}
 
@@ -153,11 +181,13 @@ module.exports = class Base {
 		return this
 	}
 
+	MAPPED() {
+		this._mapped = true
+		return this
+	}
+
 	EX(expireSecond, cacheKey) {
-		this._EX = {
-			key: cacheKey,
-			EX: expireSecond
-		}
+		this._EX = { key: cacheKey, EX: expireSecond }
 		return this
 	}
 
@@ -169,26 +199,35 @@ module.exports = class Base {
 			this._connection.useWriter = this._forceWriter
 			this._forceWriter = false
 
-			if (this._nestTables) {
-				this._nestTables = false
-				this._query = {
-					sql: this._query,
-					nestTables: true
-				}
+			const query = {
+				sql: this._q.map(q => q.command).join(' '),
+				nestTables: this._nestTables || this._mapped
 			}
+			this._nestTables = false
+
+			const values = this._q.map(q => q.value).filter(q => q)
 
 			const ex = this._EX
 			this._EX = {}
 
+			console.log(this._q)
+			console.log(query)
+			console.log(values)
+
+			// console.log(this._q)
+			// console.log(values)
+			// console.log(query)
+			// console.log(mysql.format(query.values))
+
+
 			if (this._print) {
 				this._print = false
-				results = await this._connection.print.q(this._query, this._queryValues, ex)
+				results = await this._connection.print.q(query, values, ex)
 			} else {
-				results = await this._connection.q(this._query, this._queryValues, ex)
+				results = await this._connection.q(query, values, ex)
 			}
 
-			if (this._connection.isSelect(this._query.sql || this._query)) {
-
+			if (this._connection.isSelect(query.sql)) {
 				//populate
 				if (this._populadtes.length && results.length) {
 
@@ -276,6 +315,7 @@ module.exports = class Base {
 		delete t._populadtes
 		delete t._query
 		delete t._queryValues
+		delete t._q
 	}
 
 	get JSON() {
@@ -321,27 +361,19 @@ module.exports = class Base {
 	}
 }
 
-function addQuery(reservedWord, whereCaluse, whereCaluse2 = 'oooooooo', inBrackets = true) {
+function addQuery(reservedWord, whereCaluse, whereCaluse2, inBrackets = true) {
 	if (!whereCaluse) {
 		return this
 	}
 
 	if (typeof whereCaluse == 'string') {
-
 		if (inBrackets) {
-			this._query += ` ${reservedWord} (${whereCaluse}) `
+			this._q.push({ command: `${reservedWord} (${whereCaluse})`, value: whereCaluse2, type: reservedWord })
 		} else {
-			this._query += ` ${reservedWord} ${whereCaluse} `
-		}
-
-		if (whereCaluse2 != 'oooooooo' && whereCaluse2 instanceof Array) {
-			this._queryValues = this._queryValues.concat(whereCaluse2)
-		} else if (whereCaluse2 != 'oooooooo') {
-			this._queryValues.push(whereCaluse2)
+			this._q.push({ command: `${reservedWord} ${whereCaluse}`, value: whereCaluse2, type: reservedWord })
 		}
 	} else {
-		this._queryValues.push(whereCaluse)
-		this._query += ` ${reservedWord} ? `
+		this._q.push({ command: `${reservedWord} ?`, value: whereCaluse, type: reservedWord })
 	}
 
 	return this
