@@ -39,6 +39,12 @@ module.exports = class Base {
 		}
 	}
 
+	EXPLAIN() {
+		this._q.splice(0, 0, { type: 'EXPLAIN' })
+		// this._query
+		return this
+	}
+
 	static SELECT(columns = null) {
 		const object = new this()
 		return object.SELECT(columns)
@@ -54,26 +60,33 @@ module.exports = class Base {
 						.join(', ')
 					: '*'
 
-				this._q.push({ type: 'SELECT', command: `SELECT ${keys}` })
+				this._q.push({ type: 'SELECT', command: `${keys}` })
 				break
 			}
-			case '*':
-				this._q.push({ type: 'SELECT', command: 'SELECT *' })
-				break
-			default:
-				this._q.push({ type: 'SELECT', command: `SELECT ${columns}` })
+			default: {
+				const fields = columns.split(',').map(c => {
+					if (c.includes('.')) {
+						return c
+					}
+
+					return `${this.constructor.name}.${c}`
+				}).join(', ')
+
+				this._q.push({ type: 'SELECT', command: `${fields}` })
+			}
+
 		}
 
 		return this
 	}
 
 	SQL_NO_CACHE() {
-		this._q.push({ type: 'SQL_NO_CACHE', command: `SQL_NO_CACHE` })
+		this._q.push({ type: 'SQL_NO_CACHE' })
 		return this
 	}
 
 	FROM(table = this.constructor.name) {
-		this._q.push({ type: 'FROM', command: `FROM ${table}` })
+		this._q.push({ type: 'FROM', command: `${table}` })
 		return this
 	}
 
@@ -105,21 +118,21 @@ module.exports = class Base {
 
 	ORDER_BY(column, sort = 'ASC') {
 		if (column) {
-			this._q.push({ type: 'ORDER_BY', command: `ORDER BY ${column} ${sort}` })
+			this._q.push({ type: 'ORDER BY', command: `${column} ${sort}` })
 		}
 		return this
 	}
 
 	LIMIT(numbers) {
 		if (numbers) {
-			this._q.push({ type: 'LIMIT', command: `LIMIT ${numbers}` })
+			this._q.push({ type: 'LIMIT', command: `${numbers}` })
 		}
 		return this
 	}
 
 	OFFSET(numbers) {
 		if (numbers) {
-			this._q.push({ type: 'OFFSET', command: `OFFSET ${numbers}` })
+			this._q.push({ type: 'OFFSET', command: `${numbers}` })
 		}
 		return this
 	}
@@ -131,7 +144,7 @@ module.exports = class Base {
 
 	INSERT(ignore = false) {
 		const ig = ignore ? 'IGNORE' : ''
-		this._q.push({ type: 'INSERT', command: `INSERT ${ig}` })
+		this._q.push({ type: 'INSERT', command: `${ig}` })
 		return this
 	}
 
@@ -141,7 +154,7 @@ module.exports = class Base {
 	}
 
 	INTO(table = this.constructor.name) {
-		this._q.push({ type: 'INTO', command: `INTO ${table}` })
+		this._q.push({ type: 'INTO', command: `${table}` })
 		return this
 	}
 
@@ -151,7 +164,7 @@ module.exports = class Base {
 	}
 
 	DELETE() {
-		this._q.push({ command: `DELETE`, type: 'DELETE' })
+		this._q.push({ type: 'DELETE' })
 		return this
 	}
 
@@ -162,12 +175,6 @@ module.exports = class Base {
 
 	WRITER() {
 		this._forceWriter = true
-		return this
-	}
-
-	EXPLAIN() {
-		this._q.splice(0, 0, { command: `EXPLAIN`, type: 'EXPLAIN' })
-		// this._query
 		return this
 	}
 
@@ -200,7 +207,7 @@ module.exports = class Base {
 			this._forceWriter = false
 
 			const query = {
-				sql: this._q.map(q => q.command).join(' '),
+				sql: this._q.map(q => `${q.type} ${q.command}`).join(' '),
 				nestTables: this._nestTables || this._mapped
 			}
 			this._nestTables = false
@@ -368,12 +375,12 @@ function addQuery(reservedWord, whereCaluse, whereCaluse2, inBrackets = true) {
 
 	if (typeof whereCaluse == 'string') {
 		if (inBrackets) {
-			this._q.push({ command: `${reservedWord} (${whereCaluse})`, value: whereCaluse2, type: reservedWord })
+			this._q.push({ type: reservedWord, command: `(${whereCaluse})`, value: whereCaluse2 })
 		} else {
-			this._q.push({ command: `${reservedWord} ${whereCaluse}`, value: whereCaluse2, type: reservedWord })
+			this._q.push({ type: reservedWord, command: `${whereCaluse}`, value: whereCaluse2 })
 		}
 	} else {
-		this._q.push({ command: `${reservedWord} ?`, value: whereCaluse, type: reservedWord })
+		this._q.push({ type: reservedWord, command: `?`, value: whereCaluse })
 	}
 
 	return this
