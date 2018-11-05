@@ -5,6 +5,10 @@ module.exports = class trips extends Base {
 		return {
 			trip_id: Base.Types.PK,
 			user_id: Number,
+			user: {
+				ref: require('./Users'),
+				column: 'user_id'
+			}
 		}
 	}
 

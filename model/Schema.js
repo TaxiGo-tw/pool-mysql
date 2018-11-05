@@ -49,7 +49,6 @@ module.exports = class Base {
 
 	EXPLAIN() {
 		this._q.splice(0, 0, { type: 'EXPLAIN' })
-		// this._query
 		return this
 	}
 

@@ -56,6 +56,18 @@ describe('test query', async () => {
 		results[0].should.not.have.property('user')
 	})
 
+	it('sub 4', async () => {
+		const results = await Trips.
+			SELECT()
+			.FROM()
+			.WHERE('trip_id = ?', 23890)
+			.POPULATE('user')
+			.exec()
+
+		results[0].should.have.property('trip_id')
+		results[0].should.have.property('user')
+	})
+
 
 	before(async () => { })
 	beforeEach(async () => { })
