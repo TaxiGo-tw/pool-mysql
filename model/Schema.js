@@ -33,6 +33,14 @@ module.exports = class Base {
 		}
 	}
 
+	static get keys() {
+		const object = new this()
+		if (object.columns) {
+			throw Error(`${object.constructor.name}.columns not defined`)
+		}
+		return Object.keys(object.columns).join(', ')
+	}
+
 	static SELECT(columns = null) {
 		const object = new this()
 		return object.SELECT(columns)
