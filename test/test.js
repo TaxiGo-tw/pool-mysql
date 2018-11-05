@@ -68,6 +68,17 @@ describe('test query', async () => {
 		results[0].should.have.property('user')
 	})
 
+	it('sub 5', async () => {
+		const results = await Trips.
+			SELECT('trips.*, user_info.*')
+			.FROM()
+			.LEFTJOIN('user_info ON uid = trips.user_id')
+			.WHERE('trip_id = ?', 23890)
+			.exec()
+
+		results[0].should.have.property('driver_id')
+		results[0].should.have.property('start_address')
+	})
 
 	before(async () => { })
 	beforeEach(async () => { })
