@@ -146,7 +146,7 @@ class Connection {
 		})
 	}
 
-	async q(sql, values, { key, EX, isJSON = true, cachedToResult, shouldRefreshInCache /*= (someThing) => { return true }*/, map, queryToResult, queryToCache, print } = {}) {
+	async q(sql, values, { key, EX, isJSON = true, cachedToResult, shouldRefreshInCache /*= (someThing) => { return true }*/, map, queryToResult, queryToCache, redisPrint } = {}) {
 
 		if (!EX) {
 			return await this._q(sql, values)
@@ -165,7 +165,7 @@ class Connection {
 		//if cached
 		const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
 		if (someThing && keepCache) {
-			if (print) {
+			if (redisPrint) {
 				console.log('cached', someThing)
 			}
 
@@ -179,7 +179,7 @@ class Connection {
 
 		const result = await this._q(sql, values)
 
-		if (print) {
+		if (redisPrint) {
 			console.log('queried', result)
 		}
 

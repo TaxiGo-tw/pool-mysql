@@ -8,17 +8,10 @@ module.exports = class Base {
 			for (const key in dict) {
 				this[key] = dict[key]
 			}
+		} else {
+			this._populadtes = []
+			this._q = []
 		}
-
-		this._queryValues = []
-		this._query = ''
-
-		this._populadtes = []
-
-		this._q = []
-
-		// this._q.map(q => q.query).join(' ')
-		// this._q.flatMap(q => q.values)
 	}
 
 	static async native(outSideConnection, sql, values) {
@@ -39,42 +32,54 @@ module.exports = class Base {
 		}
 	}
 
+	static get KEYS() {
+		const object = new this()
+		const columns = object.columns
+
+		const keys = []
+		for (const key in columns) {
+			const value = columns[key]
+			if (value && !(value instanceof Array) && !(typeof value == 'object')) {
+				keys.push(`${object.constructor.name}.${key}`)
+			}
+		}
+
+		return keys
+	}
+
 	EXPLAIN() {
 		this._q.splice(0, 0, { type: 'EXPLAIN' })
 		// this._query
 		return this
 	}
 
-	static SELECT(columns = null) {
+	static SELECT(...columns) {
 		const object = new this()
 		return object.SELECT(columns)
 	}
 
-	SELECT(columns = null) {
-		switch (columns) {
-			case null: {
-				const keys = this.columns
-					? Object.keys(this.columns)
-						.filter(column => !(this.columns[column] instanceof Array) && !(typeof this.columns[column] == 'object'))
-						.map(column => `${this.constructor.name}.${column}`)
-						.join(', ')
-					: '*'
+	SELECT(c) {
+		const columns = c || Array.prototype.slice.call(arguments, 0)
 
-				this._q.push({ type: 'SELECT', command: `${keys}` })
-				break
-			}
-			default: {
-				const fields = columns.split(',').map(c => {
-					if (c.includes('.')) {
-						return c
-					}
+		if (columns.length) {
+			const fields = columns.join(',').split(',').map(c => {
+				if (c.includes('.')) {
+					return c
+				}
 
-					return `${this.constructor.name}.${c}`
-				}).join(', ')
+				return `${this.constructor.name}.${c}`
+			}).join(', ')
 
-				this._q.push({ type: 'SELECT', command: `${fields}` })
-			}
+			this._q.push({ type: 'SELECT', command: `${fields}` })
+		} else {
+			const keys = this.columns
+				? Object.keys(this.columns)
+					.filter(column => !(this.columns[column] instanceof Array) && !(typeof this.columns[column] == 'object'))
+					.map(column => `${this.constructor.name}.${column}`)
+					.join(', ')
+				: '*'
 
+			this._q.push({ type: 'SELECT', command: `${keys}`, customed: true })
 		}
 
 		return this
@@ -94,7 +99,9 @@ module.exports = class Base {
 		const tableName = whereCaluse.split(' ')[0]
 		for (const q of this._q) {
 			if (q.type == 'SELECT') {
-				q.command += `, ${tableName}.*`
+				if (q.customed) {
+					q.command += `, ${tableName}.*`
+				}
 				break
 			}
 		}
@@ -104,8 +111,10 @@ module.exports = class Base {
 	LEFTJOIN(whereCaluse, whereCaluse2) {
 		const tableName = whereCaluse.split(' ')[0]
 		for (const q of this._q) {
-			if (q.type == 'SELECT' && !q.value) {
-				q.command += `, ${tableName}.*`
+			if (q.type == 'SELECT') {
+				if (q.customed) {
+					q.command += `, ${tableName}.*`
+				}
 				break
 			}
 		}
@@ -217,16 +226,6 @@ module.exports = class Base {
 			const ex = this._EX
 			this._EX = {}
 
-			console.log(this._q)
-			console.log(query)
-			console.log(values)
-
-			// console.log(this._q)
-			// console.log(values)
-			// console.log(query)
-			// console.log(mysql.format(query.values))
-
-
 			if (this._print) {
 				this._print = false
 				results = await this._connection.print.q(query, values, ex)
@@ -306,8 +305,6 @@ module.exports = class Base {
 			}
 
 			results = results.map(result => new this.constructor(result))
-			results.forEach(this.constructor.REMOVE_PRIVATE_VARIABLE)
-
 			return results
 		} catch (error) {
 			throw error
@@ -316,13 +313,6 @@ module.exports = class Base {
 				this._connection.release()
 			}
 		}
-	}
-
-	static REMOVE_PRIVATE_VARIABLE(t) {
-		delete t._populadtes
-		delete t._query
-		delete t._queryValues
-		delete t._q
 	}
 
 	get JSON() {
