@@ -1,6 +1,5 @@
 const pool = require('./Pool')
 const Types = require('./Types')
-const mysql = require('mysql')
 
 module.exports = class Base {
 	constructor(dict) {

@@ -309,6 +309,10 @@ class Pool {
 		}
 	}
 
+	get Schema() {
+		return require('./Schema')
+	}
+
 	get logger() {
 		return logger
 	}
