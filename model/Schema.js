@@ -120,38 +120,19 @@ module.exports = class Base {
 	WHERE(whereCaluse, whereCaluse2) { return addQuery.bind(this)('WHERE', whereCaluse, whereCaluse2) }
 	AND(whereCaluse, whereCaluse2) { return addQuery.bind(this)('AND', whereCaluse, whereCaluse2) }
 	OR(whereCaluse, whereCaluse2) { return addQuery.bind(this)('OR', whereCaluse, whereCaluse2) }
-	HAVING(whereCaluse, whereCaluse2) { return addQuery.bind(this)('HAVING', whereCaluse, whereCaluse2) }
 
-	ORDER_BY(column, sort = 'ASC') {
-		if (column) {
-			this._q.push({ type: 'ORDER BY', command: `${column} ${sort}` })
-		}
-		return this
-	}
+	HAVING(...column) { return addQuery.bind(this)('HAVING', column.join(' AND '), null) }
+	GROUP_BY(...column) { return addQuery.bind(this)('GROUP BY', column.join(', '), null) }
+	ORDER_BY(column, sort = 'ASC') { return addQuery.bind(this)('ORDER BY', `${column} ${sort}`, null) }
 
-	GROUP_BY(...column) {
-		if (column) {
-			this._q.push({ type: 'GROUP BY', command: column.join(',') })
-		}
-		return this
-	}
-
-	LIMIT(numbers, defaultValue) {
+	LIMIT(numbers, defaultValue = 20) {
 		const limit = numbers ? parseInt(numbers) : defaultValue
-
-		if (limit) {
-			this._q.push({ type: 'LIMIT', command: `${limit}` })
-		}
-		return this
+		return addQuery.bind(this)('LIMIT', limit, null)
 	}
 
-	OFFSET(numbers, defaultValue) {
-		const offset = numbers ? parseInt(numbers) : defaultValue
-
-		if (offset) {
-			this._q.push({ type: 'OFFSET', command: `${offset}` })
-		}
-		return this
+	OFFSET(numbers, defaultValue = 0) {
+		const limit = numbers ? parseInt(numbers) : defaultValue
+		return addQuery.bind(this)('OFFSET', limit, null)
 	}
 
 	POPULATE(...fileds) {

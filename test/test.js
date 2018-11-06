@@ -130,12 +130,12 @@ describe('test query', async () => {
 			.WHERE('trip_status = "TRIP_PAYMENT_PROCESSED"')
 			.AND('driver_id IS NOT NULL')
 			.GROUP_BY('driver_id')
-			.HAVING('count > 100')
+			.HAVING('count > 100', 'driver_id < 10000')
 
 		const results = await query.exec()
 
 		results[0].should.have.property('driver_id')
 		results[0].should.have.property('count')
-		query.FORMATTED().formatted.should.equals(`SELECT driver_id, count(*) count FROM trips WHERE (trip_status = "TRIP_PAYMENT_PROCESSED") AND (driver_id IS NOT NULL) GROUP BY driver_id HAVING (count > 100)`)
+		query.FORMATTED().formatted.should.equals(`SELECT driver_id, count(*) count FROM trips WHERE (trip_status = "TRIP_PAYMENT_PROCESSED") AND (driver_id IS NOT NULL) GROUP BY (driver_id) HAVING (count > 100 AND driver_id < 10000)`)
 	})
 })
