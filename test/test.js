@@ -207,7 +207,7 @@ describe('test HAVING', async () => {
 	})
 })
 
-describe('test HAVING', async () => {
+describe('test long query', async () => {
 	it('2', async () => {
 		const query = await Trips.SELECT(`first_name, SUBSTRING(a.phone_number, 2) phone_number`)
 			.FROM('user_info a, trips b')
@@ -219,5 +219,19 @@ describe('test HAVING', async () => {
 		await query.exec()
 
 		query.FORMATTED().formatted.should.equals(`SELECT first_name, SUBSTRING(a.phone_number, 2) phone_number FROM user_info a, trips b WHERE (trip_hash = 'LPawCZ') AND (user_id = 101 OR driver_id = 101) AND (a.uid = IF(b.user_id = 101, b.driver_id, b.user_id) or a.uid = IF(b.driver_id = 101, b.user_id, b.driver_id)) AND (b.trip_status NOT IN ('driver_reserved'))`)
+	})
+
+	it('3', async () => {
+		const query = Trips
+			.SELECT('trips.user_id, bot_id, trip_id, request_time, reserve_time, trip_status, start_latlng, end_latlng, last_latlng, start_address, end_address, feature_map, payment_method, IFNULL(test_users.user_id, 0) as test')
+			.FROM()
+			.LEFTJOIN('test_users ON trips.user_id = test_users.user_id')
+			.WHERE('trip_status IN ("WAITING_SPECIFY", "REQUESTING_DRIVER", "PENDING_RESPONSE_DRIVER")')
+			.AND('request_time = reserve_time')
+			.AND('trips.user_id NOT IN (SELECT user_id FROM blocked_users WHERE (end_time = -1 OR UNIX_TIMESTAMP() BETWEEN start_time AND end_time))')
+
+		await query.exec()
+
+		query.FORMATTED().formatted.should.equals(`SELECT trips.user_id, bot_id, trip_id, request_time, reserve_time, trip_status, start_latlng, end_latlng, last_latlng, start_address, end_address, feature_map, payment_method, IFNULL(test_users.user_id, 0) as test FROM trips LEFT JOIN test_users ON trips.user_id = test_users.user_id WHERE (trip_status IN ("WAITING_SPECIFY", "REQUESTING_DRIVER", "PENDING_RESPONSE_DRIVER")) AND (request_time = reserve_time) AND (trips.user_id NOT IN (SELECT user_id FROM blocked_users WHERE (end_time = -1 OR UNIX_TIMESTAMP() BETWEEN start_time AND end_time)))`)
 	})
 })
