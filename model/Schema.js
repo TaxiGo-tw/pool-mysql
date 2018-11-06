@@ -346,7 +346,7 @@ module.exports = class Base {
 	}
 
 	UPDATE() {
-		this._query = `UPDATE ${this.constructor.name}`
+		this._q.push({ type: 'UPDATE', command: this.constructor.name })
 		return this
 	}
 
@@ -368,14 +368,16 @@ function addQuery(reservedWord, whereCaluse, whereCaluse2, inBrackets = true) {
 		return this
 	}
 
+
 	if (typeof whereCaluse == 'string') {
 		if (inBrackets) {
 			this._q.push({ type: reservedWord, command: `(${whereCaluse})`, value: whereCaluse2 })
 		} else {
 			this._q.push({ type: reservedWord, command: `${whereCaluse}`, value: whereCaluse2 })
 		}
+	} else if (typeof whereCaluse == 'object') {
+		this._q.push({ type: reservedWord, command: `(?)`, value: whereCaluse })
 	} else {
-
 		this._q.push({ type: reservedWord, command: `?`, value: whereCaluse })
 	}
 

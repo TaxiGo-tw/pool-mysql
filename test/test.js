@@ -22,6 +22,21 @@ describe('test query', async () => {
 	})
 })
 
+it('33', async () => {
+	const query = Trips.
+		SELECT()
+		.FROM()
+		.WHERE({ trip_id: 23890 })
+		.AND({ trip_id: 23890 })
+		.LIMIT()
+
+	const results = await query.exec()
+
+	results[0].should.have.property('trip_id')
+	results[0].should.not.have.property('user')
+	query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) AND (`trip_id` = 23890) LIMIT 20')
+})
+
 describe('test POPULATE', async () => {
 	it('4', async () => {
 		const query = Trips.
@@ -84,7 +99,7 @@ describe('test LEFT JOIN, NESTTABLES', async () => {
 
 		results[0].should.have.property('trip_id')
 		results[0].should.have.property('user')
-		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id, user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE `trip_id` = 23890 AND (trip_id > 0) LIMIT 20')
+		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id, user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (`trip_id` = 23890) AND (trip_id > 0) LIMIT 20')
 	})
 
 	it('5', async () => {
@@ -235,3 +250,19 @@ describe('test long query', async () => {
 		query.FORMATTED().formatted.should.equals(`SELECT trips.user_id, bot_id, trip_id, request_time, reserve_time, trip_status, start_latlng, end_latlng, last_latlng, start_address, end_address, feature_map, payment_method, IFNULL(test_users.user_id, 0) as test FROM trips LEFT JOIN test_users ON trips.user_id = test_users.user_id WHERE (trip_status IN ("WAITING_SPECIFY", "REQUESTING_DRIVER", "PENDING_RESPONSE_DRIVER")) AND (request_time = reserve_time) AND (trips.user_id NOT IN (SELECT user_id FROM blocked_users WHERE (end_time = -1 OR UNIX_TIMESTAMP() BETWEEN start_time AND end_time)))`)
 	})
 })
+
+
+// describe('test update', async () => {
+// 	it('3', async () => {
+// 		const query = Trips
+// 			.UPDATE()
+// 			.SET({ trip_id: 23890 })
+// 			.WHERE({ trip_id: 23890 })
+
+// 		console.log(query.FORMATTED().formatted)
+// 		await query.exec()
+
+// 		query.FORMATTED().formatted.should.equals(`SELECT trips.user_id, bot_id, trip_id, request_time, reserve_time, trip_status, start_latlng, end_latlng, last_latlng, start_address, end_address, feature_map, payment_method, IFNULL(test_users.user_id, 0) as test FROM trips LEFT JOIN test_users ON trips.user_id = test_users.user_id WHERE (trip_status IN ("WAITING_SPECIFY", "REQUESTING_DRIVER", "PENDING_RESPONSE_DRIVER")) AND (request_time = reserve_time) AND (trips.user_id NOT IN (SELECT user_id FROM blocked_users WHERE (end_time = -1 OR UNIX_TIMESTAMP() BETWEEN start_time AND end_time)))`)
+// 	})
+
+// })
