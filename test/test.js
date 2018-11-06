@@ -1,6 +1,6 @@
 require('dotenv').config({ path: '.env' })
 
-const { assert, expect, should, use } = require('chai')  // Using Assert style
+const { should } = require('chai')  // Using Assert style
 should()  // Modifies `Object.prototype`
 
 const Trips = require('./model/Trips')
