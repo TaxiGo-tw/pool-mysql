@@ -142,7 +142,7 @@ module.exports = class Base {
 
 	INSERT(ignore = false) {
 		const ig = ignore ? 'IGNORE' : ''
-		this._q.push({ type: 'INSERT', command: `${ig}` })
+		this._q.push({ type: `INSERT`, command: ig })
 		return this
 	}
 
@@ -307,9 +307,10 @@ module.exports = class Base {
 					delete this._mapCallback
 					results = results.map(cb)
 				}
+
+				results = results.map(result => new this.constructor(result))
 			}
 
-			results = results.map(result => new this.constructor(result))
 			return results
 		} catch (error) {
 			throw error
@@ -351,14 +352,12 @@ module.exports = class Base {
 	}
 
 	SET(value) {
-		this._query += ' SET ? '
-		this._queryValues.push(value)
+		this._q.push({ type: 'SET', command: '?', value: value })
 		return this
 	}
 
 	DUPLICATE(set) {
-		this._query += ' ON DUPLICATE KEY UPDATE ? '
-		this._queryValues.push(set)
+		this._q.push({ type: 'ON DUPLICATE KEY', command: 'UPDATE ?', value: set })
 		return this
 	}
 }
