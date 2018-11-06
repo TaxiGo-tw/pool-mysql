@@ -1,8 +1,8 @@
-const Base = require('../../index').Schema
-module.exports = class user_info extends Base {
+const Schema = require('../../index').Schema
+module.exports = class user_info extends Schema {
 	get columns() {
 		return {
-			uid: Base.Types.PK,
+			uid: Schema.Types.PK,
 		}
 	}
 

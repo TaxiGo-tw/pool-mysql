@@ -1,5 +1,6 @@
 const pool = require('./Pool')
 const Types = require('./Types')
+const mysql = require('mysql')
 
 module.exports = class Base {
 	constructor(dict) {
@@ -179,7 +180,12 @@ module.exports = class Base {
 		return this
 	}
 
-	PRINT() {
+	PRINT(options) {
+		if (options == false) {
+			this._print = false
+			return this
+		}
+
 		this._print = true
 		return this
 	}
@@ -209,6 +215,23 @@ module.exports = class Base {
 		return this
 	}
 
+	FORMATTED({ formatted = true } = {}) {
+		const query = {
+			sql: this._q.map(q => `${q.type} ${q.command}`).join(' '),
+			nestTables: this._nestTables
+		}
+
+		const values = this._q.map(q => q.value).filter(q => q)
+
+		this._formated = {
+			query,
+			values,
+			formated: formatted ? mysql.format(query.sql, values) : null
+		}
+
+		return this._formated
+	}
+
 	async exec(outSideConnection = null) {
 		this._connection = outSideConnection || await pool.createConnection()
 		try {
@@ -217,19 +240,18 @@ module.exports = class Base {
 			this._connection.useWriter = this._forceWriter
 			this._forceWriter = false
 
-			const query = {
-				sql: this._q.map(q => `${q.type} ${q.command}`).join(' '),
-				nestTables: this._nestTables
-			}
-			this._nestTables = false
+			const { query, values } = this._formated || this.FORMATTED({ formatted: false })
 
-			const values = this._q.map(q => q.value).filter(q => q)
+			delete this._formated
+
+			this._nestTables = false
 
 			const ex = this._EX
 			this._EX = {}
 
-			if (this._print) {
-				this._print = false
+			const print = this._print
+			this._print = false
+			if (print) {
 				results = await this._connection.print.q(query, values, ex)
 			} else {
 				results = await this._connection.q(query, values, ex)
@@ -249,7 +271,7 @@ module.exports = class Base {
 
 							const PKColumn = Object.keys(this.columns).filter(column => this.columns[column] == Base.Types.PK)[0]
 							const ids = results.map(result => result[PKColumn])
-							const populates = await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).exec(this._connection)
+							const populates = await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print || false).exec(this._connection)
 
 							results.forEach(result => {
 								result[column] = populates.filter(p => p[tColumn] == result[PKColumn])
@@ -285,7 +307,7 @@ module.exports = class Base {
 							}
 
 							const PKColumn = Object.keys(refType.columns).filter(column => refType.columns[column] == Base.Types.PK)[0]
-							const populates = await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).exec(this._connection)
+							const populates = await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).PRINT(print || false).exec(this._connection)
 
 							results = results.map(result => {
 								if (result[refColumn]) {
@@ -296,7 +318,6 @@ module.exports = class Base {
 						}
 					}
 				}
-
 
 				//for MAP()
 				if (this._mapCallback) {

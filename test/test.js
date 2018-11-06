@@ -7,8 +7,9 @@ const Trips = require('./model/Trips')
 const Users = require('./model/Users')
 
 describe('test query', async () => {
+	let title = 'SELECT trips.trip_id, trips.user_id, user_info.uid FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890) AND (trip_id > 0)'
 
-	it('sub 1', async () => {
+	it(title, async () => {
 		const results = await Trips.
 			SELECT(Trips.KEYS, Users.KEYS)
 			.FROM()
@@ -31,7 +32,8 @@ describe('test query', async () => {
 		results[0].user.should.have.property('uid')
 	})
 
-	it('sub 2', async () => {
+	title = 'SELECT trips.trip_id, trips.user_id, user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE `trip_id` = 23890 AND (trip_id > 0)'
+	it(title, async () => {
 		const results = await Trips.SELECT()
 			.FROM()
 			.LEFTJOIN('user_info ON uid = trips.user_id')
@@ -45,11 +47,19 @@ describe('test query', async () => {
 			})
 			.exec()
 
+		// console.log(Trips.SELECT()
+		// 	.FROM()
+		// 	.LEFTJOIN('user_info ON uid = trips.user_id')
+		// 	.WHERE({ trip_id: 23890 })
+		// 	.AND('trip_id > 0')
+		// 	.FORMATTED())
+
 		results[0].should.have.property('trip_id')
 		results[0].should.have.property('user')
 	})
 
-	it('sub 3', async () => {
+	title = 'SELECT trips.trip_id, trips.user_id FROM trips WHERE (trip_id = 23890)'
+	it(title, async () => {
 		const results = await Trips.
 			SELECT()
 			.FROM()
@@ -60,7 +70,10 @@ describe('test query', async () => {
 		results[0].should.not.have.property('user')
 	})
 
-	it('sub 4', async () => {
+
+	title = `SELECT trips.trip_id, trips.user_id FROM trips WHERE (trip_id = 23890)
+						SELECT user_info.uid FROM user_info WHERE (uid IN (101))`
+	it(title, async () => {
 		const results = await Trips.
 			SELECT()
 			.FROM()
@@ -72,7 +85,8 @@ describe('test query', async () => {
 		results[0].should.have.property('user')
 	})
 
-	it('sub 5', async () => {
+	title = 'SELECT trips.*,  user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890)'
+	it(title, async () => {
 		const results = await Trips.
 			SELECT('trips.*, user_info.*')
 			.FROM()
