@@ -205,21 +205,19 @@ describe('test HAVING', async () => {
 		results[0].should.have.property('count')
 		query.FORMATTED().formatted.should.equals(`SELECT driver_id, count(*) count FROM trips WHERE (trip_status = "TRIP_PAYMENT_PROCESSED") AND (driver_id IS NOT NULL) GROUP BY driver_id HAVING (count > 100 AND driver_id < 10000) LIMIT 20`)
 	})
+})
 
+describe('test HAVING', async () => {
 	it('2', async () => {
-		const query = Trips.
-			SELECT('driver_id, count(*) count')
-			.FROM()
-			.WHERE('trip_status = "TRIP_PAYMENT_PROCESSED"')
-			.AND('driver_id IS NOT NULL')
-			.GROUP_BY('driver_id')
-			.HAVING('count > 100 AND driver_id < 10000')
-			.LIMIT()
+		const query = await Trips.SELECT(`first_name, SUBSTRING(a.phone_number, 2) phone_number`)
+			.FROM('user_info a, trips b')
+			.WHERE('trip_hash = ?', 'LPawCZ')
+			.AND(`user_id = ? OR driver_id = ?`, [101, 101])
+			.AND('a.uid = IF(b.user_id = ?, b.driver_id, b.user_id) or a.uid = IF(b.driver_id = ?, b.user_id, b.driver_id)', [101, 101])
+			.AND(`b.trip_status NOT IN (?)`, ['driver_reserved'])
 
-		const results = await query.exec()
+		await query.exec()
 
-		results[0].should.have.property('driver_id')
-		results[0].should.have.property('count')
-		query.FORMATTED().formatted.should.equals(`SELECT driver_id, count(*) count FROM trips WHERE (trip_status = "TRIP_PAYMENT_PROCESSED") AND (driver_id IS NOT NULL) GROUP BY driver_id HAVING (count > 100 AND driver_id < 10000) LIMIT 20`)
+		query.FORMATTED().formatted.should.equals(`SELECT first_name, SUBSTRING(a.phone_number, 2) phone_number FROM user_info a, trips b WHERE (trip_hash = 'LPawCZ') AND (user_id = 101 OR driver_id = 101) AND (a.uid = IF(b.user_id = 101, b.driver_id, b.user_id) or a.uid = IF(b.driver_id = 101, b.user_id, b.driver_id)) AND (b.trip_status NOT IN ('driver_reserved'))`)
 	})
 })

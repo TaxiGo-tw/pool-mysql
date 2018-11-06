@@ -207,7 +207,7 @@ module.exports = class Base {
 			nestTables: this._nestTables
 		}
 
-		const values = this._q.map(q => q.value).filter(q => q)
+		const values = this._q.map(q => q.value).filter(q => q).reduce((q, b) => q.concat(b), [])
 
 		return {
 			query,
@@ -375,6 +375,7 @@ function addQuery(reservedWord, whereCaluse, whereCaluse2, inBrackets = true) {
 			this._q.push({ type: reservedWord, command: `${whereCaluse}`, value: whereCaluse2 })
 		}
 	} else {
+
 		this._q.push({ type: reservedWord, command: `?`, value: whereCaluse })
 	}
 
