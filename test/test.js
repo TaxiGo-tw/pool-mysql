@@ -92,8 +92,4 @@ describe('test query', async () => {
 		results[0].should.have.property('start_address')
 		query.FORMATTED().formatted.should.equals('SELECT trips.*,  user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890)')
 	})
-
-	before(async () => { })
-	beforeEach(async () => { })
-	afterEach(async () => { })
 })
