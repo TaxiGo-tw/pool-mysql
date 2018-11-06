@@ -25,11 +25,9 @@ describe('test query', async () => {
 
 		results[0].should.have.property('trip_id')
 		results[0].trip_id.should.equal(23890)
-
 		results[0].should.have.property('user_id')
 		results[0].should.have.property('user')
 		results[0].user.should.have.property('uid')
-
 		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id, user_info.uid FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890) AND (trip_id > 0)')
 	})
 
@@ -48,10 +46,9 @@ describe('test query', async () => {
 
 		const results = await query.exec()
 
-		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id, user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE `trip_id` = 23890 AND (trip_id > 0)')
-
 		results[0].should.have.property('trip_id')
 		results[0].should.have.property('user')
+		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id, user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE `trip_id` = 23890 AND (trip_id > 0)')
 	})
 
 
@@ -68,9 +65,6 @@ describe('test query', async () => {
 		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (trip_id = 23890)')
 	})
 
-
-	const title = `SELECT trips.trip_id, trips.user_id FROM trips WHERE (trip_id = 23890)
-						SELECT user_info.uid FROM user_info WHERE (uid IN (101))`
 	it('4', async () => {
 		const query = await Trips.
 			SELECT()
@@ -96,7 +90,6 @@ describe('test query', async () => {
 
 		results[0].should.have.property('driver_id')
 		results[0].should.have.property('start_address')
-
 		query.FORMATTED().formatted.should.equals('SELECT trips.*,  user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890)')
 	})
 
