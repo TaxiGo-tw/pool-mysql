@@ -92,4 +92,18 @@ describe('test query', async () => {
 		results[0].should.have.property('start_address')
 		query.FORMATTED().formatted.should.equals('SELECT trips.*,  user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890)')
 	})
+
+	it('5', async () => {
+		const query = await Trips.
+			SELECT('*')
+			.FROM()
+			.LEFTJOIN('user_info ON uid = trips.user_id')
+			.WHERE('trip_id = ?', 23890)
+
+		const results = await query.exec()
+
+		results[0].should.have.property('driver_id')
+		results[0].should.have.property('start_address')
+		// query.FORMATTED().formatted.should.equals('SELECT trips.*,  user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890)')
+	})
 })

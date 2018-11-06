@@ -60,7 +60,9 @@ module.exports = class Base {
 	SELECT(c) {
 		const columns = c || Array.prototype.slice.call(arguments, 0)
 
-		if (columns.length) {
+		if (columns.length && columns[0] == '*') {
+			this._q.push({ type: 'SELECT', command: `*` })
+		} else if (columns.length) {
 			const fields = columns.join(',').split(',').map(c => {
 				if (c.includes('.')) {
 					return c
