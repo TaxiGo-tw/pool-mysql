@@ -103,7 +103,7 @@ describe('test query', async () => {
 		const results = await query.exec()
 
 		results[0].should.have.property('driver_id')
-		results[0].should.have.property('start_address')
-		// query.FORMATTED().formatted.should.equals('SELECT trips.*,  user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890)')
+		results[0].should.have.property('first_name')
+		query.FORMATTED().formatted.should.equals('SELECT * FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890)')
 	})
 })
