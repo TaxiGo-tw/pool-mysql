@@ -267,25 +267,32 @@ class Connection {
 		return this
 	}
 
-	// get mustAffected() {
-	// 	this._mustAffected = true
-	// 	return this
-	// }
-
-	// get mustAffectedOneRow() {
-	// 	this._mustUpdateOneRow = true
-	// 	return this
-	// }
-
 	get mustUpdateOneRow() {
 		this._mustUpdateOneRow = true
 		return this
 	}
 
-	// get mustChangedOneRow() {
-	// 	this._mustChangedOneRow = true
-	// 	return this
-	// }
+	get mustAffected() {
+		this._mustAffected = true
+		return this
+	}
+
+	get mustAffectedOneRow() {
+		this._mustAffectedOne = true
+		return this
+	}
+
+
+
+	get mustChanged() {
+		this._mustChanged = true
+		return this
+	}
+
+	get mustChangedOneRow() {
+		this._mustChangedOneRow = true
+		return this
+	}
 }
 
 //manager
