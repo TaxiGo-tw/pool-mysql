@@ -7,38 +7,24 @@ const Trips = require('./model/Trips')
 const Users = require('./model/Users')
 
 describe('test query', async () => {
-	it('3', async () => {
+	it('1', async () => {
 		const query = Trips.
 			SELECT()
 			.FROM()
-			.WHERE('trip_id = ?', 23890)
+			.WHERE({ trip_id: 23890 })
+			.AND({ trip_id: 23890 })
 			.LIMIT()
 
 		const results = await query.exec()
 
 		results[0].should.have.property('trip_id')
 		results[0].should.not.have.property('user')
-		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (trip_id = 23890) LIMIT 20')
+		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) AND (`trip_id` = 23890) LIMIT 20')
 	})
 })
 
-it('33', async () => {
-	const query = Trips.
-		SELECT()
-		.FROM()
-		.WHERE({ trip_id: 23890 })
-		.AND({ trip_id: 23890 })
-		.LIMIT()
-
-	const results = await query.exec()
-
-	results[0].should.have.property('trip_id')
-	results[0].should.not.have.property('user')
-	query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) AND (`trip_id` = 23890) LIMIT 20')
-})
-
 describe('test POPULATE', async () => {
-	it('4', async () => {
+	it('1', async () => {
 		const query = Trips.
 			SELECT()
 			.FROM()
