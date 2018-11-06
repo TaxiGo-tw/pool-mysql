@@ -238,9 +238,7 @@ module.exports = class Base {
 			this._connection.useWriter = this._forceWriter
 			this._forceWriter = false
 
-			const { query, values } = this._formated || this.FORMATTED(false)
-
-			delete this._formated
+			const { query, values } = this.FORMATTED(false)
 
 			this._nestTables = false
 
