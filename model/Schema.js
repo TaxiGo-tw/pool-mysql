@@ -131,16 +131,20 @@ module.exports = class Base {
 		return this
 	}
 
-	LIMIT(numbers) {
-		if (numbers) {
-			this._q.push({ type: 'LIMIT', command: `${numbers}` })
+	LIMIT(numbers, defaultValue) {
+		const limit = numbers ? parseInt(numbers) : defaultValue
+
+		if (limit) {
+			this._q.push({ type: 'LIMIT', command: `${limit}` })
 		}
 		return this
 	}
 
-	OFFSET(numbers) {
-		if (numbers) {
-			this._q.push({ type: 'OFFSET', command: `${numbers}` })
+	OFFSET(numbers, defaultValue) {
+		const offset = numbers ? parseInt(numbers) : defaultValue
+
+		if (offset) {
+			this._q.push({ type: 'OFFSET', command: `${offset}` })
 		}
 		return this
 	}
