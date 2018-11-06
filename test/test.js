@@ -107,4 +107,19 @@ describe('test query', async () => {
 		results[0].should.have.property('first_name')
 		query.FORMATTED().formatted.should.equals('SELECT start_address, first_name FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890)')
 	})
+
+	it('7', async () => {
+		const query = Trips.
+			SELECT(`trip_hash, first_name`)
+			.FROM()
+			.LEFTJOIN('user_info ON uid = trips.user_id')
+			.WHERE('trip_id = ?', 23890)
+			.OR('trip_hash = ?', 'LPawCZ')
+
+		const results = await query.exec()
+
+		results[0].should.have.property('trip_hash')
+		results[0].should.have.property('first_name')
+		query.FORMATTED().formatted.should.equals(`SELECT trip_hash, first_name FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890) OR (trip_hash = 'LPawCZ')`)
+	})
 })

@@ -57,10 +57,11 @@ module.exports = class Base {
 		return object.SELECT(columns)
 	}
 
-	SELECT(c) {
-		const columns = c || Array.prototype.slice.call(arguments, 0)
-
-		if (columns.length && columns.length == 1) {
+	SELECT(columns) {
+		if (columns.length && columns[0].includes('?')) {
+			this._q.push({ type: 'SELECT', command: columns[0], value: columns[1] })
+		}
+		else if (columns.length && columns.length == 1) {
 			this._q.push({ type: 'SELECT', command: columns })
 		} else if (columns.length) {
 			const fields = columns.join(',').split(',').map(c => {
