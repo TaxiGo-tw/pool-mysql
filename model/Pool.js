@@ -26,8 +26,8 @@ const readerPool = mysql.createPool(readerOptions)
 setPool(readerPool)
 
 
-console.log('pool-mysql writer domain: ', writerOptions.host)
-console.log('pool-mysql reader domain: ', readerOptions.host)
+console.log('pool-mysql writer host: ', writerOptions.host)
+console.log('pool-mysql reader host: ', readerOptions.host)
 
 const logLevel = {
 	all: (err, toPrint) => {
@@ -267,15 +267,25 @@ class Connection {
 		return this
 	}
 
-	get mustAffected() {
-		this._mustAffected = true
-		return this
-	}
+	// get mustAffected() {
+	// 	this._mustAffected = true
+	// 	return this
+	// }
+
+	// get mustAffectedOneRow() {
+	// 	this._mustUpdateOneRow = true
+	// 	return this
+	// }
 
 	get mustUpdateOneRow() {
 		this._mustUpdateOneRow = true
 		return this
 	}
+
+	// get mustChangedOneRow() {
+	// 	this._mustChangedOneRow = true
+	// 	return this
+	// }
 }
 
 //manager
