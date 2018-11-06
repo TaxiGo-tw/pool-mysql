@@ -282,8 +282,6 @@ class Connection {
 		return this
 	}
 
-
-
 	get mustChanged() {
 		this._mustChanged = true
 		return this
