@@ -60,8 +60,8 @@ module.exports = class Base {
 	SELECT(c) {
 		const columns = c || Array.prototype.slice.call(arguments, 0)
 
-		if (columns.length && columns[0] == '*') {
-			this._q.push({ type: 'SELECT', command: `*` })
+		if (columns.length && columns.length == 1) {
+			this._q.push({ type: 'SELECT', command: columns })
 		} else if (columns.length) {
 			const fields = columns.join(',').split(',').map(c => {
 				if (c.includes('.')) {
@@ -70,8 +70,7 @@ module.exports = class Base {
 
 				return `${this.constructor.name}.${c}`
 			}).join(', ')
-
-			this._q.push({ type: 'SELECT', command: `${fields}` })
+			this._q.push({ type: 'SELECT', command: fields })
 		} else {
 			const keys = this.columns
 				? Object.keys(this.columns)
@@ -111,6 +110,7 @@ module.exports = class Base {
 
 	LEFTJOIN(whereCaluse, whereCaluse2) {
 		const tableName = whereCaluse.split(' ')[0]
+
 		for (const q of this._q) {
 			if (q.type == 'SELECT') {
 				if (q.customed) {

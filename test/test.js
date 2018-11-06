@@ -7,6 +7,7 @@ const Trips = require('./model/Trips')
 const Users = require('./model/Users')
 
 describe('test query', async () => {
+
 	it('1', async () => {
 		const query = Trips.
 			SELECT(Trips.KEYS, Users.KEYS)
@@ -90,20 +91,20 @@ describe('test query', async () => {
 
 		results[0].should.have.property('driver_id')
 		results[0].should.have.property('start_address')
-		query.FORMATTED().formatted.should.equals('SELECT trips.*,  user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890)')
+		query.FORMATTED().formatted.should.equals('SELECT trips.*, user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890)')
 	})
 
-	it('5', async () => {
+	it('6', async () => {
 		const query = Trips.
-			SELECT('*')
+			SELECT('start_address, first_name')
 			.FROM()
 			.LEFTJOIN('user_info ON uid = trips.user_id')
 			.WHERE('trip_id = ?', 23890)
 
 		const results = await query.exec()
 
-		results[0].should.have.property('driver_id')
+		results[0].should.have.property('start_address')
 		results[0].should.have.property('first_name')
-		query.FORMATTED().formatted.should.equals('SELECT * FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890)')
+		query.FORMATTED().formatted.should.equals('SELECT start_address, first_name FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890)')
 	})
 })
