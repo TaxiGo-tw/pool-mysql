@@ -86,11 +86,6 @@ module.exports = class Base {
 		return this
 	}
 
-	SQL_NO_CACHE() {
-		this._q.push({ type: 'SQL_NO_CACHE' })
-		return this
-	}
-
 	FROM(table = this.constructor.name) {
 		this._q.push({ type: 'FROM', command: `${table}` })
 		return this
@@ -130,6 +125,13 @@ module.exports = class Base {
 	ORDER_BY(column, sort = 'ASC') {
 		if (column) {
 			this._q.push({ type: 'ORDER BY', command: `${column} ${sort}` })
+		}
+		return this
+	}
+
+	GROUP_BY(...column) {
+		if (column) {
+			this._q.push({ type: 'GROUP BY', command: column.join(',') })
 		}
 		return this
 	}
