@@ -7,6 +7,37 @@ const Trips = require('./model/Trips')
 const Users = require('./model/Users')
 
 describe('test query', async () => {
+	it('3', async () => {
+		const query = Trips.
+			SELECT()
+			.FROM()
+			.WHERE('trip_id = ?', 23890)
+
+		const results = await query.exec()
+
+		results[0].should.have.property('trip_id')
+		results[0].should.not.have.property('user')
+		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (trip_id = 23890)')
+	})
+})
+
+describe('test POPULATE', async () => {
+	it('4', async () => {
+		const query = Trips.
+			SELECT()
+			.FROM()
+			.WHERE('trip_id = ?', 23890)
+			.POPULATE('user')
+
+		const results = await query.exec()
+
+		results[0].should.have.property('trip_id')
+		results[0].should.have.property('user')
+		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (trip_id = 23890)')
+	})
+})
+
+describe('test LEFT JOIN, NESTTABLES', async () => {
 
 	it('1', async () => {
 		const query = Trips.
@@ -52,34 +83,6 @@ describe('test query', async () => {
 		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id, user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE `trip_id` = 23890 AND (trip_id > 0)')
 	})
 
-
-	it('3', async () => {
-		const query = Trips.
-			SELECT()
-			.FROM()
-			.WHERE('trip_id = ?', 23890)
-
-		const results = await query.exec()
-
-		results[0].should.have.property('trip_id')
-		results[0].should.not.have.property('user')
-		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (trip_id = 23890)')
-	})
-
-	it('4', async () => {
-		const query = Trips.
-			SELECT()
-			.FROM()
-			.WHERE('trip_id = ?', 23890)
-			.POPULATE('user')
-
-		const results = await query.exec()
-
-		results[0].should.have.property('trip_id')
-		results[0].should.have.property('user')
-		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (trip_id = 23890)')
-	})
-
 	it('5', async () => {
 		const query = Trips.
 			SELECT('trips.*, user_info.*')
@@ -122,8 +125,6 @@ describe('test query', async () => {
 		results[0].should.have.property('first_name')
 		query.FORMATTED().formatted.should.equals(`SELECT trip_hash, first_name FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890) OR (trip_hash = 'LPawCZ')`)
 	})
-
-
 })
 
 describe('test GROUP BY', async () => {
