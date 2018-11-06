@@ -122,7 +122,7 @@ module.exports = class Base {
 	OR(whereCaluse, whereCaluse2) { return addQuery.bind(this)('OR', whereCaluse, whereCaluse2) }
 
 	HAVING(...column) { return addQuery.bind(this)('HAVING', column.join(' AND '), null) }
-	GROUP_BY(...column) { return addQuery.bind(this)('GROUP BY', column.join(', '), null) }
+	GROUP_BY(...column) { return addQuery.bind(this)('GROUP BY', column.join(', '), null, false) }
 	ORDER_BY(column, sort = 'ASC') { return addQuery.bind(this)('ORDER BY', `${column} ${sort}`, null) }
 
 	LIMIT(numbers, defaultValue = 20) {

@@ -123,7 +123,46 @@ describe('test query', async () => {
 		query.FORMATTED().formatted.should.equals(`SELECT trip_hash, first_name FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890) OR (trip_hash = 'LPawCZ')`)
 	})
 
-	it('8', async () => {
+
+})
+
+describe('test GROUP BY', async () => {
+	it('1', async () => {
+		const query = Trips.
+			SELECT('driver_id, count(*) count')
+			.FROM()
+			.WHERE('trip_status = "TRIP_PAYMENT_PROCESSED"')
+			.AND('driver_id IS NOT NULL')
+			.AND('user_id IS NOT NULL')
+			.GROUP_BY('driver_id', 'user_id')
+
+		const results = await query.exec()
+
+		results[0].should.have.property('driver_id')
+		results[0].should.have.property('count')
+		query.FORMATTED().formatted.should.equals(`SELECT driver_id, count(*) count FROM trips WHERE (trip_status = "TRIP_PAYMENT_PROCESSED") AND (driver_id IS NOT NULL) AND (user_id IS NOT NULL) GROUP BY driver_id, user_id`)
+	})
+
+	it('2', async () => {
+		const query = Trips.
+			SELECT('driver_id, count(*) count')
+			.FROM()
+			.WHERE('trip_status = "TRIP_PAYMENT_PROCESSED"')
+			.AND('driver_id IS NOT NULL')
+			.AND('user_id IS NOT NULL')
+			.GROUP_BY('driver_id, user_id')
+
+		const results = await query.exec()
+
+		results[0].should.have.property('driver_id')
+		results[0].should.have.property('count')
+		query.FORMATTED().formatted.should.equals(`SELECT driver_id, count(*) count FROM trips WHERE (trip_status = "TRIP_PAYMENT_PROCESSED") AND (driver_id IS NOT NULL) AND (user_id IS NOT NULL) GROUP BY driver_id, user_id`)
+	})
+})
+
+
+describe('test HAVING', async () => {
+	it('1', async () => {
 		const query = Trips.
 			SELECT('driver_id, count(*) count')
 			.FROM()
@@ -136,6 +175,22 @@ describe('test query', async () => {
 
 		results[0].should.have.property('driver_id')
 		results[0].should.have.property('count')
-		query.FORMATTED().formatted.should.equals(`SELECT driver_id, count(*) count FROM trips WHERE (trip_status = "TRIP_PAYMENT_PROCESSED") AND (driver_id IS NOT NULL) GROUP BY (driver_id) HAVING (count > 100 AND driver_id < 10000)`)
+		query.FORMATTED().formatted.should.equals(`SELECT driver_id, count(*) count FROM trips WHERE (trip_status = "TRIP_PAYMENT_PROCESSED") AND (driver_id IS NOT NULL) GROUP BY driver_id HAVING (count > 100 AND driver_id < 10000)`)
+	})
+
+	it('2', async () => {
+		const query = Trips.
+			SELECT('driver_id, count(*) count')
+			.FROM()
+			.WHERE('trip_status = "TRIP_PAYMENT_PROCESSED"')
+			.AND('driver_id IS NOT NULL')
+			.GROUP_BY('driver_id')
+			.HAVING('count > 100 AND driver_id < 10000')
+
+		const results = await query.exec()
+
+		results[0].should.have.property('driver_id')
+		results[0].should.have.property('count')
+		query.FORMATTED().formatted.should.equals(`SELECT driver_id, count(*) count FROM trips WHERE (trip_status = "TRIP_PAYMENT_PROCESSED") AND (driver_id IS NOT NULL) GROUP BY driver_id HAVING (count > 100 AND driver_id < 10000)`)
 	})
 })
