@@ -242,20 +242,6 @@ describe('test long query', async () => {
 	})
 })
 
-
-// describe('test update', async () => {
-// 	it('3', async () => {
-// 		const query = Trips
-// 			.UPDATE()
-// 			.SET({ trip_id: 23890 })
-// 			.WHERE({ trip_id: 23890 })
-
-// 		await query.exec()
-
-// 		query.FORMATTED().formatted.should.equals('UPDATE trips SET `trip_id` = 23890 WHERE (`trip_id` = 23890)')
-// 	})
-// })
-
 describe('test insert', async () => {
 	it('3', async () => {
 		const query = Block
@@ -269,4 +255,19 @@ describe('test insert', async () => {
 		query.FORMATTED().formatted.should.equals('INSERT IGNORE INTO block_personally SET `blocker` = 201, `blocked` = 203, `notes` = \'test\' ON DUPLICATE KEY UPDATE `notes` = \'ggg\'')
 	})
 
+})
+
+
+describe('test update', async () => {
+	it('3', async () => {
+		const query = Block
+			.UPDATE()
+			.SET({ notes: 'hihi' })
+			.WHERE({ blocker: 201 })
+			.AND({ blocked: 203 })
+
+		await query.exec()
+
+		query.FORMATTED().formatted.should.equals('UPDATE block_personally SET `notes` = \'hihi\' WHERE (`blocker` = 201) AND (`blocked` = 203)')
+	})
 })
