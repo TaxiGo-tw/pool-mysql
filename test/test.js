@@ -66,7 +66,7 @@ describe('test query', async () => {
 	})
 
 	it('4', async () => {
-		const query = await Trips.
+		const query = Trips.
 			SELECT()
 			.FROM()
 			.WHERE('trip_id = ?', 23890)
@@ -80,7 +80,7 @@ describe('test query', async () => {
 	})
 
 	it('5', async () => {
-		const query = await Trips.
+		const query = Trips.
 			SELECT('trips.*, user_info.*')
 			.FROM()
 			.LEFTJOIN('user_info ON uid = trips.user_id')
@@ -94,7 +94,7 @@ describe('test query', async () => {
 	})
 
 	it('5', async () => {
-		const query = await Trips.
+		const query = Trips.
 			SELECT('*')
 			.FROM()
 			.LEFTJOIN('user_info ON uid = trips.user_id')
