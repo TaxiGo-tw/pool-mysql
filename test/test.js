@@ -24,7 +24,11 @@ describe('test query', async () => {
 			.exec()
 
 		results[0].should.have.property('trip_id')
+		results[0].trip_id.should.equal(23890)
+
+		results[0].should.have.property('user_id')
 		results[0].should.have.property('user')
+		results[0].user.should.have.property('uid')
 	})
 
 	it('sub 2', async () => {
