@@ -215,7 +215,7 @@ module.exports = class Base {
 		return this
 	}
 
-	FORMATTED({ formatted = true } = {}) {
+	FORMATTED(formatted = true) {
 		const query = {
 			sql: this._q.map(q => `${q.type} ${q.command}`).join(' '),
 			nestTables: this._nestTables
@@ -223,13 +223,11 @@ module.exports = class Base {
 
 		const values = this._q.map(q => q.value).filter(q => q)
 
-		this._formated = {
+		return {
 			query,
 			values,
-			formated: formatted ? mysql.format(query.sql, values) : null
+			formatted: formatted ? mysql.format(query.sql, values) : null
 		}
-
-		return this._formated
 	}
 
 	async exec(outSideConnection = null) {
@@ -240,7 +238,7 @@ module.exports = class Base {
 			this._connection.useWriter = this._forceWriter
 			this._forceWriter = false
 
-			const { query, values } = this._formated || this.FORMATTED({ formatted: false })
+			const { query, values } = this._formated || this.FORMATTED(false)
 
 			delete this._formated
 
