@@ -203,7 +203,7 @@ module.exports = class Base {
 
 	FORMATTED(formatted = true) {
 		const query = {
-			sql: this._q.map(q => `${q.type} ${q.command}`).join(' '),
+			sql: this._q.map(q => `${q.type || ''} ${q.command || ''}`).join(' '),
 			nestTables: this._nestTables
 		}
 

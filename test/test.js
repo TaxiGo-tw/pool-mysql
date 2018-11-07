@@ -35,8 +35,6 @@ describe('test POPULATE', async () => {
 
 		const results = await query.exec()
 
-		console.log(results)
-
 		results[0].should.have.property('trip_id')
 		results[0].should.have.property('user')
 		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (trip_id = 23890) LIMIT 20')
@@ -61,8 +59,6 @@ describe('test LEFT JOIN, NESTTABLES', async () => {
 			})
 
 		const results = await query.exec()
-
-		console.log(results)
 
 		results[0].should.have.property('trip_id')
 		results[0].trip_id.should.equal(23890)
@@ -254,9 +250,7 @@ describe('test insert', async () => {
 
 		query.FORMATTED().formatted.should.equals('INSERT IGNORE INTO block_personally SET `blocker` = 201, `blocked` = 203, `notes` = \'test\' ON DUPLICATE KEY UPDATE `notes` = \'ggg\'')
 	})
-
 })
-
 
 describe('test update', async () => {
 	it('3', async () => {
