@@ -207,7 +207,10 @@ module.exports = class Base {
 			nestTables: this._nestTables
 		}
 
-		const values = this._q.filter(q => (q.command.includes('?') || q.value)).map(q => q.value).reduce((q, b) => q.concat(b), [])
+		const values = this._q
+			.filter(q => ((q.command && q.command.includes('?')) || q.value))
+			.map(q => q.value)
+			.reduce((q, b) => q.concat(b), [])
 
 		return {
 			query,

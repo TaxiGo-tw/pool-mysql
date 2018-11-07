@@ -18,15 +18,15 @@ describe('test query', async () => {
 			.AND({ trip_id: id })
 			.AND('trip_id = ?', ii)
 			.LIMIT()
+			.PRINT()
 
 		const results = await query.exec()
 
-		results[0].should.have.property('trip_id')
-		results[0].should.not.have.property('user')
+		results.length.should.equal(0)
 		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) AND (`trip_id` = 23890) AND (trip_id = NULL) LIMIT 20')
 	})
 
-	it('1', async () => {
+	it('2', async () => {
 		const query = Trips.
 			SELECT()
 			.FROM()
