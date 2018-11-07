@@ -166,7 +166,7 @@ class Connection {
 		const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
 		if (someThing && keepCache) {
 			if (redisPrint) {
-				console.log('cached', someThing)
+				console.log('Cached in redis: true')
 			}
 
 			if (someThing.isNull) {
@@ -180,7 +180,7 @@ class Connection {
 		const result = await this._q(sql, values)
 
 		if (redisPrint) {
-			console.log('queried', result)
+			console.log('Cached in redis: false ')
 		}
 
 		let toCache = map

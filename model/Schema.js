@@ -231,11 +231,13 @@ module.exports = class Base {
 
 			this._nestTables = false
 
-			const ex = this._EX
-			this._EX = {}
-
 			const print = this._print
 			this._print = false
+
+			const ex = this._EX || {}
+			ex.redisPrint = print
+			this._EX = {}
+
 			if (print) {
 				results = await this._connection.print.q(query, values, ex)
 			} else {

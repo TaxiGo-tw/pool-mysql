@@ -31,8 +31,11 @@ describe('test query', async () => {
 			.ORDER_BY('trip_id')
 			.LIMIT()
 			.EX(2)
+			.PRINT()
 
-		const results = await query.exec()
+		let results = await query.exec()
+		results = await query.exec()
+
 
 		results.length.should.equal(0)
 		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) AND (`trip_id` = 23890) AND (trip_id = NULL) ORDER BY  trip_id ASC LIMIT 20')
