@@ -18,7 +18,6 @@ describe('test query', async () => {
 			.AND({ trip_id: id })
 			.AND('trip_id = ?', ii)
 			.LIMIT()
-			.PRINT()
 
 		const results = await query.exec()
 
