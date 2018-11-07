@@ -123,7 +123,7 @@ module.exports = class Base {
 
 	HAVING(...column) { return addQuery.bind(this)('HAVING', column.join(' AND '), null) }
 	GROUP_BY(...column) { return addQuery.bind(this)('GROUP BY', column.join(', '), null, false) }
-	ORDER_BY(column, sort = 'ASC') { return addQuery.bind(this)('ORDER BY', column, sort) }
+	ORDER_BY(column, sort = 'ASC') { return addQuery.bind(this)('ORDER BY ', `${column} ${sort}`, null, false) }
 
 	LIMIT(numbers, defaultValue = 20) {
 		const limit = numbers ? parseInt(numbers) : defaultValue

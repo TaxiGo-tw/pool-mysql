@@ -17,12 +17,13 @@ describe('test query', async () => {
 			.WHERE({ trip_id: id })
 			.AND({ trip_id: id })
 			.AND('trip_id = ?', ii)
+			.ORDER_BY('trip_id')
 			.LIMIT()
 
 		const results = await query.exec()
 
 		results.length.should.equal(0)
-		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) AND (`trip_id` = 23890) AND (trip_id = NULL) LIMIT 20')
+		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) AND (`trip_id` = 23890) AND (trip_id = NULL) ORDER BY  trip_id ASC LIMIT 20')
 	})
 
 	it('2', async () => {
