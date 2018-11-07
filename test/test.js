@@ -7,6 +7,17 @@ const Trips = require('./model/Trips')
 const Users = require('./model/Users')
 const Block = require('./model/BlockPersonally')
 
+const pool = require('../index')
+const Redis = require('redis')
+const bluebird = require('bluebird')
+bluebird.promisifyAll(Redis.RedisClient.prototype)
+bluebird.promisifyAll(Redis.Multi.prototype)
+pool.redisClient = Redis.createClient({
+	host: process.env.REDIS_HOST,
+	port: process.env.REDIS_PORT,
+	db: process.env.NODE_ENV == 'production' ? 14 : 15
+})
+
 describe('test query', async () => {
 	it('1', async () => {
 		const id = 23890
@@ -19,6 +30,7 @@ describe('test query', async () => {
 			.AND('trip_id = ?', ii)
 			.ORDER_BY('trip_id')
 			.LIMIT()
+			.EX(2)
 
 		const results = await query.exec()
 
@@ -33,6 +45,7 @@ describe('test query', async () => {
 			.WHERE({ trip_id: 23890 })
 			.AND({ trip_id: 23890 })
 			.LIMIT()
+			.EX(2)
 
 		const results = await query.exec()
 

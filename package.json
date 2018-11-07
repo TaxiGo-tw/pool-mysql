@@ -14,10 +14,12 @@
 		"mysql": "^2.16.0"
 	},
 	"devDependencies": {
+		"bluebird": "^3.5.3",
 		"chai": "^4.2.0",
 		"debug": "^4.1.0",
 		"dotenv": "^6.1.0",
 		"jest": "^23.6.0",
-		"mocha": "^5.2.0"
+		"mocha": "^5.2.0",
+		"redis": "^2.8.0"
 	}
 }
