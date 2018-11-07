@@ -257,10 +257,10 @@ module.exports = class Base {
 					delete this._mapCallback
 					results = results.map(cb)
 				}
-			}
 
-			results = results.map(result => new this.constructor(result))
-			results.forEach(this.constructor.REMOVE_PRIVATE_VARIABLE)
+				results = results.map(result => new this.constructor(result))
+				results.forEach(this.constructor.REMOVE_PRIVATE_VARIABLE)
+			}
 
 			return results
 		} catch (error) {
