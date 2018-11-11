@@ -54,9 +54,9 @@ connection.query(sql, values, (err,data) => {
 
 //support async/await
 try {
-	const result = await connection.q(sql,value)
+  const result = await connection.q(sql,value)
 } catch(err) {
-	console.log(err)
+  console.log(err)
 }
 ```
 
@@ -90,11 +90,26 @@ const User = class user extends Schema {
 await Posts
       .SELECT()         //default to columns()
       .FROM()
-      .WHERE({id:3})    //or you can use .WHERE('id = ?',3)
+      .WHERE({id: 3})    //or you can use .WHERE('id = ?',3)
       .POPULATE('user') //query reference
-      .PRINT            //print command, connection id and works on writer/reader
+      .PRINT()            //print command, connection id and works on writer/reader
       .WRITER           //force query on writer
       .exec()
+
+await Trips.
+      SELECT(Trips.KEYS, Users.KEYS)                   //defined columns
+      .FROM()
+      .LEFTJOIN('user_info ON uid = trips.user_id')
+      .WHERE('trip_id = ?', 12345)
+      .AND('trip_id > 0')
+      .LIMIT()
+      .NESTTABLES()
+      .MAP(result => {
+        const trip = result.trips
+        trip.user = result.user_info
+        return trip
+      })
+      .exec()                                         //will return nested json
 ```
 
 ### log level
