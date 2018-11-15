@@ -8,9 +8,7 @@ which made for migrating to features
 * model.query
 * log print
 
-#### Examples
-
-  testing cases
+[Examples](https://github.com/vivalalova/pool-mysql/blob/master/test/test.js)
 
 ### Installation
 
