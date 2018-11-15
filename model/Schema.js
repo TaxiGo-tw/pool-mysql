@@ -57,7 +57,7 @@ module.exports = class Base {
 		return object.SELECT(columns)
 	}
 
-	SELECT(columns) {
+	SELECT(columns = []) {
 		if (columns.length && columns[0].includes('?')) {
 			this._q.push({ type: 'SELECT', command: columns[0], value: columns[1] })
 		}
@@ -234,6 +234,12 @@ module.exports = class Base {
 			const print = this._print
 			this._print = false
 
+			const filter = this._filter
+			delete this._filter
+
+			const getFirst = this._getFirst
+			delete this._getFirst
+
 			const ex = this._EX || {}
 			ex.redisPrint = print
 			this._EX = {}
@@ -314,11 +320,14 @@ module.exports = class Base {
 				}
 
 				results = results.map(result => new this.constructor(result))
-			}
 
-			if (this._getFirst) {
-				this._getFirst = false
-				return results[0]
+				if (filter) {
+					results = results.filter(filter)
+				}
+
+				if (getFirst) {
+					return results[0]
+				}
 			}
 
 			return results
@@ -374,6 +383,36 @@ module.exports = class Base {
 	FIRST() {
 		this._getFirst = true
 		addQuery.bind(this)('LIMIT', 1, null)
+		return this
+	}
+
+	static FIND(whereCaluse) {
+		const object = new this()
+		return object.SELECT().FROM().WHERE(whereCaluse)
+	}
+
+	static FIND_PK(pk) {
+		if (!this.columns) {
+			throw Error(`${this.constructor.name} columns not defined`)
+		}
+
+		let find
+		for (const key in this.columns) {
+			const value = this.columns[key]
+			if (value == Base.Types.PK) {
+				find = key
+			}
+		}
+
+		if (!find) {
+			throw Error(`${this.constructor.name}.PK columns not defined`)
+		}
+
+		return this.SELECT().FROM().WHERE(`${find} = ?`, pk).FIRST()
+	}
+
+	FILTER(callback) {
+		this._filter = callback
 		return this
 	}
 }

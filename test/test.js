@@ -19,7 +19,7 @@ pool.redisClient = Redis.createClient({
 })
 
 describe('test query', async () => {
-	it('1', async () => {
+	it('with cache', async () => {
 		const id = 23890
 		let ii
 		const query = Trips.
@@ -31,7 +31,6 @@ describe('test query', async () => {
 			.ORDER_BY('trip_id')
 			.LIMIT()
 			.EX(2)
-			.PRINT()
 
 		let results = await query.exec()
 		results = await query.exec()
@@ -41,7 +40,7 @@ describe('test query', async () => {
 		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) AND (`trip_id` = 23890) AND (trip_id = NULL) ORDER BY  trip_id ASC LIMIT 20')
 	})
 
-	it('2', async () => {
+	it('with cache', async () => {
 		const query = Trips.
 			SELECT()
 			.FROM()
@@ -57,14 +56,51 @@ describe('test query', async () => {
 		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) AND (`trip_id` = 23890) LIMIT 20')
 	})
 
-	it('2', async () => {
-		const query = Trips.
+	it('object entity', async () => {
+		const trip = new Trips()
+
+		const query = trip.
 			SELECT()
 			.FROM()
 			.WHERE({ trip_id: 23890 })
 			.AND({ trip_id: 23890 })
 			.FIRST()
-			.EX(2)
+			.FILTER(t => t.trip_id != 23890)
+
+		const result = await query.exec()
+
+		should(result).equal(undefined)
+		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) AND (`trip_id` = 23890) LIMIT 1')
+	})
+
+	it('find', async () => {
+		const query = Trips.FIND({ trip_id: 23890 }).FIRST()
+		const result = await query.exec()
+
+		result.should.have.property('trip_id')
+		result.should.not.have.property('user')
+		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) LIMIT 1')
+	})
+
+	it('find pk', async () => {
+		const query = Trips.FIND_PK(23890)
+		const result = await query.exec()
+
+		result.should.have.property('trip_id')
+		result.should.not.have.property('user')
+		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (trip_id = 23890) LIMIT 1')
+	})
+
+	it('filter', async () => {
+		const trip = new Trips()
+
+		const query = trip.
+			SELECT()
+			.FROM()
+			.WHERE({ trip_id: 23890 })
+			.AND({ trip_id: 23890 })
+			.FIRST()
+			.FILTER(t => t.trip_id == 23890)
 
 		const result = await query.exec()
 
@@ -75,19 +111,21 @@ describe('test query', async () => {
 })
 
 describe('test POPULATE', async () => {
-	it('1', async () => {
+	it('POPULATE', async () => {
 		const query = Trips.
 			SELECT()
 			.FROM()
 			.WHERE('trip_id = ?', 23890)
-			.LIMIT()
 			.POPULATE('user')
+			.FIRST()
 
 		const results = await query.exec()
 
-		results[0].should.have.property('trip_id')
-		results[0].should.have.property('user')
-		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (trip_id = 23890) LIMIT 20')
+		results.should.have.property('trip_id')
+		results.should.have.property('user')
+		results.user.should.have.property('uid')
+
+		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (trip_id = 23890) LIMIT 1')
 	})
 })
 

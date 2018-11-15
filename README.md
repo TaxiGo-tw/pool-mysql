@@ -8,6 +8,10 @@ which made for migrating to features
 * model.query
 * log print
 
+#### Examples
+
+  testing cases
+
 ### Installation
 
 ```bash
