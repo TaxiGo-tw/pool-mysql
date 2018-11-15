@@ -56,6 +56,22 @@ describe('test query', async () => {
 		results[0].should.not.have.property('user')
 		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) AND (`trip_id` = 23890) LIMIT 20')
 	})
+
+	it('2', async () => {
+		const query = Trips.
+			SELECT()
+			.FROM()
+			.WHERE({ trip_id: 23890 })
+			.AND({ trip_id: 23890 })
+			.FIRST()
+			.EX(2)
+
+		const result = await query.exec()
+
+		result.should.have.property('trip_id')
+		result.should.not.have.property('user')
+		query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) AND (`trip_id` = 23890) LIMIT 1')
+	})
 })
 
 describe('test POPULATE', async () => {

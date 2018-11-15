@@ -316,6 +316,11 @@ module.exports = class Base {
 				results = results.map(result => new this.constructor(result))
 			}
 
+			if (this._getFirst) {
+				this._getFirst = false
+				return results[0]
+			}
+
 			return results
 		} catch (error) {
 			throw error
@@ -363,6 +368,12 @@ module.exports = class Base {
 
 	DUPLICATE(set) {
 		this._q.push({ type: 'ON DUPLICATE KEY', command: 'UPDATE ?', value: set })
+		return this
+	}
+
+	FIRST() {
+		this._getFirst = true
+		addQuery.bind(this)('LIMIT', 1, null)
 		return this
 	}
 }
