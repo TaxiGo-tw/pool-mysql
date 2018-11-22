@@ -6,7 +6,7 @@
 	"main": "index.js",
 	"scripts": {
 		"test": "mocha",
-		"t": "nodemon --exec 'mocha --exit'"
+		"t": "nodemon --exec 'mocha --exit -s 0'"
 	},
 	"author": "",
 	"license": "ISC",
