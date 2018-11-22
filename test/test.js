@@ -133,6 +133,7 @@ describe('test POPULATE', async () => {
 			.SELECT()
 			.FROM()
 			.WHERE({ user_id: 3925 })
+			.AND('driver_id')
 			.ORDER_BY('trip_id', 'desc')
 			.POPULATE('driver_loc', 'driver_info')
 			.FIRST()

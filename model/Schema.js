@@ -4,7 +4,7 @@ const mysql = require('mysql')
 
 module.exports = class Base {
 	constructor(dict) {
-		if (dict && typeof dict == 'object') {
+		if (dict) {
 			for (const key in dict) {
 				this[key] = dict[key]
 			}
