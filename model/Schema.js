@@ -118,8 +118,21 @@ module.exports = class Base {
 		return addQuery.bind(this)('LEFT JOIN', whereCaluse, whereCaluse2, false)
 	}
 	WHERE(whereCaluse, whereCaluse2) { return addQuery.bind(this)('WHERE', whereCaluse, whereCaluse2) }
-	AND(whereCaluse, whereCaluse2) { return addQuery.bind(this)('AND', whereCaluse, whereCaluse2) }
-	OR(whereCaluse, whereCaluse2) { return addQuery.bind(this)('OR', whereCaluse, whereCaluse2) }
+
+	AND(whereCaluse, whereCaluse2, { isExec = true } = {}) {
+		if (isExec) {
+			return addQuery.bind(this)('AND', whereCaluse, whereCaluse2)
+		}
+		return this
+	}
+
+	OR(whereCaluse, whereCaluse2, { isExec = true } = {}) {
+		if (isExec) {
+			return addQuery.bind(this)('OR', whereCaluse, whereCaluse2)
+		}
+
+		return this
+	}
 
 	HAVING(...column) { return addQuery.bind(this)('HAVING', column.join(' AND '), null) }
 	GROUP_BY(...column) { return addQuery.bind(this)('GROUP BY', column.join(', '), null, false) }

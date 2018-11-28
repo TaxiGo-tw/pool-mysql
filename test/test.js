@@ -56,6 +56,24 @@ describe('test query', async () => {
 		// query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) AND (`trip_id` = 23890) LIMIT 20')
 	})
 
+	it('without cache', async () => {
+		const id = 23890
+		const query = Trips.
+			SELECT()
+			.FROM()
+			.WHERE('trip_id = ?', id)
+			.AND('trip_id <> ?', id, { isExec: false })
+			.ORDER_BY('trip_id')
+			.LIMIT()
+			.EX(2)
+
+		let results = await query.exec()
+		results = await query.exec()
+
+		results.length.should.equal(1)
+		// query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) AND (`trip_id` = 23890) AND (trip_id = NULL) ORDER BY  trip_id ASC LIMIT 20')
+	})
+
 	it('object entity', async () => {
 		const trip = new Trips()
 
