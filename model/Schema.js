@@ -117,6 +117,7 @@ module.exports = class Base {
 		}
 		return addQuery.bind(this)('LEFT JOIN', whereCaluse, whereCaluse2, false)
 	}
+
 	WHERE(whereCaluse, whereCaluse2) { return addQuery.bind(this)('WHERE', whereCaluse, whereCaluse2) }
 
 	AND(whereCaluse, whereCaluse2, { isExec = true } = {}) {
