@@ -133,7 +133,7 @@ describe('test POPULATE', async () => {
 		const query = Trips.
 			SELECT()
 			.FROM()
-			.WHERE('trip_id = ?', 23890)
+			.WHERE('trip_id = ?', 24233)
 			.POPULATE('user')
 			.FIRST()
 
