@@ -191,10 +191,10 @@ module.exports = class Base {
 		return this
 	}
 
-	// MAPPED() {
-	// 	this._mapped = true
-	// 	return this
-	// }
+	NESTED() {
+		this._nested = true
+		return this
+	}
 
 	EX(expireSecond, cacheKey) {
 		this._EX = { key: cacheKey, EX: expireSecond }
@@ -204,7 +204,7 @@ module.exports = class Base {
 	FORMATTED(formatted = true) {
 		const query = {
 			sql: this._q.map(q => `${q.type || ''} ${q.command || ''}`).join(' '),
-			nestTables: this._nestTables
+			nestTables: this._nestTables || this._nested
 		}
 
 		const values = this._q
@@ -230,6 +230,9 @@ module.exports = class Base {
 			const { query, values } = this.FORMATTED(false)
 
 			this._nestTables = false
+
+			const nested = this._nested
+			this._nested = false
 
 			const print = this._print
 			this._print = false
@@ -319,7 +322,20 @@ module.exports = class Base {
 					results = results.map(cb)
 				}
 
-				results = results.map(result => new this.constructor(result))
+				if (nested) {
+					results = results.map(result => {
+						const r = result[this.constructor.name]
+						for (const key in result) {
+							if (key == this.constructor.name) {
+								continue
+							}
+							r[key] = result[key]
+						}
+						return new this.constructor(r)
+					})
+				} else {
+					results = results.map(result => new this.constructor(result))
+				}
 
 				if (filter) {
 					results = results.filter(filter)

@@ -166,6 +166,9 @@ describe('test LEFT JOIN, NESTTABLES', async () => {
 
 		const results = await query.exec()
 
+		console.log(query.FORMATTED())
+
+
 		results[0].should.have.property('trip_id')
 		results[0].trip_id.should.equal(23890)
 		results[0].should.have.property('user_id')
@@ -192,6 +195,22 @@ describe('test LEFT JOIN, NESTTABLES', async () => {
 
 		results[0].should.have.property('trip_id')
 		results[0].should.have.property('user')
+		// query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id, user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (`trip_id` = 23890) AND (trip_id > 0) LIMIT 20')
+	})
+
+	it('2', async () => {
+		const query = Trips.SELECT()
+			.FROM()
+			.LEFTJOIN('user_info ON uid = trips.user_id')
+			.WHERE({ trip_id: 23890 })
+			.AND('trip_id > 0')
+			.NESTED()
+			.LIMIT()
+
+		const results = await query.exec()
+		results[0].should.have.property('trip_id')
+		results[0].should.have.property('user_info')
+		results[0].user_info.should.have.property('uid')
 		// query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id, user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (`trip_id` = 23890) AND (trip_id > 0) LIMIT 20')
 	})
 
