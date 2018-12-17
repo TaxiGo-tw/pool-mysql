@@ -1,12 +1,12 @@
 {
 	"name": "pool-mysql",
-	"version": "1.3.2",
+	"version": "1.3.4",
 	"description": "",
 	"url": "https://github.com/vivalalova/pool-mysql",
 	"main": "index.js",
 	"scripts": {
 		"test": "mocha",
-		"t": "nodemon --exec 'mocha --exit'"
+		"t": "nodemon --exec 'mocha --exit -s 0'"
 	},
 	"author": "",
 	"license": "ISC",
