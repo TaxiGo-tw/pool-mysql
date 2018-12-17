@@ -129,16 +129,16 @@ describe('test query', async () => {
 })
 
 describe('test POPULATE', async () => {
-	it('POPULATE', async () => {
+	it('POPULATE first', async () => {
 		const query = Trips.
 			SELECT()
 			.FROM()
-			.WHERE('trip_id = ?', 24233)
+			.WHERE('trip_id = ?', 23890)
 			.POPULATE('user')
 			.FIRST()
 
 		const results = await query.exec()
-
+		console.log(results)
 		results.should.have.property('trip_id')
 		results.should.have.property('user')
 		results.user.should.have.property('uid')
@@ -157,7 +157,6 @@ describe('test POPULATE', async () => {
 			.FIRST()
 
 		const result = await query.exec()
-
 		result.should.have.property('trip_id')
 		result.should.have.property('user_id')
 		result.driver_loc.should.have.property('location')
@@ -217,7 +216,7 @@ describe('test LEFT JOIN, NESTTABLES', async () => {
 		// query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id, user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (`trip_id` = 23890) AND (trip_id > 0) LIMIT 20')
 	})
 
-	it('2', async () => {
+	it('NESTED', async () => {
 		const query = Trips.SELECT()
 			.FROM()
 			.LEFTJOIN('user_info ON uid = trips.user_id')
