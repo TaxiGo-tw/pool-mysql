@@ -416,9 +416,9 @@ module.exports = class Base {
 		return this
 	}
 
-	static FIND(whereCaluse) {
+	static FIND(...whereCaluse) {
 		const object = new this()
-		return object.SELECT().FROM().WHERE(whereCaluse)
+		return object.SELECT().FROM().WHERE(...arguments)
 	}
 
 	static FIND_PK(pk) {
@@ -451,7 +451,6 @@ function addQuery(reservedWord, whereCaluse, whereCaluse2, inBrackets = true) {
 	if (!whereCaluse) {
 		return this
 	}
-
 
 	if (typeof whereCaluse == 'string') {
 		if (inBrackets) {

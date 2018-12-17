@@ -100,6 +100,25 @@ describe('test query', async () => {
 		// query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) LIMIT 1')
 	})
 
+	it('where string', async () => {
+		const query = Trips.SELECT().FROM().WHERE(' trip_id = ?', 23890).FIRST()
+		const result = await query.exec()
+
+		result.should.have.property('trip_id')
+		result.should.not.have.property('user')
+		// query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) LIMIT 1')
+	})
+
+	it('find string', async () => {
+		const query = Trips.FIND(' trip_id = ?', 23890).FIRST()
+		const result = await query.exec()
+
+		result.should.have.property('trip_id')
+		result.should.not.have.property('user')
+		// query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id FROM trips WHERE (`trip_id` = 23890) LIMIT 1')
+	})
+
+
 	it('find pk', async () => {
 		const query = Trips.FIND_PK(23890)
 		const result = await query.exec()
@@ -138,7 +157,7 @@ describe('test POPULATE', async () => {
 			.FIRST()
 
 		const results = await query.exec()
-		console.log(results)
+
 		results.should.have.property('trip_id')
 		results.should.have.property('user')
 		results.user.should.have.property('uid')
@@ -183,9 +202,6 @@ describe('test LEFT JOIN, NESTTABLES', async () => {
 			})
 
 		const results = await query.exec()
-
-		console.log(query.FORMATTED())
-
 
 		results[0].should.have.property('trip_id')
 		results[0].trip_id.should.equal(23890)
