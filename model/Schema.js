@@ -47,10 +47,10 @@ module.exports = class Base {
 		return keys
 	}
 
-	EXPLAIN() {
-		this._q.splice(0, 0, { type: 'EXPLAIN' })
-		return this
-	}
+	// EXPLAIN() {
+	// 	this._q.push({ type: 'EXPLAIN', command: null, value: null })
+	// 	return this
+	// }
 
 	static SELECT(...columns) {
 		const object = new this()
@@ -333,7 +333,14 @@ module.exports = class Base {
 				if (this._mapCallback) {
 					const cb = this._mapCallback
 					delete this._mapCallback
-					results = results.map(cb)
+
+					const temp = []
+					for (const key in results) {
+						let element = results[key]
+						element = await cb(element)
+						temp.push(element)
+					}
+					results = temp
 				}
 
 				if (nested) {
