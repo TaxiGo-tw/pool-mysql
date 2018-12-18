@@ -333,14 +333,7 @@ module.exports = class Base {
 				if (this._mapCallback) {
 					const cb = this._mapCallback
 					delete this._mapCallback
-
-					const temp = []
-					for (const key in results) {
-						let element = results[key]
-						element = await cb(element)
-						temp.push(element)
-					}
-					results = temp
+					results = results.map(cb)
 				}
 
 				if (nested) {
