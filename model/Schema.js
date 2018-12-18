@@ -380,7 +380,6 @@ module.exports = class Base {
 
 	static get Types() { return Types }
 
-
 	//////////////////////////////Base.js
 	//UPDATE
 	static UPDATE() {
@@ -477,8 +476,8 @@ module.exports = class Base {
 
 	_options() {
 		const options = {}
-		const formatted = this.FORMATTED(false)
 
+		const formatted = this.FORMATTED(false)
 		options.query = formatted.query
 		options.values = formatted.values
 

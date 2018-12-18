@@ -416,7 +416,8 @@ describe('test save', async () => {
 		const trip = new Trips({ trip_id: 24813, payment_method: 'cash' })
 		trip.payment_method = 'creditcard'
 		const result = await trip.save()
-		console.log(result)
+
+		result.should.have.property('changedRows')
 		// query.FORMATTED().formatted.should.equals('UPDATE block_personally SET `notes` = \'hihi\' WHERE (`blocker` = 201) AND (`blocked` = 203)')
 	})
 })
