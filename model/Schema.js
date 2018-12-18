@@ -241,21 +241,15 @@ module.exports = class Base {
 			this._connection.useWriter = this._forceWriter
 			this._forceWriter = false
 
-			const { query, values } = this.FORMATTED(false)
-
-			this._nestTables = false
-
-			const nested = this._nested
-			this._nested = false
-
-			const print = this._print
-			this._print = false
-
-			const filter = this._filter
-			delete this._filter
-
-			const getFirst = this._getFirst
-			delete this._getFirst
+			const {
+				query,
+				values,
+				mapCallback,
+				nested,
+				print,
+				filter,
+				getFirst
+			} = this._options()
 
 			const ex = this._EX || {}
 			ex.redisPrint = print
@@ -330,10 +324,8 @@ module.exports = class Base {
 				}
 
 				//for MAP()
-				if (this._mapCallback) {
-					const cb = this._mapCallback
-					delete this._mapCallback
-					results = results.map(cb)
+				if (mapCallback) {
+					results = results.map(mapCallback)
 				}
 
 				if (nested) {
@@ -390,12 +382,17 @@ module.exports = class Base {
 
 
 	//////////////////////////////Base.js
+	//UPDATE
 	static UPDATE() {
 		const object = new this()
 		return object.UPDATE()
 	}
 
 	UPDATE() {
+		if (!this._q) {
+			this._q = []
+		}
+
 		this._q.push({ type: 'UPDATE', command: this.constructor.name })
 		return this
 	}
@@ -444,6 +441,65 @@ module.exports = class Base {
 	FILTER(callback) {
 		this._filter = callback
 		return this
+	}
+
+	async save() {
+		const pk = this._pk
+
+		const value = JSON.parse(JSON.stringify(this))
+		delete value[pk]
+
+		const where = {}
+		where[pk] = this[pk]
+
+		await this.UPDATE().SET(value).WHERE(where).exec()
+	}
+
+	get _pk() {
+		if (!this.columns) {
+			throw Error(`${this.constructor.name} columns not defined`)
+		}
+
+		let pk
+		for (const key in this.columns) {
+			const value = this.columns[key]
+			if (value == Base.Types.PK) {
+				pk = key
+			}
+		}
+
+		if (!pk) {
+			throw Error(`${this.constructor.name}.PK columns not defined`)
+		}
+
+		return pk
+	}
+
+	_options() {
+		const options = {}
+		const formatted = this.FORMATTED(false)
+
+		options.query = formatted.query
+		options.values = formatted.values
+
+		delete this._nestTables
+
+		options.mapCallback = this._mapCallback
+		delete this._mapCallback
+
+		options.nested = this._nested
+		this._nested = false
+
+		options.print = this._print
+		this._print = false
+
+		options.filter = this._filter
+		delete this._filter
+
+		options.getFirst = this._getFirst
+		delete this._getFirst
+
+		return options
 	}
 }
 

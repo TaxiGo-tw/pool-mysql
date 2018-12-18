@@ -411,16 +411,12 @@ describe('test insert', async () => {
 	})
 })
 
-describe('test update', async () => {
+describe('test save', async () => {
 	it('3', async () => {
-		const query = Block
-			.UPDATE()
-			.SET({ notes: 'hihi' })
-			.WHERE({ blocker: 201 })
-			.AND({ blocked: 203 })
-
-		await query.exec()
-
+		const trip = new Trips({ trip_id: 24813, payment_method: 'cash' })
+		trip.payment_method = 'creditcard'
+		const result = await trip.save()
+		console.log(result)
 		// query.FORMATTED().formatted.should.equals('UPDATE block_personally SET `notes` = \'hihi\' WHERE (`blocker` = 201) AND (`blocked` = 203)')
 	})
 })
