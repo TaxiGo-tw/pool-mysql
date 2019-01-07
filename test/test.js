@@ -1,7 +1,9 @@
 require('dotenv').config({ path: '.env' })
 
+
 const { should } = require('chai')  // Using Assert style
 should()  // Modifies `Object.prototype`
+const assert = require('assert')
 
 const Trips = require('./model/Trips')
 const Users = require('./model/Users')
@@ -208,6 +210,7 @@ describe('test LEFT JOIN, NESTTABLES', async () => {
 		results[0].should.have.property('user_id')
 		results[0].should.have.property('user')
 		results[0].user.should.have.property('uid')
+		assert(results[0] instanceof Trips)
 		// query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id, user_info.uid FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890) AND (trip_id > 0) LIMIT 20')
 	})
 
@@ -229,6 +232,7 @@ describe('test LEFT JOIN, NESTTABLES', async () => {
 
 		results[0].should.have.property('trip_id')
 		results[0].should.have.property('user')
+		assert(results[0] instanceof Trips)
 		// query.FORMATTED().formatted.should.equals('SELECT trips.trip_id, trips.user_id, user_info.* FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (`trip_id` = 23890) AND (trip_id > 0) LIMIT 20')
 	})
 
@@ -275,6 +279,7 @@ describe('test LEFT JOIN, NESTTABLES', async () => {
 
 		results[0].should.have.property('start_address')
 		results[0].should.have.property('first_name')
+		assert(results[0] instanceof Trips)
 		// query.FORMATTED().formatted.should.equals('SELECT start_address, first_name FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890) LIMIT 20')
 	})
 
@@ -291,6 +296,7 @@ describe('test LEFT JOIN, NESTTABLES', async () => {
 
 		results[0].should.have.property('trip_hash')
 		results[0].should.have.property('first_name')
+		assert(results[0] instanceof Trips)
 		// query.FORMATTED().formatted.should.equals(`SELECT trip_hash, first_name FROM trips LEFT JOIN user_info ON uid = trips.user_id WHERE (trip_id = 23890) OR (trip_hash = 'LPawCZ') LIMIT 20`)
 	})
 })
@@ -310,6 +316,7 @@ describe('test GROUP BY', async () => {
 
 		results[0].should.have.property('driver_id')
 		results[0].should.have.property('count')
+		assert(results[0] instanceof Trips)
 		// query.FORMATTED().formatted.should.equals(`SELECT driver_id, count(*) count FROM trips WHERE (trip_status = "TRIP_PAYMENT_PROCESSED") AND (driver_id IS NOT NULL) AND (user_id IS NOT NULL) GROUP BY driver_id, user_id LIMIT 20`)
 	})
 
@@ -327,6 +334,7 @@ describe('test GROUP BY', async () => {
 
 		results[0].should.have.property('driver_id')
 		results[0].should.have.property('count')
+		assert(results[0] instanceof Trips)
 		// query.FORMATTED().formatted.should.equals(`SELECT driver_id, count(*) count FROM trips WHERE (trip_status = "TRIP_PAYMENT_PROCESSED") AND (driver_id IS NOT NULL) AND (user_id IS NOT NULL) GROUP BY driver_id, user_id LIMIT 20`)
 	})
 
@@ -344,6 +352,8 @@ describe('test GROUP BY', async () => {
 
 		results[0].should.have.property('driver_id')
 		results[0].should.have.property('count')
+		results[0].should.have.property('count')
+		assert(results[0] instanceof Trips)
 		// query.FORMATTED().formatted.should.equals(`SELECT driver_id, count(*) count FROM trips WHERE (trip_status = "TRIP_PAYMENT_PROCESSED") AND (driver_id IS NOT NULL) AND (user_id IS NOT NULL) GROUP BY driver_id, user_id LIMIT 20`)
 	})
 })

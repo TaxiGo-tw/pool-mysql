@@ -323,6 +323,11 @@ module.exports = class Base {
 					}
 				}
 
+				//for MAP()
+				if (mapCallback) {
+					results = results.map(mapCallback)
+				}
+
 				if (nested) {
 					results = results.map(result => {
 						const r = result[this.constructor.name]
@@ -336,11 +341,6 @@ module.exports = class Base {
 					})
 				} else {
 					results = results.map(result => new this.constructor(result))
-				}
-
-				//for MAP()
-				if (mapCallback) {
-					results = results.map(mapCallback)
 				}
 
 				if (filter) {
