@@ -102,7 +102,7 @@ class Connection {
 		let command = sql.sql || sql
 
 		if (this.isSelect(command) && this._noCache) {
-			command = command.replace(/select/gi, 'SELECT SQL_NO_CACHE ')
+			command = command.replace(/^select/gi, 'SELECT SQL_NO_CACHE ')
 		}
 		this._noCache = false
 

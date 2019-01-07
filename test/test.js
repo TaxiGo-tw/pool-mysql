@@ -411,13 +411,13 @@ describe('test insert', async () => {
 	})
 })
 
-describe('test save', async () => {
-	it('3', async () => {
-		const trip = new Trips({ trip_id: 24813, payment_method: 'cash' })
-		trip.payment_method = 'creditcard'
-		const result = await trip.save()
+// describe('test save', async () => {
+// 	it('3', async () => {
+// 		const trip = new Trips({ trip_id: 24813, payment_method: 'cash' })
+// 		trip.payment_method = 'creditcard'
+// 		const result = await trip.save()
 
-		result.should.have.property('changedRows')
-		// query.FORMATTED().formatted.should.equals('UPDATE block_personally SET `notes` = \'hihi\' WHERE (`blocker` = 201) AND (`blocked` = 203)')
-	})
-})
+// 		result.should.have.property('changedRows')
+// 		// query.FORMATTED().formatted.should.equals('UPDATE block_personally SET `notes` = \'hihi\' WHERE (`blocker` = 201) AND (`blocked` = 203)')
+// 	})
+// })
