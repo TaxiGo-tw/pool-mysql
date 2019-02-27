@@ -1,3 +1,7 @@
+const launchTme = new Date()
+const QUERY_THRESHOLD_START = process.env.QUERY_THRESHOLD_START || 60 * 1000
+const QUERY_THRESHOLD_MS = process.env.QUERY_THRESHOLD_MS || 500
+
 const mysql = require('mysql')
 
 const writerOptions = {
@@ -136,7 +140,13 @@ class Connection {
 
 	_q(sql, values) {
 		return new Promise((reslove, reject) => {
+			const from = new Date()
 			this.query(sql, values, (err, res) => {
+				const to = new Date()
+				const cost = to - from
+
+				logger(to - launchTme > QUERY_THRESHOLD_START && cost > QUERY_THRESHOLD_MS, `| Long Query: ${cost} ms\n| ${sql.sql}`)
+
 				if (err) {
 					reject(err)
 				} else {
