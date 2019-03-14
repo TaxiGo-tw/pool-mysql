@@ -462,13 +462,14 @@ describe('test PRE & AFTER', async () => {
 		const query = Block
 			.UPDATE()
 			.SET('id = id')
-			.WHERE({ blocked: 101 })
+			.WHERE({ blocked: 3925 })
 			.UPDATED('id', 'blocker')
 
 		const results = await query.exec()
 
-		results.length.should.equals(2)
-		results[0].should.have.property('id')
-		results[0].should.have.property('blocker')
+		for (const result of results) {
+			result.should.have.property('id')
+			result.should.have.property('blocker')
+		}
 	})
 })

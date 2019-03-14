@@ -361,22 +361,25 @@ module.exports = class Base {
 					return results[0]
 				}
 			}
-
 			//select with query
-			if (updated) {
-				const updated = results.reverse()[0][0]
-
-				const keys = Object.keys(updated)
-				const updatedResults = []
-				for (let i = 0; i < keys.length; i++) {
-					const obj = {}
-					for (const key in updated) {
-						const value = updated[key]
-						obj[key] = value.split(',').filter(r => r)[i]
-					}
-					updatedResults.push(obj)
+			else if (updated) {
+				if (results[1].affectedRows == 0) {
+					return []
 				}
 
+				const updated = results.reverse()[0][0]
+				const updatedResults = []
+
+				for (const key in updated) {
+					const arr = updated[key].replace(/,$/, '').split(',')
+					for (let i = 0; i < arr.length; i++) {
+						if (!updatedResults[i]) {
+							updatedResults[i] = {}
+						}
+
+						updatedResults[i][key] = arr[i]
+					}
+				}
 				return updatedResults
 			}
 
