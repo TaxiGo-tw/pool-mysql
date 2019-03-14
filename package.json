@@ -1,6 +1,6 @@
 {
 	"name": "pool-mysql",
-	"version": "1.3.12",
+	"version": "1.3.13",
 	"description": "",
 	"url": "https://github.com/vivalalova/pool-mysql",
 	"main": "index.js",

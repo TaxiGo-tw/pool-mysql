@@ -380,6 +380,15 @@ module.exports = class Base {
 						updatedResults[i][key] = arr[i]
 					}
 				}
+
+				if (filter) {
+					updatedResults = updatedResults.filter(filter)
+				}
+
+				if (getFirst) {
+					return updatedResults[0]
+				}
+
 				return updatedResults
 			}
 
