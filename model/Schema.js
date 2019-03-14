@@ -257,7 +257,8 @@ module.exports = class Base {
 				nested,
 				print,
 				filter,
-				getFirst
+				getFirst,
+				updated
 			} = this._options()
 
 			const ex = this._EX || {}
@@ -359,6 +360,24 @@ module.exports = class Base {
 				if (getFirst) {
 					return results[0]
 				}
+			}
+
+			//select with query
+			if (updated) {
+				const updated = results.reverse()[0][0]
+
+				const keys = Object.keys(updated)
+				const updatedResults = []
+				for (let i = 0; i < keys.length; i++) {
+					const obj = {}
+					for (const key in updated) {
+						const value = updated[key]
+						obj[key] = value.split(',').filter(r => r)[i]
+					}
+					updatedResults.push(obj)
+				}
+
+				return updatedResults
 			}
 
 			return results
@@ -501,6 +520,23 @@ module.exports = class Base {
 		return this
 	}
 
+	UPDATED(...variables) {
+		this._updated = true
+
+		let obj = this
+
+		for (const i in variables) {
+			const variable = variables[i]
+			obj = obj.AND(`SELECT @${variable} := CONCAT_WS(',', ${variable}, @${variable})`)
+		}
+
+		let preParams = variables.map(r => `@${r} := ''`).join(',')
+		obj = obj.PRE(`SET ${preParams}`)
+
+		const queryParams = variables.map(r => `@${r} ${r}`).join(',')
+		return obj.AFTER(`SELECT ${queryParams}`)
+	}
+
 	_options() {
 		const options = {}
 
@@ -524,6 +560,9 @@ module.exports = class Base {
 
 		options.getFirst = this._getFirst
 		delete this._getFirst
+
+		options.updated = this._updated
+		delete this._updated
 
 		return options
 	}

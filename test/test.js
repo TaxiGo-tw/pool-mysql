@@ -457,4 +457,18 @@ describe('test PRE & AFTER', async () => {
 		results.length.should.equals(3)
 		results[2][0].should.have.property('id')
 	})
+
+	it('3', async () => {
+		const query = Block
+			.UPDATE()
+			.SET('id = id')
+			.WHERE({ blocked: 101 })
+			.UPDATED('id', 'blocker')
+
+		const results = await query.exec()
+
+		results.length.should.equals(2)
+		results[0].should.have.property('id')
+		results[0].should.have.property('blocker')
+	})
 })
