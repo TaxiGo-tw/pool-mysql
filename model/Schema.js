@@ -216,8 +216,14 @@ module.exports = class Base {
 	}
 
 	FORMATTED(formatted = true) {
+		const pre = this._pre || ''
+		delete this._pre
+
+		const after = this._after || ''
+		delete this._after
+
 		const query = {
-			sql: this._q.map(q => `${q.type || ''} ${q.command || ''}`).join(' '),
+			sql: pre + this._q.map(q => `${q.type || ''} ${q.command || ''}`).join(' ') + after,
 			nestTables: this._nestTables || this._nested
 		}
 
@@ -226,10 +232,13 @@ module.exports = class Base {
 			.map(q => q.value)
 			.reduce((q, b) => q.concat(b), [])
 
+
 		return {
 			query,
 			values,
-			formatted: formatted ? mysql.format(query.sql, values) : null
+			formatted: formatted
+				? mysql.format(query.sql, values)
+				: null
 		}
 	}
 
@@ -396,14 +405,22 @@ module.exports = class Base {
 		return this
 	}
 
-	SET(value) {
-		this._q.push({ type: 'SET', command: '?', value: value })
-		return this
+	SET(whereCaluse, whereCaluse2) {
+		if (whereCaluse instanceof Object) {
+			this._q.push({ type: 'SET', command: '?', value: whereCaluse })
+			return this
+		}
+
+		return addQuery.bind(this)('SET', whereCaluse, whereCaluse2, false)
 	}
 
-	DUPLICATE(set) {
-		this._q.push({ type: 'ON DUPLICATE KEY', command: 'UPDATE ?', value: set })
-		return this
+	DUPLICATE(whereCaluse, whereCaluse2) {
+		if (whereCaluse instanceof Object) {
+			this._q.push({ type: 'ON DUPLICATE KEY', command: 'UPDATE ?', value: whereCaluse })
+			return this
+		}
+
+		return addQuery.bind(this)('ON DUPLICATE KEY UPDATE', whereCaluse, whereCaluse2, false)
 	}
 
 	FIRST() {
@@ -472,6 +489,16 @@ module.exports = class Base {
 		}
 
 		return pk
+	}
+
+	PRE(command) {
+		this._pre = command + ';'
+		return this
+	}
+
+	AFTER(command) {
+		this._after = ';' + command
+		return this
 	}
 
 	_options() {

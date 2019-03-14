@@ -419,6 +419,18 @@ describe('test insert', async () => {
 
 		// query.FORMATTED().formatted.should.equals('INSERT IGNORE INTO block_personally SET `blocker` = 201, `blocked` = 203, `notes` = \'test\' ON DUPLICATE KEY UPDATE `notes` = \'ggg\'')
 	})
+
+	it('4', async () => {
+		const query = Block
+			.INSERT(true)
+			.INTO()
+			.SET(`blocker = 201, blocked = 203, notes = 'test'`)
+			.DUPLICATE(` notes = 'ggg' `)
+
+		await query.exec()
+
+		// query.FORMATTED().formatted.should.equals('INSERT IGNORE INTO block_personally SET `blocker` = 201, `blocked` = 203, `notes` = \'test\' ON DUPLICATE KEY UPDATE `notes` = \'ggg\'')
+	})
 })
 
 // describe('test save', async () => {
@@ -431,3 +443,18 @@ describe('test insert', async () => {
 // 		// query.FORMATTED().formatted.should.equals('UPDATE block_personally SET `notes` = \'hihi\' WHERE (`blocker` = 201) AND (`blocked` = 203)')
 // 	})
 // })
+
+describe('test PRE & AFTER', async () => {
+	it('3', async () => {
+		const query = Block
+			.UPDATE()
+			.SET('id = 2905,blocker = (SELECT @aa := blocker)')
+			.WHERE({ id: 2905 })
+			.PRE('SET @aa := 0')
+			.AFTER('SELECT @aa id ')
+
+		const results = await query.exec()
+		results.length.should.equals(3)
+		results[2][0].should.have.property('id')
+	})
+})
