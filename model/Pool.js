@@ -3,6 +3,7 @@ const QUERY_THRESHOLD_START = process.env.QUERY_THRESHOLD_START || 60 * 1000
 const QUERY_THRESHOLD_MS = process.env.QUERY_THRESHOLD_MS || 500
 
 const mysql = require('mysql')
+require('./Misc')
 
 const writerOptions = {
 	connectionLimit: process.env.CONNECTION_LIMIT || 30,
@@ -145,7 +146,8 @@ class Connection {
 				const to = new Date()
 				const cost = to - from
 
-				logger(to - launchTme > QUERY_THRESHOLD_START && cost > QUERY_THRESHOLD_MS, `| Long Query: ${cost} ms\n| ${sql.sql}`)
+				const shouldPrint = to - launchTme > QUERY_THRESHOLD_START && cost > QUERY_THRESHOLD_MS
+				logger(shouldPrint, `| Long Query: ${cost} ms`, __function, __line)
 
 				if (err) {
 					reject(err)
