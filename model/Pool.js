@@ -120,7 +120,10 @@ class Connection {
 			nestTables: sql.nestTables
 		}
 
+		const startTime = new Date()
+
 		const q = connection.query(query, values, (a, b, c) => {
+			const endTime = new Date()
 			if (mustUpdateOneRow && b && b.affectedRows != 1) {
 				// console.log(a, b, c)
 				return cb(a || Error('MUST_UPDATE_ONE_ROW'), b, c)
@@ -129,12 +132,12 @@ class Connection {
 				// console.log('changed a row')
 			}
 
+			//log
+			const string = mustUpdateOneRow ? 'mustUpdateOneRow' : ''
+			logger(null, `${connection.logPrefix} ${endTime - startTime}ms: ${string} ${q.sql}`)
+
 			cb(a, b, c)
 		})
-
-		const string = mustUpdateOneRow ? 'mustUpdateOneRow' : ''
-
-		logger(null, `${connection.logPrefix} : (${string}) ${q.sql}`)
 
 		return {}
 	}
