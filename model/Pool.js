@@ -147,7 +147,7 @@ class Connection {
 				const cost = to - from
 
 				const shouldPrint = to - launchTme > QUERY_THRESHOLD_START && cost > QUERY_THRESHOLD_MS
-				logger(shouldPrint, `| Long Query: ${cost} ms`, __function, __line)
+				logger(shouldPrint, `| Long Query: ${cost} ms ${sql.sql || sql}`, __function, __line)
 
 				if (err) {
 					reject(err)
