@@ -94,7 +94,7 @@ await Posts
       .FROM()
       .WHERE({id: 3})    //or you can use .WHERE('id = ?',3)
       .POPULATE('user') //query reference
-      .PRINT()            //print command, connection id and works on writer/reader
+      .PRINT()            //print sql statement, query time, connection id and works on writer/reader
       .WRITER           //force query on writer
       .exec()
 
@@ -103,7 +103,7 @@ await Trips.
       .FROM()
       .LEFTJOIN('user_info ON uid = trips.user_id')
       .WHERE('trip_id = ?', 12345)
-      .AND('trip_id > 0')
+      .AND('trip_id > 0', { isExec: condition }) // isExec: run this statement or not
       .LIMIT()
       .NESTTABLES()
       .MAP(result => {
