@@ -14,8 +14,8 @@ const writerOptions = {
 	multipleStatements: true,
 	charset: 'utf8mb4'
 }
-const writerPool = mysql.createPool(writerOptions)
-setPool(writerPool)
+// const writerPool = mysql.createPool(writerOptions)
+// setPool(writerPool)
 
 const readerOptions = {
 	connectionLimit: process.env.CONNECTION_LIMIT_READER || process.env.CONNECTION_LIMIT || 30,
@@ -27,8 +27,8 @@ const readerOptions = {
 	charset: 'utf8mb4'
 }
 
-const readerPool = mysql.createPool(readerOptions)
-setPool(readerPool)
+// const readerPool = mysql.createPool(readerOptions)
+// setPool(readerPool)
 
 
 console.log('pool-mysql writer host: ', writerOptions.host)
@@ -261,14 +261,16 @@ class Connection {
 	}
 
 	release() {
-		if (this.reader && readerPool._freeConnections.indexOf(this.reader)) {
+		if (this.reader) {
+			// if (this.reader && readerPool._freeConnections.indexOf(this.reader)) {
 			logger(null, this.reader.logPrefix + ' : RELEASE')
-			this.reader.destroy();
+			// this.reader.end()
 		}
 
-		if (this.writer && writerPool._freeConnections.indexOf(this.writer)) {
+		if (this.writer) {
+			// if (this.writer && writerPool._freeConnections.indexOf(this.writer)) {
 			logger(null, this.writer.logPrefix + ' : RELEASE')
-			this.writer.destroy();
+			// this.writer.end()
 		}
 	}
 
@@ -400,7 +402,10 @@ class Pool {
 	}
 
 	query(sql, values, callback) {
-		writerPool.query(sql, values, callback)
+		crConnection().then(connection => {
+			connection.query(sql, values, callback)
+		})
+		// writerPool.query(sql, values, callback)
 		return {}
 	}
 }

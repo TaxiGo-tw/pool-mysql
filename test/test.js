@@ -474,8 +474,6 @@ describe('test PRE & AFTER', async () => {
 	})
 })
 
-
-
 describe('test connection.query()', () => {
 	it('3', (done) => {
 		pool.createConnection().then(connection => {
@@ -486,7 +484,6 @@ describe('test connection.query()', () => {
 		})
 	})
 })
-
 
 describe('test pool.query()', () => {
 	it('3', (done) => {
