@@ -59,6 +59,24 @@ function trimed(params) {
 	return params.replace(/\t/g, '').replace(/\n/g, ' ').trim()
 }
 
+const crConnection = async (role = 'reader') => {
+	const option = role == 'writer' ? writerOptions : readerOptions
+
+	return new Promise((resolve, reject) => {
+		const connection = mysql.createConnection(option)
+
+		connection.connect((err) => {
+			if (err) {
+				logger(err)
+				return reject(err)
+			}
+
+			setConnection(connection)
+			resolve(connection)
+		})
+	})
+}
+
 class Connection {
 	constructor(reader, writer) {
 		this.reader = reader
@@ -245,12 +263,12 @@ class Connection {
 	release() {
 		if (this.reader && readerPool._freeConnections.indexOf(this.reader)) {
 			logger(null, this.reader.logPrefix + ' : RELEASE')
-			this.reader.release()
+			this.reader.destroy();
 		}
 
 		if (this.writer && writerPool._freeConnections.indexOf(this.writer)) {
 			logger(null, this.writer.logPrefix + ' : RELEASE')
-			this.writer.release()
+			this.writer.destroy();
 		}
 	}
 
@@ -361,11 +379,14 @@ class Pool {
 	createConnection() {
 		return new Promise(async (resolve, reject) => {
 			try {
-				const reader = await readerPool.createConnection()
+				// const reader = await readerPool.createConnection()
+				const reader = await crConnection('reader')
 				reader.role = 'Reader'
 				setConnection(reader)
 
-				const writer = await writerPool.createConnection()
+
+				// const writer = await writerPool.createConnection()
+				const writer = await crConnection('writer')
 				writer.role = 'Writer'
 				setConnection(writer)
 
