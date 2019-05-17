@@ -473,3 +473,25 @@ describe('test PRE & AFTER', async () => {
 		}
 	})
 })
+
+
+
+describe('test connection.query()', () => {
+	it('3', (done) => {
+		pool.createConnection().then(connection => {
+			connection.query('select * from trips LIMIT 5', (e, r) => {
+				connection.release()
+				done()
+			})
+		})
+	})
+})
+
+
+describe('test pool.query()', () => {
+	it('3', (done) => {
+		pool.query('select * from trips LIMIT 5', (e, r) => {
+			done()
+		})
+	})
+})
