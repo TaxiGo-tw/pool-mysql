@@ -411,7 +411,7 @@ describe('test insert', async () => {
 
 
 describe('test PRE & AFTER', async () => {
-	it('3', async () => {
+	it('1', async () => {
 		const query = Block
 			.UPDATE()
 			.SET('id = 2905,blocker = (SELECT @aa := blocker)')
@@ -424,7 +424,7 @@ describe('test PRE & AFTER', async () => {
 		results[2][0].should.have.property('id')
 	})
 
-	it('3', async () => {
+	it('2', async () => {
 		const query = Block
 			.UPDATE()
 			.SET('id = id')
@@ -469,13 +469,18 @@ describe('test pool.query()', () => {
 })
 
 
-pool.event.on('get', id => {
-	// console.log(id)
-})
+// pool.event.on('get', connection => {
+// 	console.log(connection.id)
+// })
 
-pool.event.on('release', id => {
-})
+// pool.event.on('release', connection => {
+// 	console.log(connection.id)
+// })
 
-pool.event.on('query', string => {
-	// console.log(string)
+// pool.event.on('query', string => {
+// 	console.log(string)
+// })
+
+pool.event.on('amount', amount => {
+	console.log(amount)
 })

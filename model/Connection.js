@@ -25,6 +25,7 @@ const mysqlConnection = (option, role) => {
 				}
 			})
 		} else {
+			console.log('mysql connection', err)
 			throw err
 		}
 	})

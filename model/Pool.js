@@ -26,6 +26,21 @@ class Pool {
 		console.log('pool-mysql reader host: ', this.options.reader.host)
 	}
 
+	get numberOfConnections() {
+		const amount = Object.keys(this.connectionPool.using).length + this.connectionPool.waiting.length
+
+		if (amount != this._numberOfConnections) {
+			this.event.emit('amount', amount)
+			this._numberOfConnections = amount
+		}
+
+		return amount
+	}
+
+	set numberOfConnections(value) {
+		this._numberOfConnections = value
+	}
+
 	get Schema() {
 		return require('./Schema')
 	}
@@ -87,8 +102,7 @@ class Pool {
 
 	getConnection(callback, retry = 0) {
 		try {
-			const numberOfConnections = Object.keys(this.connectionPool.using).length + this.connectionPool.waiting.length
-			this.event.emit('number of connections', numberOfConnections)
+			const numberOfConnections = this.numberOfConnections
 
 			//reuse
 			let connection = this.connectionPool.waiting.shift()
