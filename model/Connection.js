@@ -11,9 +11,11 @@ function setConnection(connection) {
 			// db error 重新連線
 			console.log('db error 重新連線')
 			connection.connect(err => {
-				setTimeout(() => {
-					connection.connect()
-				}, 300)
+				if (err) {
+					setTimeout(() => {
+						connection.connect()
+					}, 300)
+				}
 			})
 		} else {
 			throw err
