@@ -31,6 +31,7 @@ class Pool {
 
 		if (amount != this._numberOfConnections) {
 			this.event.emit('amount', amount)
+			console.log('connections amount', amount)
 			this._numberOfConnections = amount
 		}
 
@@ -102,8 +103,6 @@ class Pool {
 
 	getConnection(callback, retry = 0) {
 		try {
-			const numberOfConnections = this.numberOfConnections
-
 			//reuse
 			let connection = this.connectionPool.waiting.shift()
 			if (connection) {
@@ -114,7 +113,7 @@ class Pool {
 			}
 
 			//connection limit
-			if (numberOfConnections >= this.options.connectionLimit) {
+			if (this.numberOfConnections >= this.options.connectionLimit) {
 				if (retry > 3) {
 					const error = Error('pool-mysql failed: connection numbers limited (retry 3)')
 					callback(error, null)
@@ -128,14 +127,13 @@ class Pool {
 
 			//create new one
 			connection = new Connection(this)
+			this.connectionPool.using[connection.id] = connection
+			this.event.emit('create', connection)
 
 			connection.connect().then(() => {
-				this.connectionPool.using[connection.id] = connection
-
-				this.event.emit('create', connection)
-
 				callback(undefined, connection)
 			}).catch(err => {
+				delete this.connectionPool.using[connection.id]
 				callback(err, undefined)
 			})
 		} catch (error) {

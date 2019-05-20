@@ -152,6 +152,9 @@ module.exports = class Connection {
 		const mustUpdateOneRow = this._mustUpdateOneRow
 		this._mustUpdateOneRow = false
 
+		const print = this._print
+		this._print = false
+
 		const query = {
 			sql: trimed(command),
 			nestTables: sql.nestTables
@@ -178,6 +181,9 @@ module.exports = class Connection {
 			if (isLongQuery) {
 				printString = `| Long Query: ${costTime} ms ${sql.sql || sql}`
 				this.pool.logger(isLongQuery, printString, __function, __line)
+			} else if (print) {
+				printString = `${connection.logPrefix} ${costTime}ms: ${string} ${q.sql || sql}`
+				this.pool.logger(1, printString)
 			} else {
 				printString = `${connection.logPrefix} ${costTime}ms: ${string} ${q.sql || sql}`
 				this.pool.logger(null, printString)
@@ -306,7 +312,7 @@ module.exports = class Connection {
 	}
 
 	get print() {
-		this.pool.logger = LogLevel.oneTime
+		this._print = true
 		return this
 	}
 

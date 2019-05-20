@@ -10,9 +10,5 @@ module.exports = {
 	},
 	none: (err, toPrint) => {
 
-	},
-	oneTime: (err, toPrint) => {
-		console.log(toPrint)
-		logger = logLevel.error
 	}
 }
