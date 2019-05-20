@@ -131,7 +131,6 @@ module.exports = class Connection {
 		}
 		this._noCache = false
 
-
 		const mustUpdateOneRow = this._mustUpdateOneRow
 		this._mustUpdateOneRow = false
 
@@ -266,13 +265,13 @@ module.exports = class Connection {
 		if (this.reader) {
 			// if (this.reader && readerPool._freeConnections.indexOf(this.reader)) {
 			this.pool.logger(null, this.reader.logPrefix + ' : RELEASE')
-			// this.reader.end()
+			this.reader.end()
 		}
 
 		if (this.writer) {
 			// if (this.writer && writerPool._freeConnections.indexOf(this.writer)) {
 			this.pool.logger(null, this.writer.logPrefix + ' : RELEASE')
-			// this.writer.end()
+			this.writer.end()
 		}
 	}
 
