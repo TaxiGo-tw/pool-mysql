@@ -5,7 +5,14 @@ const QUERY_THRESHOLD_MS = process.env.QUERY_THRESHOLD_MS || 500
 const mysql = require('mysql')
 const LogLevel = require('./LogLevel')
 
-function setConnection(connection) {
+function trimed(params) {
+	return params.replace(/\t/g, '').replace(/\n/g, ' ').trim()
+}
+
+const mysqlConnection = (option, role) => {
+	const connection = mysql.createConnection(option)
+	connection.role = role
+
 	connection.on('error', err => {
 		if (err.code === 'PROTOCOL_CONNECTION_LOST') {
 			// db error 重新連線
@@ -60,16 +67,6 @@ function setConnection(connection) {
 		})
 	}
 
-	// connection.logPrefix = `[${(connection.threadId || 'default')}] ${connection.role}`
-}
-
-function trimed(params) {
-	return params.replace(/\t/g, '').replace(/\n/g, ' ').trim()
-}
-
-const mysqlConnection = (option, role) => {
-	const connection = mysql.createConnection(option)
-	connection.role = role
 	return connection
 }
 
@@ -93,7 +90,6 @@ module.exports = class Connection {
 						return reject(err)
 					}
 
-					setConnection(connection)
 					connection.logPrefix = `[${(this.id || 'default')}] ${connection.role}`
 
 					resolve(connection)
