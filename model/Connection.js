@@ -4,25 +4,6 @@ const QUERY_THRESHOLD_MS = process.env.QUERY_THRESHOLD_MS || 500
 
 const mysql = require('mysql')
 
-const crConnection = async (role = 'reader') => {
-	const option = role == 'writer' ? writerOptions : readerOptions
-
-	return new Promise((resolve, reject) => {
-		const connection = mysql.createConnection(option)
-
-		connection.connect((err) => {
-			if (err) {
-				logger(err)
-				return reject(err)
-			}
-
-			setConnection(connection)
-			resolve(connection)
-		})
-	})
-}
-
-
 function setConnection(connection) {
 	connection.q = (sql, values) => {
 		return new Promise((resolve, reject) => {
@@ -40,7 +21,7 @@ function setConnection(connection) {
 		return new Promise((resolve, reject) => {
 			connection.beginTransaction((err) => {
 				if (err) {
-					logger(err, undefined)
+					this.pool.logger(err, undefined)
 					reject(err)
 				} else {
 					resolve(connection)
@@ -53,7 +34,7 @@ function setConnection(connection) {
 		return new Promise((resolve, reject) => {
 			connection.commit((err) => {
 				if (err) {
-					logger(err, undefined)
+					this.pool.logger(err, undefined)
 					reject(err)
 				} else {
 					resolve(connection)
@@ -65,16 +46,44 @@ function setConnection(connection) {
 	connection.logPrefix = `[${(connection.threadId || 'default')}] ${connection.role}`
 }
 
-
 function trimed(params) {
 	return params.replace(/\t/g, '').replace(/\n/g, ' ').trim()
 }
 
+const mysqlConnection = (option, role) => {
+	const connection = mysql.createConnection(option)
+	connection.role = role
+	return connection
+}
+
 module.exports = class Connection {
-	constructor(reader, writer) {
-		this.reader = reader
-		this.writer = writer
+	constructor(pool) {
+		this.pool = pool
+
+		this.reader = mysqlConnection(this.pool.options.reader, 'Reader')
+		this.writer = mysqlConnection(this.pool.options.writer, 'Writer')
 		this.useWriter = false
+	}
+
+	async connect() {
+		const crConnection = async (connection) => {
+			return new Promise((resolve, reject) => {
+				connection.connect(err => {
+					if (err) {
+						this.pool.logger(err)
+						return reject(err)
+					}
+
+					setConnection(connection)
+					resolve(connection)
+				})
+			})
+		}
+
+		await crConnection(this.reader)
+		await crConnection(this.writer)
+
+		return this
 	}
 
 	async beginTransaction(cb) {
@@ -145,7 +154,7 @@ module.exports = class Connection {
 
 			//log
 			const string = mustUpdateOneRow ? 'mustUpdateOneRow' : ''
-			logger(null, `${connection.logPrefix} ${endTime - startTime}ms: ${string} ${q.sql}`)
+			this.pool.logger(null, `${connection.logPrefix} ${endTime - startTime}ms: ${string} ${q.sql}`)
 
 			cb(a, b, c)
 		})
@@ -161,7 +170,7 @@ module.exports = class Connection {
 				const cost = to - from
 
 				const shouldPrint = to - launchTme > QUERY_THRESHOLD_START && cost > QUERY_THRESHOLD_MS
-				logger(shouldPrint, `| Long Query: ${cost} ms ${sql.sql || sql}`, __function, __line)
+				this.pool.logger(shouldPrint, `| Long Query: ${cost} ms ${sql.sql || sql}`, __function, __line)
 
 				if (err) {
 					reject(err)
@@ -176,8 +185,8 @@ module.exports = class Connection {
 
 		if (!EX) {
 			return await this._q(sql, values)
-		} else if (!pool.redisClient && EX) {
-			console.error('should assign redis client to pool.redisClient')
+		} else if (!this.pool.redisClient && EX) {
+			console.error('should assign redis client to this.pool.redisClient')
 			return await this._q(sql, values)
 		}
 
@@ -185,8 +194,8 @@ module.exports = class Connection {
 		const cacheKey = key || queryString
 
 		let someThing = isJSON
-			? await pool.redisClient.getJSONAsync(cacheKey)
-			: await pool.redisClient.getAsync(cacheKey)
+			? await this.pool.redisClient.getJSONAsync(cacheKey)
+			: await this.pool.redisClient.getAsync(cacheKey)
 
 		//if cached
 		const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
@@ -221,8 +230,8 @@ module.exports = class Connection {
 		}
 
 		isJSON
-			? await pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
-			: await pool.redisClient.setAsync(cacheKey, toCache, 'EX', EX)
+			? await this.pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
+			: await this.pool.redisClient.setAsync(cacheKey, toCache, 'EX', EX)
 
 		return map
 			? map(result)
@@ -232,7 +241,7 @@ module.exports = class Connection {
 	commit(cb) {
 		this.writer.commit((e) => {
 			if (this.writer) {
-				logger(e, this.writer.logPrefix + ' : COMMIT')
+				this.pool.logger(e, this.writer.logPrefix + ' : COMMIT')
 			}
 
 			if (cb) {
@@ -245,8 +254,8 @@ module.exports = class Connection {
 		return new Promise((resolve, reject) => {
 			const x = this.reader.rollback(() => {
 				const y = this.writer.rollback(() => {
-					logger(null, '[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
-					logger(null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
+					this.pool.logger(null, '[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
+					this.pool.logger(null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
 					resolve()
 				})
 			})
@@ -256,13 +265,13 @@ module.exports = class Connection {
 	release() {
 		if (this.reader) {
 			// if (this.reader && readerPool._freeConnections.indexOf(this.reader)) {
-			logger(null, this.reader.logPrefix + ' : RELEASE')
+			this.pool.logger(null, this.reader.logPrefix + ' : RELEASE')
 			// this.reader.end()
 		}
 
 		if (this.writer) {
 			// if (this.writer && writerPool._freeConnections.indexOf(this.writer)) {
-			logger(null, this.writer.logPrefix + ' : RELEASE')
+			this.pool.logger(null, this.writer.logPrefix + ' : RELEASE')
 			// this.writer.end()
 		}
 	}
@@ -286,7 +295,7 @@ module.exports = class Connection {
 	}
 
 	get print() {
-		logger = logLevel.oneTime
+		this.pool.logger = logLevel.oneTime
 		return this
 	}
 
