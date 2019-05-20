@@ -3,80 +3,19 @@ const QUERY_THRESHOLD_START = process.env.QUERY_THRESHOLD_START || 60 * 1000
 const QUERY_THRESHOLD_MS = process.env.QUERY_THRESHOLD_MS || 500
 
 const mysql = require('mysql')
-const LogLevel = require('./LogLevel')
 
 function trimed(params) {
 	return params.replace(/\t/g, '').replace(/\n/g, ' ').trim()
 }
 
-const mysqlConnection = (option, role) => {
-	const connection = mysql.createConnection(option)
-	connection.role = role
 
-	connection.on('error', err => {
-		if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-			// db error 重新連線
-			console.log('db error 重新連線')
-			connection.connect(err => {
-				if (err) {
-					setTimeout(() => {
-						connection.connect()
-					}, 300)
-				}
-			})
-		} else {
-			console.log('mysql connection', err)
-			throw err
-		}
-	})
-
-	connection.q = (sql, values) => {
-		return new Promise((resolve, reject) => {
-			connection.query(sql, values, (err, result) => {
-				if (err) {
-					reject(err)
-				} else {
-					resolve(result)
-				}
-			})
-		})
-	}
-
-	connection.startTransaction = () => {
-		return new Promise((resolve, reject) => {
-			connection.beginTransaction((err) => {
-				if (err) {
-					this.pool.logger(err, undefined)
-					reject(err)
-				} else {
-					resolve(connection)
-				}
-			})
-		})
-	}
-
-	connection.commitChange = () => {
-		return new Promise((resolve, reject) => {
-			connection.commit((err) => {
-				if (err) {
-					this.pool.logger(err, undefined)
-					reject(err)
-				} else {
-					resolve(connection)
-				}
-			})
-		})
-	}
-
-	return connection
-}
 
 module.exports = class Connection {
 	constructor(pool) {
 		this.pool = pool
 
-		this.reader = mysqlConnection(this.pool.options.reader, 'Reader')
-		this.writer = mysqlConnection(this.pool.options.writer, 'Writer')
+		this.reader = this._mysqlConnection(this.pool.options.reader, 'Reader')
+		this.writer = this._mysqlConnection(this.pool.options.writer, 'Writer')
 		this.useWriter = false
 
 		this.id = ++pool.connectionID
@@ -106,7 +45,7 @@ module.exports = class Connection {
 
 	async beginTransaction(cb) {
 		try {
-			await this.reader.startTransaction()
+			// await this.reader.startTransaction()
 			await this.writer.startTransaction()
 			cb(undefined)
 		} catch (e) {
@@ -117,7 +56,7 @@ module.exports = class Connection {
 	async awaitTransaction() {
 		return new Promise(async (resolve, reject) => {
 			try {
-				await this.reader.startTransaction()
+				// await this.reader.startTransaction()
 				await this.writer.startTransaction()
 				resolve()
 			} catch (e) {
@@ -129,7 +68,7 @@ module.exports = class Connection {
 	async awaitCommit() {
 		return new Promise(async (resolve, reject) => {
 			try {
-				await this.reader.commit()
+				// await this.reader.commit()
 				await this.writer.commit()
 				resolve()
 			} catch (e) {
@@ -268,7 +207,7 @@ module.exports = class Connection {
 	commit(cb) {
 		this.writer.commit((e) => {
 			if (this.writer) {
-				this.pool.logger(e, this.writer.logPrefix + ' : COMMIT')
+				this.pool.logger(e, `${this.writer.logPrefix} : COMMIT`)
 			}
 
 			if (cb) {
@@ -290,6 +229,7 @@ module.exports = class Connection {
 	}
 
 	release() {
+		this.pool.logger(null, `[${this.id}] RELEASE`)
 		this.pool._recycle(this).then().catch(console.log)
 	}
 
@@ -344,5 +284,68 @@ module.exports = class Connection {
 	get mustChangedOneRow() {
 		this._mustChangedOneRow = true
 		return this
+	}
+
+
+	_mysqlConnection(option, role) {
+		const connection = mysql.createConnection(option)
+		connection.role = role
+
+		connection.on('error', err => {
+			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+				// db error 重新連線
+				console.log('db error 重新連線')
+				connection.connect(err => {
+					if (err) {
+						setTimeout(() => {
+							connection.connect()
+						}, 300)
+					}
+				})
+			} else {
+				console.log('mysql connection', err)
+				throw err
+			}
+		})
+
+		connection.q = (sql, values) => {
+			return new Promise((resolve, reject) => {
+				connection.query(sql, values, (err, result) => {
+					if (err) {
+						reject(err)
+					} else {
+						resolve(result)
+					}
+				})
+			})
+		}
+
+		connection.startTransaction = () => {
+			return new Promise((resolve, reject) => {
+				connection.beginTransaction((err) => {
+					this.pool.logger(err, `${connection.logPrefix} : Start Transaction`)
+					if (err) {
+						reject(err)
+					} else {
+						resolve(connection)
+					}
+				})
+			})
+		}
+
+		connection.commitChange = () => {
+			return new Promise((resolve, reject) => {
+				connection.commit((err) => {
+					this.pool.logger(err, `${connection.logPrefix} : COMMIT`)
+					if (err) {
+						reject(err)
+					} else {
+						resolve(connection)
+					}
+				})
+			})
+		}
+
+		return connection
 	}
 }
