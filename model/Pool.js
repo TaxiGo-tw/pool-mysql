@@ -3,6 +3,9 @@ require('./Connection')
 const LogLevel = require('./LogLevel')
 const defaultOptions = require('./DefaultOptions')
 const Connection = require('./Connection')
+
+const { EventEmitter } = require('events')
+
 class Pool {
 	constructor({ options, redisClient } = {}) {
 		this.options = options || defaultOptions
@@ -16,6 +19,8 @@ class Pool {
 		this.redisClient = redisClient
 
 		this.connectionID = 0
+
+		this.event = new EventEmitter()
 
 		console.log('pool-mysql writer host: ', this.options.writer.host)
 		console.log('pool-mysql reader host: ', this.options.reader.host)
@@ -69,18 +74,30 @@ class Pool {
 		}
 	}
 
+	async createConnection() {
+		return new Promise(async (resolve, reject) => {
+			this.getConnection((err, connection) => {
+				if (err) {
+					return reject(err)
+				}
+				resolve(connection)
+			})
+		})
+	}
+
 	getConnection(callback, retry = 0) {
 		try {
-			let connection = this.connectionPool.waiting.shift()
-
 			//reuse
+			let connection = this.connectionPool.waiting.shift()
 			if (connection) {
 				this.connectionPool.using[connection.id] = connection
+				this.event.emit('get', connection)
+
 				return callback(undefined, connection)
 			}
 
+			//connection limit
 			const numberOfConnections = Object.keys(this.connectionPool.using).length + this.connectionPool.waiting.length
-
 			if (numberOfConnections >= this.options.connectionLimit) {
 				if (retry > 3) {
 					const error = Error('pool-mysql failed: connection numbers limited (retry 3)')
@@ -95,11 +112,11 @@ class Pool {
 
 			//create new one
 			connection = new Connection(this)
-			connection.id = ++this.connectionID
-
-			this.connectionPool.using[connection.id] = connection
 
 			connection.connect().then(() => {
+				this.connectionPool.using[connection.id] = connection
+				this.event.emit('get', connection)
+
 				callback(undefined, connection)
 			}).catch(err => {
 				callback(err, undefined)
@@ -109,32 +126,31 @@ class Pool {
 		}
 	}
 
-	async createConnection() {
-		return new Promise(async (resolve, reject) => {
-			this.getConnection((err, connection) => {
-				if (err) {
-					return reject(err)
-				}
-				resolve(connection)
-			})
-		})
-	}
-
 	async _recycle(connection) {
 		delete this.connectionPool.using[connection.id]
 		this.connectionPool.waiting.push(connection)
+		this.event.emit('release', connection)
 	}
 
-	query(sql, values, callback) {
+	query(sql, b, c) {
 		this.createConnection().then(connection => {
-			connection.query(sql, values, callback)
-		})
+			const callback = c || b
+
+			const cb = (a, b, c) => {
+				this._recycle(connection).then()
+				callback(a, b, c)
+			}
+
+			if (c) {
+				connection.query(sql, b, cb)
+			} else {
+				connection.query(sql, cb)
+			}
+		}).catch(c || b)
 		return {}
 	}
 
-	release() {
-
-	}
+	release() { }
 }
 
 module.exports = new Pool()

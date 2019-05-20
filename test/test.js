@@ -454,6 +454,7 @@ describe('test connection.query()', () => {
 describe('test get connection', () => {
 	it('1', (done) => {
 		pool.getConnection((err, connection) => {
+			connection.release()
 			done()
 		})
 	})
@@ -465,4 +466,16 @@ describe('test pool.query()', () => {
 			done()
 		})
 	})
+})
+
+
+pool.event.on('get', id => {
+	// console.log(id)
+})
+
+pool.event.on('release', id => {
+})
+
+pool.event.on('query', string => {
+	// console.log(string)
 })

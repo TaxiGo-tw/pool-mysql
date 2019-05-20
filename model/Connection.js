@@ -43,7 +43,7 @@ function setConnection(connection) {
 		})
 	}
 
-	connection.logPrefix = `[${(connection.threadId || 'default')}] ${connection.role}`
+	// connection.logPrefix = `[${(connection.threadId || 'default')}] ${connection.role}`
 }
 
 function trimed(params) {
@@ -63,6 +63,8 @@ module.exports = class Connection {
 		this.reader = mysqlConnection(this.pool.options.reader, 'Reader')
 		this.writer = mysqlConnection(this.pool.options.writer, 'Writer')
 		this.useWriter = false
+
+		this.id = ++pool.connectionID
 	}
 
 	async connect() {
@@ -75,6 +77,8 @@ module.exports = class Connection {
 					}
 
 					setConnection(connection)
+					connection.logPrefix = `[${(this.id || 'default')}] ${connection.role}`
+
 					resolve(connection)
 				})
 			})
@@ -153,7 +157,19 @@ module.exports = class Connection {
 
 			//log
 			const string = mustUpdateOneRow ? 'mustUpdateOneRow' : ''
-			this.pool.logger(null, `${connection.logPrefix} ${endTime - startTime}ms: ${string} ${q.sql}`)
+			const costTime = endTime - startTime
+			let printString
+
+			const isLongQuery = endTime - launchTme > QUERY_THRESHOLD_START && costTime > QUERY_THRESHOLD_MS
+			if (isLongQuery) {
+				printString = `| Long Query: ${costTime} ms ${sql.sql || sql}`
+				this.pool.logger(isLongQuery, printString, __function, __line)
+			} else {
+				printString = `${connection.logPrefix} ${costTime}ms: ${string} ${q.sql || sql}`
+				this.pool.logger(null, printString)
+			}
+
+			this.pool.event.emit('query', printString)
 
 			cb(a, b, c)
 		})
@@ -163,14 +179,7 @@ module.exports = class Connection {
 
 	_q(sql, values) {
 		return new Promise((reslove, reject) => {
-			const from = new Date()
 			this.query(sql, values, (err, res) => {
-				const to = new Date()
-				const cost = to - from
-
-				const shouldPrint = to - launchTme > QUERY_THRESHOLD_START && cost > QUERY_THRESHOLD_MS
-				this.pool.logger(shouldPrint, `| Long Query: ${cost} ms ${sql.sql || sql}`, __function, __line)
-
 				if (err) {
 					reject(err)
 				} else {
