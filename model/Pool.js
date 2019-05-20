@@ -83,8 +83,9 @@ class Pool {
 
 			if (numberOfConnections >= this.options.connectionLimit) {
 				if (retry > 3) {
-
-				} else if (retry < 3) {
+					const error = Error('failed: connection numbers limited (retry 3)')
+					callback(error, null)
+				} else if (retry <= 3) {
 					setTimeout(() => {
 						this.getConnection(callback, retry + 1)
 					}, 300)
