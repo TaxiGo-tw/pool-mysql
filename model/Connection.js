@@ -223,7 +223,6 @@ module.exports = class Connection {
 				? queryToCache(result)
 				: result
 
-
 		if (toCache === null) {
 			toCache = { isNull: true }
 		}
@@ -262,17 +261,18 @@ module.exports = class Connection {
 	}
 
 	release() {
-		if (this.reader) {
-			// if (this.reader && readerPool._freeConnections.indexOf(this.reader)) {
-			this.pool.logger(null, this.reader.logPrefix + ' : RELEASE')
-			this.reader.end()
-		}
+		this.pool._recycle(this).then().catch(console.log)
+		// if (this.reader) {
+		// if (this.reader && readerPool._freeConnections.indexOf(this.reader)) {
+		// this.pool.logger(null, this.reader.logPrefix + ' : RELEASE')
+		// this.reader.end()
+		// }
 
-		if (this.writer) {
-			// if (this.writer && writerPool._freeConnections.indexOf(this.writer)) {
-			this.pool.logger(null, this.writer.logPrefix + ' : RELEASE')
-			this.writer.end()
-		}
+		// if (this.writer) {
+		// if (this.writer && writerPool._freeConnections.indexOf(this.writer)) {
+		// this.pool.logger(null, this.writer.logPrefix + ' : RELEASE')
+		// this.writer.end()
+		// }
 	}
 
 	isSelect(sql) {

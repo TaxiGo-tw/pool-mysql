@@ -8,12 +8,14 @@ class Pool {
 		this.options = options || defaultOptions
 
 		this.connectionPool = {
-			using: [],
+			using: {},
 			waiting: []
 		}
 
 		this._logger = LogLevel.error
 		this.redisClient = redisClient
+
+		this.connectionID = 0
 
 		console.log('pool-mysql writer host: ', this.options.writer.host)
 		console.log('pool-mysql reader host: ', this.options.reader.host)
@@ -69,7 +71,19 @@ class Pool {
 
 	getConnection(callback) {
 		try {
-			const connection = new Connection(this)
+			let connection = this.connectionPool.waiting.shift()
+
+			//reuse
+			if (connection) {
+				this.connectionPool.using[connection.id] = connection
+				return callback(undefined, connection)
+			}
+
+			//create new one
+			connection = new Connection(this)
+			connection.id = ++this.connectionID
+
+			this.connectionPool.using[connection.id] = connection
 
 			connection.connect().then(() => {
 				callback(undefined, connection)
@@ -90,6 +104,11 @@ class Pool {
 				resolve(connection)
 			})
 		})
+	}
+
+	async _recycle(connection) {
+		delete this.connectionPool.using[connection.id]
+		this.connectionPool.waiting.push(connection)
 	}
 
 	query(sql, values, callback) {
