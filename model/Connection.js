@@ -3,8 +3,23 @@ const QUERY_THRESHOLD_START = process.env.QUERY_THRESHOLD_START || 60 * 1000
 const QUERY_THRESHOLD_MS = process.env.QUERY_THRESHOLD_MS || 500
 
 const mysql = require('mysql')
+const LogLevel = require('./LogLevel')
 
 function setConnection(connection) {
+	connection.on('error', err => {
+		if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+			// db error 重新連線
+			console.log('db error 重新連線')
+			connection.connect(err => {
+				setTimeout(() => {
+					connection.connect()
+				}, 300)
+			})
+		} else {
+			throw err
+		}
+	})
+
 	connection.q = (sql, values) => {
 		return new Promise((resolve, reject) => {
 			connection.query(sql, values, (err, result) => {
@@ -271,17 +286,6 @@ module.exports = class Connection {
 
 	release() {
 		this.pool._recycle(this).then().catch(console.log)
-		// if (this.reader) {
-		// if (this.reader && readerPool._freeConnections.indexOf(this.reader)) {
-		// this.pool.logger(null, this.reader.logPrefix + ' : RELEASE')
-		// this.reader.end()
-		// }
-
-		// if (this.writer) {
-		// if (this.writer && writerPool._freeConnections.indexOf(this.writer)) {
-		// this.pool.logger(null, this.writer.logPrefix + ' : RELEASE')
-		// this.writer.end()
-		// }
 	}
 
 	isSelect(sql) {
@@ -303,7 +307,7 @@ module.exports = class Connection {
 	}
 
 	get print() {
-		this.pool.logger = logLevel.oneTime
+		this.pool.logger = LogLevel.oneTime
 		return this
 	}
 
