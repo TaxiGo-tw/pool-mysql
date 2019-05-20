@@ -69,7 +69,7 @@ class Pool {
 		}
 	}
 
-	getConnection(callback) {
+	getConnection(callback, retry = 0) {
 		try {
 			let connection = this.connectionPool.waiting.shift()
 
@@ -77,6 +77,19 @@ class Pool {
 			if (connection) {
 				this.connectionPool.using[connection.id] = connection
 				return callback(undefined, connection)
+			}
+
+			const numberOfConnections = Object.keys(this.connectionPool.using).length + this.connectionPool.waiting.length
+
+			if (numberOfConnections >= this.options.connectionLimit) {
+				if (retry > 3) {
+
+				} else if (retry < 3) {
+					setTimeout(() => {
+						this.getConnection(callback, retry + 1)
+					}, 300)
+				}
+				return
 			}
 
 			//create new one
