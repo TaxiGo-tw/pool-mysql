@@ -98,40 +98,10 @@ class Pool {
 		})
 		return {}
 	}
+
+	release() {
+
+	}
 }
 
 module.exports = new Pool()
-
-// function setPool(pool) {
-// 	pool.createConnection = () => {
-// 		return new Promise((resolve, reject) => {
-// 			pool.getConnection((err, connection) => {
-// 				if (err) {
-// 					logger(err)
-// 					return reject(err)
-// 				}
-// 				setConnection(connection)
-// 				resolve(connection)
-// 			})
-// 		})
-// 	}
-
-// 	pool.query = (sql, values, callback) => {
-// 		pool.getConnection((err, connection) => {
-// 			logger(err, 'pool.query')
-// 			if (err) {
-// 				connection.release()
-// 				return callback(err, null)
-// 			}
-
-// 			connection.query(sql, values, (err, result) => {
-// 				connection.release()
-// 				callback(err, result)
-// 			})
-// 		})
-
-// 		return {}
-// 	}
-
-// 	pool.release = () => { }
-// }
