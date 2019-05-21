@@ -233,6 +233,15 @@ module.exports = class Connection {
 		this.pool._recycle(this).then().catch(console.log)
 	}
 
+	end() {
+		this.reader.end()
+		this.writer.end()
+
+		delete this.pool
+		delete this.reader
+		delete this.writer
+	}
+
 	isSelect(sql) {
 		const command = trimed((sql.sql || sql).toLowerCase())
 
