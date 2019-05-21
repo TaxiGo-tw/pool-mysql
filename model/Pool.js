@@ -28,26 +28,11 @@ class Pool {
 		setInterval(this.endFreeConnections.bind(this), 5 * 60 * 1000)
 	}
 
-	//結束一半的waiting connections, 至少留10個
-	endFreeConnections() {
-		const stayAmount = Math.ceil(this.connectionPool.waiting.length / 2)
-
-		while (stayAmount > 10 && this.connectionPool.waiting.length > stayAmount) {
-			const connection = this.connectionPool.waiting.shift()
-			this.numberOfConnections
-			if (!connection) {
-				continue
-			}
-			connection.end()
-		}
-	}
-
 	get numberOfConnections() {
 		const amount = Object.keys(this.connectionPool.using).length + this.connectionPool.waiting.length
 
 		if (amount != this._numberOfConnections) {
 			this.event.emit('amount', amount)
-			console.log('connections amount', amount)
 			this._numberOfConnections = amount
 		}
 
@@ -182,6 +167,21 @@ class Pool {
 	}
 
 	release() { }
+
+	//結束一半的waiting connections, 至少留10個
+	endFreeConnections() {
+		const stayAmount = Math.ceil(this.connectionPool.waiting.length / 2)
+
+		while (stayAmount > 10 && this.connectionPool.waiting.length > stayAmount) {
+			const connection = this.connectionPool.waiting.shift()
+			this.numberOfConnections
+			if (!connection) {
+				continue
+			}
+			this.event.emit('end', connection)
+			connection.end()
+		}
+	}
 }
 
 module.exports = new Pool()
