@@ -12,10 +12,10 @@ function trimed(params) {
 
 module.exports = class Connection {
 	constructor(pool) {
-		this.pool = pool
+		this._pool = pool
 
-		this.reader = this._mysqlConnection(this.pool.options.reader, 'Reader')
-		this.writer = this._mysqlConnection(this.pool.options.writer, 'Writer')
+		this.reader = this._mysqlConnection(this._pool.options.reader, 'Reader')
+		this.writer = this._mysqlConnection(this._pool.options.writer, 'Writer')
 		this.useWriter = false
 
 		this.id = ++pool.connectionID
@@ -26,7 +26,7 @@ module.exports = class Connection {
 			return new Promise((resolve, reject) => {
 				connection.connect(err => {
 					if (err) {
-						this.pool.logger(err)
+						this._pool.logger(err)
 						return reject(err)
 					}
 
@@ -119,16 +119,16 @@ module.exports = class Connection {
 			const isLongQuery = endTime - launchTme > QUERY_THRESHOLD_START && costTime > QUERY_THRESHOLD_MS
 			if (isLongQuery) {
 				printString = `| Long Query: ${costTime} ms ${sql.sql || sql}`
-				this.pool.logger(isLongQuery, printString, __function, __line)
+				this._pool.logger(isLongQuery, printString, __function, __line)
 			} else if (print) {
 				printString = `${connection.logPrefix} ${costTime}ms: ${string} ${q.sql || sql}`
-				this.pool.logger(1, printString)
+				this._pool.logger(1, printString)
 			} else {
 				printString = `${connection.logPrefix} ${costTime}ms: ${string} ${q.sql || sql}`
-				this.pool.logger(null, printString)
+				this._pool.logger(null, printString)
 			}
 
-			this.pool.event.emit('query', printString)
+			this._pool.event.emit('query', printString)
 
 			cb(a, b, c)
 		})
@@ -152,8 +152,8 @@ module.exports = class Connection {
 
 		if (!EX) {
 			return await this._q(sql, values)
-		} else if (!this.pool.redisClient && EX) {
-			console.error('should assign redis client to this.pool.redisClient')
+		} else if (!this._pool.redisClient && EX) {
+			console.error('should assign redis client to this._pool.redisClient')
 			return await this._q(sql, values)
 		}
 
@@ -161,8 +161,8 @@ module.exports = class Connection {
 		const cacheKey = key || queryString
 
 		let someThing = isJSON
-			? await this.pool.redisClient.getJSONAsync(cacheKey)
-			: await this.pool.redisClient.getAsync(cacheKey)
+			? await this._pool.redisClient.getJSONAsync(cacheKey)
+			: await this._pool.redisClient.getAsync(cacheKey)
 
 		//if cached
 		const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
@@ -196,8 +196,8 @@ module.exports = class Connection {
 		}
 
 		isJSON
-			? await this.pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
-			: await this.pool.redisClient.setAsync(cacheKey, toCache, 'EX', EX)
+			? await this._pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
+			: await this._pool.redisClient.setAsync(cacheKey, toCache, 'EX', EX)
 
 		return map
 			? map(result)
@@ -207,7 +207,7 @@ module.exports = class Connection {
 	commit(cb) {
 		this.writer.commit((e) => {
 			if (this.writer) {
-				this.pool.logger(e, `${this.writer.logPrefix} : COMMIT`)
+				this._pool.logger(e, `${this.writer.logPrefix} : COMMIT`)
 			}
 
 			if (cb) {
@@ -220,8 +220,8 @@ module.exports = class Connection {
 		return new Promise((resolve, reject) => {
 			const x = this.reader.rollback(() => {
 				const y = this.writer.rollback(() => {
-					this.pool.logger(null, '[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
-					this.pool.logger(null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
+					this._pool.logger(null, '[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
+					this._pool.logger(null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
 					resolve()
 				})
 			})
@@ -229,15 +229,15 @@ module.exports = class Connection {
 	}
 
 	release() {
-		this.pool.logger(null, `[${this.id}] RELEASE`)
-		this.pool._recycle(this).then().catch(console.log)
+		this._pool.logger(null, `[${this.id}] RELEASE`)
+		this._pool._recycle(this).then().catch(console.log)
 	}
 
 	end() {
 		this.reader.end()
 		this.writer.end()
 
-		delete this.pool
+		delete this._pool
 		delete this.reader
 		delete this.writer
 	}
@@ -332,7 +332,7 @@ module.exports = class Connection {
 		connection.startTransaction = () => {
 			return new Promise((resolve, reject) => {
 				connection.beginTransaction((err) => {
-					this.pool.logger(err, `${connection.logPrefix} : Start Transaction`)
+					this._pool.logger(err, `${connection.logPrefix} : Start Transaction`)
 					if (err) {
 						reject(err)
 					} else {
@@ -345,7 +345,7 @@ module.exports = class Connection {
 		connection.commitChange = () => {
 			return new Promise((resolve, reject) => {
 				connection.commit((err) => {
-					this.pool.logger(err, `${connection.logPrefix} : COMMIT`)
+					this._pool.logger(err, `${connection.logPrefix} : COMMIT`)
 					if (err) {
 						reject(err)
 					} else {

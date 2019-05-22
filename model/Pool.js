@@ -25,7 +25,7 @@ class Pool {
 		console.log('pool-mysql writer host: ', this.options.writer.host)
 		console.log('pool-mysql reader host: ', this.options.reader.host)
 
-		setInterval(this.endFreeConnections.bind(this), 5 * 60 * 1000)
+		setInterval(this._endFreeConnections.bind(this), 5 * 60 * 1000)
 	}
 
 	get numberOfConnections() {
@@ -169,7 +169,7 @@ class Pool {
 	release() { }
 
 	//結束一半的waiting connections, 至少留10個
-	endFreeConnections() {
+	_endFreeConnections() {
 		const stayAmount = Math.ceil(this.connectionPool.waiting.length / 2)
 
 		while (stayAmount > 10 && this.connectionPool.waiting.length > stayAmount) {
