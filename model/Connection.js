@@ -14,8 +14,8 @@ module.exports = class Connection {
 	constructor(pool) {
 		this._pool = pool
 
-		this.reader = this._mysqlConnection(this._pool.options.reader, 'Reader')
-		this.writer = this._mysqlConnection(this._pool.options.writer, 'Writer')
+		this.reader = this._mysqlConnection(this._pool.options.reader, 'Reader', this)
+		this.writer = this._mysqlConnection(this._pool.options.writer, 'Writer', this)
 		this.useWriter = false
 
 		this.id = ++pool.connectionID
@@ -296,25 +296,25 @@ module.exports = class Connection {
 	}
 
 
-	_mysqlConnection(option, role) {
+	_mysqlConnection(option, role, manager) {
 		const connection = mysql.createConnection(option)
 		connection.role = role
 
 		connection.on('error', err => {
-			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-				// db error 重新連線
-				console.log('db error 重新連線')
-				connection.connect(err => {
-					if (err) {
-						setTimeout(() => {
-							connection.connect()
-						}, 300)
-					}
-				})
-			} else {
-				console.log('mysql connection', err)
-				throw err
-			}
+			manager.end()
+			// if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+			// 	// db error 重新連線
+			// 	connection.connect(err => {
+			// 		if (err) {
+			// 			setTimeout(() => {
+			// 				connection.connect()
+			// 			}, 300)
+			// 		}
+			// 	})
+			// } else {
+			// 	console.log('mysql connection', err)
+			// 	throw err
+			// }
 		})
 
 		connection.q = (sql, values) => {
