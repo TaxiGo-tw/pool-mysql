@@ -1,10 +1,11 @@
 require('./Misc')
-require('./Connection')
 const LogLevel = require('./LogLevel')
 const defaultOptions = require('./DefaultOptions')
 const Connection = require('./Connection')
 
 const { EventEmitter } = require('events')
+
+const extendRedis = require('./RedisExtend')
 
 class Pool {
 	constructor({ options, redisClient } = {}) {
@@ -71,24 +72,7 @@ class Pool {
 
 	set redisClient(newValue) {
 		this._redisClient = newValue
-
-		if (!this._redisClient) {
-			return
-		}
-
-		if (!this._redisClient.getJSONAsync) {
-			this._redisClient.getJSONAsync = async (...args) => {
-				const result = await this.redisClient.getAsync(...args)
-				return JSON.parse(result)
-			}
-		}
-
-		if (!this._redisClient.setJSONAsync) {
-			this._redisClient.setJSONAsync = async (...args) => {
-				args[1] = JSON.stringify(args[1])
-				return await this.redisClient.setAsync(...args)
-			}
-		}
+		extendRedis(this._redisClient)
 	}
 
 	async createConnection() {
