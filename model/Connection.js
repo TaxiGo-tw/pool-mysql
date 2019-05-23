@@ -16,6 +16,9 @@ module.exports = class Connection {
 		this.useWriter = false
 
 		this.id = pool.connectionID
+
+		this.createdAt = new Date()
+		this.gotAt = new Date()
 	}
 
 	async connect() {
@@ -98,7 +101,10 @@ module.exports = class Connection {
 
 		const startTime = new Date()
 
+		this.querying = command
 		const q = connection.query(query, values, (a, b, c) => {
+			delete this.querying
+
 			const endTime = new Date()
 			if (mustUpdateOneRow && b && b.affectedRows != 1) {
 				// console.log(a, b, c)

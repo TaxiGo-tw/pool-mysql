@@ -17,3 +17,4 @@ module.exports = {
 		charset: 'utf8mb4'
 	}
 }
+3

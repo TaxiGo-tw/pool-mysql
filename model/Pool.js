@@ -21,12 +21,31 @@ class Pool {
 
 		this.connectionID = 0
 
+		this._connectionRequests = []
+
 		this.event = new EventEmitter()
 
 		console.log('pool-mysql writer host: ', this.options.writer.host)
 		console.log('pool-mysql reader host: ', this.options.reader.host)
 
+		this.runSchedulers()
+	}
+
+	runSchedulers() {
+		//自動清多餘connection
 		setInterval(this._endFreeConnections.bind(this), 5 * 60 * 1000)
+
+		//清掉timeout的get connection requests
+		setInterval(() => {
+			const now = new Date()
+			const requestTimeOut = 10000
+
+			while (this._connectionRequests[0] && now - this._connectionRequests[0].requestTime > requestTimeOut) {
+				const callback = this._connectionRequests.shift()
+				const err = Error('get connection request timeout')
+				callback(err, null)
+			}
+		}, 1000)
 	}
 
 	get numberOfConnections() {
@@ -92,22 +111,26 @@ class Pool {
 			let connection = this.connectionPool.waiting.shift()
 			if (connection) {
 				this.connectionPool.using[connection.id] = connection
+				connection.gotAt = new Date()
 				this.event.emit('get', connection)
-
 				return callback(undefined, connection)
 			}
 
 			//connection limit
 			if (this.numberOfConnections >= this.options.connectionLimit) {
-				if (retry > 3) {
-					const error = Error('pool-mysql failed: connection numbers limited (retry 3)')
-					callback(error, null)
-				} else if (retry <= 3) {
-					setTimeout(() => {
-						this.getConnection(callback, retry + 1)
-					}, 300)
-				}
+				callback.requestTime = new Date()
+				this._connectionRequests.push(callback)
+				this.event.emit('request')
 				return
+				// if (retry > 3) {
+				// 	const error = Error('pool-mysql failed: connection numbers limited (retry 3)')
+				// 	callback(error, null)
+				// } else if (retry <= 3) {
+				// 	setTimeout(() => {
+				// 		this.getConnection(callback, retry + 1)
+				// 	}, 300)
+				// }
+				// return
 			}
 
 			//create new one
@@ -129,6 +152,14 @@ class Pool {
 	}
 
 	async _recycle(connection) {
+		const callback = this._connectionRequests.shift()
+		if (callback) {
+			console.log('recycle')
+			this.event.emit('recycle', connection)
+			connection.gotAt = new Date()
+			return callback(null, connection)
+		}
+
 		delete this.connectionPool.using[connection.id]
 		this.connectionPool.waiting.push(connection)
 		this.event.emit('release', connection)

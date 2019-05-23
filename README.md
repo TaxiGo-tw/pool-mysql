@@ -166,6 +166,10 @@ But will keep at least 10 reader&writer connections
 
 * `end` called when connection end
 
+* `request` request a connection but capped on connection limit
+
+* `recycle` free connection is back
+
 ```js
 pool.event.on('get', connection => {
 	console.log(connection.id)
