@@ -115,22 +115,12 @@ class Pool {
 				this.event.emit('get', connection)
 				return callback(undefined, connection)
 			}
-
-			//connection limit
-			if (this.numberOfConnections >= this.options.connectionLimit) {
+			//on connection limit, 去排隊
+			else if (this.numberOfConnections >= this.options.connectionLimit) {
 				callback.requestTime = new Date()
 				this._connectionRequests.push(callback)
 				this.event.emit('request')
 				return
-				// if (retry > 3) {
-				// 	const error = Error('pool-mysql failed: connection numbers limited (retry 3)')
-				// 	callback(error, null)
-				// } else if (retry <= 3) {
-				// 	setTimeout(() => {
-				// 		this.getConnection(callback, retry + 1)
-				// 	}, 300)
-				// }
-				// return
 			}
 
 			//create new one
