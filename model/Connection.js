@@ -22,7 +22,7 @@ module.exports = class Connection {
 	}
 
 	async connect() {
-		const crConnection = async (connection) => {
+		const create = async (connection) => {
 			return new Promise((resolve, reject) => {
 				connection.connect(err => {
 					if (err) {
@@ -38,8 +38,8 @@ module.exports = class Connection {
 		}
 
 		try {
-			await crConnection(this.reader)
-			await crConnection(this.writer)
+			await create(this.reader)
+			await create(this.writer)
 		} catch (error) {
 			throw error
 		}
