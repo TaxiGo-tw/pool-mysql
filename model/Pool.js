@@ -130,9 +130,9 @@ class Pool {
 			this.connectionID++
 			connection = new Connection(this)
 			this.connectionPool.using[connection.id] = connection
-			this.event.emit('create', connection)
 
 			connection.connect().then(() => {
+				this.event.emit('create', connection)
 				this.numberOfConnections
 				callback(undefined, connection)
 			}).catch(err => {
