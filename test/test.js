@@ -468,7 +468,15 @@ describe('test pool.query()', () => {
 	})
 })
 
-
+describe('test get connections', async () => {
+	it('1', async () => {
+		for (let i = 0; i < 10000; i++) {
+			pool.createConnection().then(c => {
+				c.release()
+			})
+		}
+	})
+})
 // pool.event.on('get', connection => {
 // 	console.log(connection.id)
 // })
@@ -480,7 +488,10 @@ describe('test pool.query()', () => {
 // pool.event.on('query', string => {
 // 	console.log(string)
 // })
+// pool.event.on('recycle', amount => {
+// 	console.log('recycle')
+// })
 
-pool.event.on('amount', amount => {
-	console.log(amount)
-})
+// pool.event.on('amount', amount => {
+// 	console.log(amount)
+// })

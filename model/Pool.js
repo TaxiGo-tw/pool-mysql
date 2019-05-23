@@ -119,7 +119,7 @@ class Pool {
 			else if (this.numberOfConnections >= this.options.connectionLimit) {
 				callback.requestTime = new Date()
 				this._connectionRequests.push(callback)
-				this.event.emit('request')
+				this.event.emit('request', this._connectionRequests.length)
 				return
 			}
 
