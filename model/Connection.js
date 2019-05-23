@@ -37,8 +37,12 @@ module.exports = class Connection {
 			})
 		}
 
-		await crConnection(this.reader)
-		await crConnection(this.writer)
+		try {
+			await crConnection(this.reader)
+			await crConnection(this.writer)
+		} catch (error) {
+			throw error
+		}
 
 		return this
 	}
