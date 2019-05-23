@@ -1,5 +1,3 @@
-
-
 module.exports = {
 	connectionLimit: process.env.CONNECTION_LIMIT || 30,
 	writer: {

@@ -179,7 +179,6 @@ class Pool {
 			if (!connection) {
 				continue
 			}
-			this.event.emit('end', connection)
 			connection.end()
 		}
 	}
