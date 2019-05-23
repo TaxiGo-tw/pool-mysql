@@ -458,6 +458,12 @@ describe('test get connection', () => {
 			done()
 		})
 	})
+
+	it('2', async () => {
+		for (let i = 0; i < 10000; i++) {
+			pool.createConnection().then(c => c.release())
+		}
+	})
 })
 
 describe('test pool.query()', () => {
@@ -468,13 +474,6 @@ describe('test pool.query()', () => {
 	})
 })
 
-describe('test get connections', async () => {
-	it('1', async () => {
-		for (let i = 0; i < 10000; i++) {
-			pool.createConnection().then(c => c.release())
-		}
-	})
-})
 // pool.event.on('get', connection => {
 // 	console.log(connection.id)
 // })
