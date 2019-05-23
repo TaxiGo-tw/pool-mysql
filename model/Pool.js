@@ -39,9 +39,9 @@ class Pool {
 		return amount
 	}
 
-	set numberOfConnections(value) {
-		this._numberOfConnections = value
-	}
+	// set numberOfConnections(value) {
+	// 	this._numberOfConnections = value
+	// }
 
 	get Schema() {
 		return require('./Schema')
@@ -172,14 +172,16 @@ class Pool {
 
 	//結束一半的waiting connections, 至少留10個
 	_endFreeConnections() {
+		const atLeast = process.env.SQL_FREE_CONNECTIONS || 10
 		const stayAmount = Math.ceil(this.connectionPool.waiting.length / 2)
 
-		while (stayAmount > 10 && this.connectionPool.waiting.length > stayAmount) {
+		while (stayAmount > atLeast && this.connectionPool.waiting.length > stayAmount) {
 			const connection = this.connectionPool.waiting.shift()
-			this.numberOfConnections
 			if (!connection) {
 				continue
 			}
+
+			this.numberOfConnections
 			connection.end()
 		}
 	}

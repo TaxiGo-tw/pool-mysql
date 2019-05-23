@@ -5,7 +5,7 @@ module.exports = {
 		user: process.env.SQL_USER || 'root',
 		password: process.env.SQL_PASSWORD || '123',
 		database: process.env.SQL_TABLE || 'test',
-		multipleStatements: process.env.MULTIPLE_STATEMENTS || true,
+		multipleStatements: process.env.SQL_MULTIPLE_STATEMENTS || true,
 		charset: 'utf8mb4'
 	},
 	reader: {
@@ -13,7 +13,7 @@ module.exports = {
 		user: process.env.SQL_USER_READER || process.env.SQL_USER || 'root',
 		password: process.env.SQL_PASSWORD_READER || process.env.SQL_PASSWORD || '123',
 		database: process.env.SQL_TABLE || 'test',
-		multipleStatements: process.env.MULTIPLE_STATEMENTS || true,
+		multipleStatements: process.env.SQL_MULTIPLE_STATEMENTS || true,
 		charset: 'utf8mb4'
 	}
 }
