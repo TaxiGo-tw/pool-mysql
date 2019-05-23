@@ -133,6 +133,7 @@ class Pool {
 			this.event.emit('create', connection)
 
 			connection.connect().then(() => {
+				this.numberOfConnections
 				callback(undefined, connection)
 			}).catch(err => {
 				delete this.connectionPool.using[connection.id]
