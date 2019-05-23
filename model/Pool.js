@@ -144,7 +144,6 @@ class Pool {
 	async _recycle(connection) {
 		const callback = this._connectionRequests.shift()
 		if (callback) {
-			console.log('recycle')
 			this.event.emit('recycle', connection)
 			connection.gotAt = new Date()
 			return callback(null, connection)
