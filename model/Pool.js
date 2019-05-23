@@ -127,6 +127,7 @@ class Pool {
 			}
 
 			//create new one
+			this.connectionID++
 			connection = new Connection(this)
 			this.connectionPool.using[connection.id] = connection
 			this.event.emit('create', connection)

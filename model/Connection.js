@@ -7,9 +7,6 @@ const mysql = require('mysql')
 function trimed(params) {
 	return params.replace(/\t/g, '').replace(/\n/g, ' ').trim()
 }
-
-
-
 module.exports = class Connection {
 	constructor(pool) {
 		this._pool = pool
@@ -18,7 +15,7 @@ module.exports = class Connection {
 		this.writer = this._mysqlConnection(this._pool.options.writer, 'Writer', this)
 		this.useWriter = false
 
-		this.id = ++pool.connectionID
+		this.id = pool.connectionID
 	}
 
 	async connect() {
@@ -296,12 +293,13 @@ module.exports = class Connection {
 	}
 
 
-	_mysqlConnection(option, role, manager) {
-		const connection = mysql.createConnection(option)
-		connection.role = role
+	_mysqlConnection(option, role, connection) {
+		const mysqlConnection = mysql.createConnection(option)
+		mysqlConnection.role = role
 
-		connection.on('error', err => {
-			manager.end()
+		mysqlConnection.on('error', err => {
+			//丟掉這個conneciton
+			connection.end()
 			// if (err.code === 'PROTOCOL_CONNECTION_LOST') {
 			// 	// db error 重新連線
 			// 	connection.connect(err => {
@@ -317,9 +315,9 @@ module.exports = class Connection {
 			// }
 		})
 
-		connection.q = (sql, values) => {
+		mysqlConnection.q = (sql, values) => {
 			return new Promise((resolve, reject) => {
-				connection.query(sql, values, (err, result) => {
+				mysqlConnection.query(sql, values, (err, result) => {
 					if (err) {
 						reject(err)
 					} else {
@@ -329,32 +327,32 @@ module.exports = class Connection {
 			})
 		}
 
-		connection.startTransaction = () => {
+		mysqlConnection.startTransaction = () => {
 			return new Promise((resolve, reject) => {
-				connection.beginTransaction((err) => {
-					this._pool.logger(err, `${connection.logPrefix} : Start Transaction`)
+				mysqlConnection.beginTransaction((err) => {
+					this._pool.logger(err, `${mysqlConnection.logPrefix} : Start Transaction`)
 					if (err) {
 						reject(err)
 					} else {
-						resolve(connection)
+						resolve(mysqlConnection)
 					}
 				})
 			})
 		}
 
-		connection.commitChange = () => {
+		mysqlConnection.commitChange = () => {
 			return new Promise((resolve, reject) => {
-				connection.commit((err) => {
-					this._pool.logger(err, `${connection.logPrefix} : COMMIT`)
+				mysqlConnection.commit((err) => {
+					this._pool.logger(err, `${mysqlConnection.logPrefix} : COMMIT`)
 					if (err) {
 						reject(err)
 					} else {
-						resolve(connection)
+						resolve(mysqlConnection)
 					}
 				})
 			})
 		}
 
-		return connection
+		return mysqlConnection
 	}
 }
