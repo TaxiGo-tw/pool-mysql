@@ -150,6 +150,7 @@ class Pool {
 		}
 
 		delete this.connectionPool.using[connection.id]
+		connection._resetStatus()
 		this.connectionPool.waiting.push(connection)
 		this.event.emit('release', connection)
 	}

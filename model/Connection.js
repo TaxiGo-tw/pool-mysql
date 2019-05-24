@@ -19,6 +19,12 @@ module.exports = class Connection {
 
 		this.createdAt = new Date()
 		this.gotAt = new Date()
+
+		this._resetStatus()
+	}
+
+	_resetStatus() {
+		this._status = {}
 	}
 
 	async connect() {
@@ -51,6 +57,7 @@ module.exports = class Connection {
 		try {
 			// await this.reader.startTransaction()
 			await this.writer.startTransaction()
+			this._status.isStartedStransaction = true
 			cb(undefined)
 		} catch (e) {
 			cb(e)
@@ -58,23 +65,18 @@ module.exports = class Connection {
 	}
 
 	async awaitTransaction() {
-		return new Promise(async (resolve, reject) => {
-			try {
-				// await this.reader.startTransaction()
-				await this.writer.startTransaction()
-				resolve()
-			} catch (e) {
-				reject(e)
-			}
-		})
+		await this.writer.beginTransaction()
 	}
 
 	async awaitCommit() {
 		return new Promise(async (resolve, reject) => {
 			try {
-				// await this.reader.commit()
-				await this.writer.commit()
-				resolve()
+				this.commit((err) => {
+					if (err) {
+						throw err
+					}
+					resolve()
+				})
 			} catch (e) {
 				reject(e)
 			}
@@ -217,6 +219,8 @@ module.exports = class Connection {
 				this._pool.logger(e, `${this.writer.logPrefix} : COMMIT`)
 			}
 
+			this._status.isCommited = true
+
 			if (cb) {
 				cb(e)
 			}
@@ -237,6 +241,12 @@ module.exports = class Connection {
 
 	release() {
 		this._pool.logger(null, `[${this.id}] RELEASE`)
+
+		if (this._status.isStartedStransaction && !this._status.isCommited) {
+			console.error('pool-mysql: Transaction started, should be Committed')
+		}
+		this._resetStatus()
+
 		this._pool._recycle(this).then().catch(console.log)
 	}
 
