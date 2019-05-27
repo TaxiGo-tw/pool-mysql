@@ -114,26 +114,6 @@ await Trips.
       .exec()                                         //will return nested json
 ```
 
-### log level
-
-Print all
-
-```js
-pool.logger = 'all'
-```
-
-Print if error
-
-```js
-pool.logger = 'error'
-```
-
-Print nothing
-
-```js
-pool.logger = 'none'
-```
-
 ### cache
 
 ```js
@@ -163,4 +143,51 @@ await connection.q('SELECT id FROM user WHERE uid = ?', userID, {
 await connection.q('SELECT id FROM user WHERE uid = ?', userID, { EX: 60})
 
 User.SELECT().FROM().WHERE('uid = ?',id).EX(60).exec()
+```
+
+
+### Auto Free Connections
+
+Every 300 seconds free half reader&writer connections
+
+But will keep at least 10 reader&writer connections
+
+### Events
+
+* `get` called when connection got from pool
+
+* `create` called when connection created
+
+* `release` called when connection released
+
+* `query` called when connection query
+
+* `amount` called when connection pool changes amount
+
+* `end` called when connection end
+
+* `request` request a connection but capped on connection limit
+
+* `recycle` free connection is back
+
+```js
+pool.event.on('get', connection => {
+	console.log(connection.id)
+})
+```
+
+
+### Log level
+
+* `all` print logs anywhere
+
+* `error` print logs if error
+
+* `none` never print logs
+
+default to `error`
+
+```js
+pool.logger = 'error'
+// [3] Reader 1ms:  SELECT * FROM table
 ```
