@@ -258,7 +258,7 @@ module.exports = class Connection {
 		delete this.reader
 		delete this.writer
 
-		this.pool.event.emit('end', this)
+		this._pool.event.emit('end', this)
 	}
 
 	isSelect(sql) {
