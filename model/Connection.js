@@ -231,6 +231,8 @@ module.exports = class Connection {
 		return new Promise((resolve, reject) => {
 			const x = this.reader.rollback(() => {
 				const y = this.writer.rollback(() => {
+					this._status.isCommited = true
+
 					this._pool.logger(null, '[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
 					this._pool.logger(null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
 					resolve()
@@ -253,12 +255,11 @@ module.exports = class Connection {
 	end() {
 		this.reader.end()
 		this.writer.end()
+		this._pool.event.emit('end', this)
 
 		delete this._pool
 		delete this.reader
 		delete this.writer
-
-		this._pool.event.emit('end', this)
 	}
 
 	isSelect(sql) {
