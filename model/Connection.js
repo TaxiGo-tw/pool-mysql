@@ -27,6 +27,10 @@ module.exports = class Connection {
 		this._status = {}
 	}
 
+	get isUsing() {
+		return this._pool.connectionPool.using[this.id] != undefined
+	}
+
 	async connect() {
 		const create = async (connection) => {
 			return new Promise((resolve, reject) => {
@@ -84,10 +88,15 @@ module.exports = class Connection {
 	}
 
 	query(sql, values, cb) {
+		let command = sql.sql || sql
+
+		if (!this.isUsing) {
+			this._pool.logger(1, `pool-mysql connection not using, sql:, ${command}`)
+		}
+
 		const connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
 		this.useWriter = false
 
-		let command = sql.sql || sql
 
 		if (this.isSelect(command) && this._noCache) {
 			command = command.replace(/^select/gi, 'SELECT SQL_NO_CACHE ')

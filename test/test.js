@@ -474,6 +474,21 @@ describe('test pool.query()', () => {
 	})
 })
 
+describe('test release first', () => {
+	it('1', (done) => {
+		pool.createConnection().then(connection => {
+			assert.equal(connection.isUsing, true)
+			connection.release()
+			assert.equal(connection.isUsing, false)
+
+			connection.query('SELECT * FROM trips LIMIT 5', () => {
+				console.log('done')
+				done()
+			})
+		})
+	})
+})
+
 // pool.event.on('get', connection => {
 // 	console.log(connection.id)
 // })
