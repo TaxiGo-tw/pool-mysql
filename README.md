@@ -32,7 +32,7 @@ SQL_PASSWORD={{passwd}}
 SQL_TABLE={{table name}}
 ```
 
-##### Query
+#### Query
 
 Require `pool-mysql`
 
@@ -44,7 +44,7 @@ pool.query(sql, value, (err, data) => {
 })
 ```
 
-Create connection
+##### Create connection
 
 ```js
 const connection = await pool.createConnection()
@@ -62,7 +62,7 @@ try {
 }
 ```
 
-After model setting
+##### After model setting
 
 ```js
 const Schema = require('pool-mysql').Schema
@@ -112,6 +112,24 @@ await Trips.
         return trip
       })
       .exec()                                         //will return nested json
+```
+
+##### Updated
+
+return value after updated
+
+```js
+const results = await Block
+		.UPDATE()
+		.SET('id = id')
+		.WHERE({ blocked: 3925 })
+		.UPDATED('id', 'blocker')
+		.exec()
+
+for (const result of results) {
+	result.should.have.property('id')
+	result.should.have.property('blocker')
+}
 ```
 
 ### cache
