@@ -474,7 +474,7 @@ describe('test pool.query()', () => {
 	})
 })
 
-describe('test release first', () => {
+describe('test release before query warning', () => {
 	it('1', (done) => {
 		pool.createConnection().then(connection => {
 			assert.equal(connection.isUsing, true)
@@ -482,7 +482,6 @@ describe('test release first', () => {
 			assert.equal(connection.isUsing, false)
 
 			connection.query('SELECT * FROM trips LIMIT 5', () => {
-				console.log('done')
 				done()
 			})
 		})
