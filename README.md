@@ -62,7 +62,7 @@ try {
 }
 ```
 
-##### After model setting
+#### Model setting
 
 ```js
 const Schema = require('pool-mysql').Schema
@@ -88,6 +88,10 @@ const User = class user extends Schema {
       user: [require('./posts')] //one to many reference
     }
 }
+```
+#### Query
+
+```js
 
 await Posts
       .SELECT()         //default to columns()
@@ -97,24 +101,36 @@ await Posts
       .PRINT()            //print sql statement, query time, connection id and works on writer/reader
       .WRITER           //force query on writer
       .exec()
-
-await Trips.
-      SELECT(Trips.KEYS, Users.KEYS)                   //defined columns
-      .FROM()
-      .LEFTJOIN('user_info ON uid = trips.user_id')
-      .WHERE('trip_id = ?', 12345)
-      .AND('trip_id > 0', { isExec: condition }) // isExec: run this statement or not
-      .LIMIT()
-      .NESTTABLES()
-      .MAP(result => {
-        const trip = result.trips
-        trip.user = result.user_info
-        return trip
-      })
-      .exec()                                         //will return nested json
 ```
 
-##### Updated
+#### Nested Query
+
+```js
+const results = Trips.
+	SELECT(Trips.KEYS, Users.KEYS)
+	.FROM()
+	.LEFTJOIN('user_info ON uid = trips.user_id')
+	.WHERE('trip_id = ?', 23890)
+	.AND('trip_id > 0')
+	.LIMIT()
+	.NESTTABLES()
+	.MAP(result => {
+		const trip = result.trips
+		trip.user = result.user_info
+		return trip
+	})
+	.FIRST()
+	.exec()
+
+results.should.have.property('trip_id')
+results.trip_id.should.equal(23890)
+results.should.have.property('user_id')
+results.should.have.property('user')
+results.user.should.have.property('uid')
+assert(results instanceof Trips)
+```
+
+### Updated
 
 return value after updated
 
