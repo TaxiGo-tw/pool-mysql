@@ -91,7 +91,7 @@ module.exports = class Connection {
 		let command = sql.sql || sql
 
 		if (!this.isUsing) {
-			this._pool.logger(1, `pool-mysql connection not using, sql:, ${command}`)
+			console.error(`pool-mysql: connection not using, might released too early,  sql:, ${command}`)
 		}
 
 		const connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
