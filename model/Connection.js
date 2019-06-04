@@ -4,6 +4,9 @@ const QUERY_THRESHOLD_MS = process.env.QUERY_THRESHOLD_MS || 500
 
 const mysql = require('mysql')
 
+const Event = require('./Event')
+
+
 function trimed(params) {
 	return params.replace(/\t/g, '').replace(/\n/g, ' ').trim()
 }
@@ -87,19 +90,31 @@ module.exports = class Connection {
 		})
 	}
 
-	query(sql, values, cb) {
-		let command = sql.sql || sql
+	query(sql, bb, cc) {
+		let values = bb
+		let cb = cc
+
+		if (bb instanceof Function) {
+			values = null
+			cb = bb
+		}
+
+
+		let sqlStatment = sql.sql || sql
 
 		if (!this.isUsing) {
-			console.error(`pool-mysql: connection not using, might released too early,  sql:, ${command}`)
+			console.error(`
+	pool-mysql: connection is not using, might released too early
+	Query: ${sqlStatment}
+			`)
 		}
 
 		const connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
 		this.useWriter = false
 
 
-		if (this.isSelect(command) && this._noCache) {
-			command = command.replace(/^select/gi, 'SELECT SQL_NO_CACHE ')
+		if (this.isSelect(sqlStatment) && this._noCache) {
+			sqlStatment = sqlStatment.replace(/^select/gi, 'SELECT SQL_NO_CACHE ')
 		}
 		this._noCache = false
 
@@ -110,48 +125,42 @@ module.exports = class Connection {
 		this._print = false
 
 		const query = {
-			sql: trimed(command),
+			sql: mysql.format(trimed(sqlStatment), values),
 			nestTables: sql.nestTables
 		}
 
+		this.querying = query.sql
+
+		Event.emit('will_query', query.sql)
+
 		const startTime = new Date()
 
-		this.querying = command
-		const q = connection.query(query, values, (a, b, c) => {
-			delete this.querying
-
+		connection.query(query, (a, b, c) => {
 			const endTime = new Date()
-			if (mustUpdateOneRow && b && b.affectedRows != 1) {
-				// console.log(a, b, c)
-				return cb(a || Error('MUST_UPDATE_ONE_ROW'), b, c)
-			} else if (mustUpdateOneRow && b && b.affectedRows == 1) {
-				// console.log(a, b, c)
-				// console.log('changed a row')
-			}
 
+			delete this.querying
 			//log
-			const string = mustUpdateOneRow ? 'mustUpdateOneRow' : ''
+			const optionsString = [
+				mustUpdateOneRow ? 'mustUpdateOneRow' : ''
+			].join(',')
+
 			const costTime = endTime - startTime
-			let printString
-
 			const isLongQuery = endTime - launchTme > QUERY_THRESHOLD_START && costTime > QUERY_THRESHOLD_MS
-			if (isLongQuery) {
-				printString = `| Long Query: ${costTime} ms ${sql.sql || sql}`
-				this._pool.logger(isLongQuery, printString, __function, __line)
-			} else if (print) {
-				printString = `${connection.logPrefix} ${costTime}ms: ${string} ${q.sql || sql}`
-				this._pool.logger(1, printString)
-			} else {
-				printString = `${connection.logPrefix} ${costTime}ms: ${string} ${q.sql || sql}`
-				this._pool.logger(null, printString)
-			}
+			const printString = `${connection.logPrefix} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
+			this._pool.logger(print || isLongQuery, printString)
 
-			this._pool.event.emit('query', printString)
+			//emit
+			Event.emit('query', printString)
+			Event.emit('did_query', query.sql)
+
+			if (mustUpdateOneRow && b && b.affectedRows != 1) {
+				return cb(a || Error('MUST_UPDATE_ONE_ROW'), b, c)
+			}
 
 			cb(a, b, c)
 		})
 
-		return {}
+		return query
 	}
 
 	_q(sql, values) {
@@ -264,7 +273,7 @@ module.exports = class Connection {
 	end() {
 		this.reader.end()
 		this.writer.end()
-		this._pool.event.emit('end', this)
+		Event.emit('end', this)
 
 		delete this._pool
 		delete this.reader

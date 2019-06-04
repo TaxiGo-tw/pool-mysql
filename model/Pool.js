@@ -3,7 +3,7 @@ const LogLevel = require('./LogLevel')
 const defaultOptions = require('./DefaultOptions')
 const Connection = require('./Connection')
 
-const { EventEmitter } = require('events')
+const Event = require('./Event')
 
 const extendRedis = require('./RedisExtend')
 
@@ -23,12 +23,14 @@ class Pool {
 
 		this._connectionRequests = []
 
-		this.event = new EventEmitter()
-
 		console.log('pool-mysql writer host: ', this.options.writer.host)
 		console.log('pool-mysql reader host: ', this.options.reader.host)
 
 		this.runSchedulers()
+	}
+
+	get event() {
+		return Event
 	}
 
 	runSchedulers() {
@@ -52,7 +54,7 @@ class Pool {
 		const amount = Object.keys(this.connectionPool.using).length + this.connectionPool.waiting.length
 
 		if (amount != this._numberOfConnections) {
-			this.event.emit('amount', amount)
+			Event.emit('amount', amount)
 			this._numberOfConnections = amount
 		}
 
@@ -112,14 +114,14 @@ class Pool {
 			if (connection) {
 				this.connectionPool.using[connection.id] = connection
 				connection.gotAt = new Date()
-				this.event.emit('get', connection)
+				Event.emit('get', connection)
 				return callback(undefined, connection)
 			}
 			//on connection limit, 去排隊
 			else if (this.numberOfConnections >= this.options.connectionLimit) {
 				callback.requestTime = new Date()
 				this._connectionRequests.push(callback)
-				this.event.emit('request', this._connectionRequests.length)
+				Event.emit('request', this._connectionRequests.length)
 				return
 			}
 
@@ -129,7 +131,7 @@ class Pool {
 			this.connectionPool.using[connection.id] = connection
 
 			connection.connect().then(() => {
-				this.event.emit('create', connection)
+				Event.emit('create', connection)
 				this.numberOfConnections
 				callback(undefined, connection)
 			}).catch(err => {
@@ -144,7 +146,7 @@ class Pool {
 	async _recycle(connection) {
 		const callback = this._connectionRequests.shift()
 		if (callback) {
-			this.event.emit('recycle', connection)
+			Event.emit('recycle', connection)
 			connection.gotAt = new Date()
 			return callback(null, connection)
 		}
@@ -152,7 +154,7 @@ class Pool {
 		delete this.connectionPool.using[connection.id]
 		connection._resetStatus()
 		this.connectionPool.waiting.push(connection)
-		this.event.emit('release', connection)
+		Event.emit('release', connection)
 	}
 
 	query(sql, b, c) {

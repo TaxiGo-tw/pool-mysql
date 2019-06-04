@@ -92,7 +92,6 @@ const User = class user extends Schema {
 #### Query
 
 ```js
-
 await Posts
       .SELECT()         //default to columns()
       .FROM()
@@ -106,8 +105,7 @@ await Posts
 #### Nested Query
 
 ```js
-const results = Trips.
-	SELECT(Trips.KEYS, Users.KEYS)
+const results = Trips.SELECT(Trips.KEYS, Users.KEYS)
 	.FROM()
 	.LEFTJOIN('user_info ON uid = trips.user_id')
 	.WHERE('trip_id = ?', 23890)
@@ -194,7 +192,11 @@ But will keep at least 10 reader&writer connections
 
 * `release` called when connection released
 
+* `will_query`
+
 * `query` called when connection query
+
+* `did_query`
 
 * `amount` called when connection pool changes amount
 
