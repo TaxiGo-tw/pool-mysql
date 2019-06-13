@@ -1,25 +1,25 @@
 {
-	"name": "pool-mysql",
-	"version": "1.4.5",
-	"description": "",
-	"url": "https://github.com/vivalalova/pool-mysql",
-	"main": "index.js",
-	"scripts": {
-		"test": "mocha",
-		"t": "nodemon --exec 'mocha --exit -s 0'"
-	},
-	"author": "",
-	"license": "ISC",
-	"dependencies": {
-		"mysql": "^2.16.0"
-	},
-	"devDependencies": {
-		"bluebird": "^3.5.3",
-		"chai": "^4.2.0",
-		"debug": "^4.1.0",
-		"dotenv": "^6.1.0",
-		"jest": "^23.6.0",
-		"mocha": "^5.2.0",
-		"redis": "^2.8.0"
-	}
+  "name": "pool-mysql",
+  "version": "1.4.5",
+  "description": "",
+  "url": "https://github.com/vivalalova/pool-mysql",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "t": "nodemon --exec 'mocha --exit -s 0'"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mysql": "^2.16.0"
+  },
+  "devDependencies": {
+    "bluebird": "^3.5.5",
+    "chai": "^4.2.0",
+    "debug": "^4.1.1",
+    "dotenv": "^8.0.0",
+    "jest": "^24.8.0",
+    "mocha": "^6.1.4",
+    "redis": "^2.8.0"
+  }
 }
