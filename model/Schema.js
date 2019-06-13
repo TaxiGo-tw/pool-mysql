@@ -258,7 +258,9 @@ module.exports = class Base {
 				print,
 				filter,
 				getFirst,
-				updated
+				updated,
+				changedRows,
+				affectedRows
 			} = this._options()
 
 			const ex = this._EX || {}
@@ -269,6 +271,15 @@ module.exports = class Base {
 				results = await this._connection.print.q(query, values, ex)
 			} else {
 				results = await this._connection.q(query, values, ex)
+			}
+
+
+			// check changedRows && affectedRows
+			const index = updated ? 1 : 0
+			if (changedRows && changedRows != results[index].changedRows) {
+				throw Error(`changedRows did set to ${changedRows}, but ${results[index].changedRows}`)
+			} else if (affectedRows && affectedRows != results[index].affectedRows) {
+				throw Error(`affectedRows did set to ${affectedRows}, but ${results[index].affectedRows}`)
 			}
 
 			if (this._connection.isSelect(query.sql)) {
@@ -436,13 +447,29 @@ module.exports = class Base {
 		return this
 	}
 
-	SET(whereCaluse, whereCaluse2) {
+	SET(whereCaluse, whereCaluse2, { passUndefined = false } = {}) {
+		function passUndefinedIfNeeded(passUndefined, value) {
+			if (!passUndefined || !(value instanceof Object)) {
+				return value
+			}
+
+			const result = JSON.parse(JSON.stringify(value))
+			for (const key in Object.keys(result)) {
+				if (result[key] === undefined) {
+					delete result[key]
+				}
+			}
+			return result
+		}
+
 		if (whereCaluse instanceof Object) {
-			this._q.push({ type: 'SET', command: '?', value: whereCaluse })
+			const value = passUndefinedIfNeeded(passUndefined, whereCaluse)
+			this._q.push({ type: 'SET', command: '?', value })
 			return this
 		}
 
-		return addQuery.bind(this)('SET', whereCaluse, whereCaluse2, false)
+		const value = passUndefinedIfNeeded(passUndefined, whereCaluse2)
+		return addQuery.bind(this)('SET', whereCaluse, value, false)
 	}
 
 	DUPLICATE(whereCaluse, whereCaluse2) {
@@ -549,6 +576,16 @@ module.exports = class Base {
 		return obj.AFTER(`SELECT ${queryParams}`)
 	}
 
+	CHANGED_ROWS(changedRows) {
+		this._changedRows = changedRows
+		return this
+	}
+
+	AFFECTED_ROWS(affectedRows) {
+		this._affectedRows = affectedRows
+		return this
+	}
+
 	_options() {
 		const options = {}
 
@@ -575,6 +612,12 @@ module.exports = class Base {
 
 		options.updated = this._updated
 		delete this._updated
+
+		options.changedRows = this._changedRows
+		delete this._changedRows
+
+		options.affectedRows = this._affectedRows
+		delete this._affectedRows
 
 		return options
 	}
