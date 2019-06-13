@@ -430,6 +430,8 @@ describe('test PRE & AFTER', async () => {
 			.SET('id = id')
 			.WHERE({ blocked: 3925 })
 			.UPDATED('id', 'blocker')
+			.AFFECTED_ROWS(3)
+			.CHANGED_ROWS(0)
 
 		const results = await query.exec()
 
