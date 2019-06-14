@@ -253,6 +253,7 @@ module.exports = class Base {
 			const {
 				query,
 				values,
+				formatted,
 				mapCallback,
 				nested,
 				print,
@@ -277,9 +278,9 @@ module.exports = class Base {
 			// check changedRows && affectedRows
 			const ch = updated ? results[1] : results
 			if (changedRows && changedRows != ch.changedRows) {
-				throw Error(`changedRows did set to ${changedRows}, but ${ch.changedRows}`)
+				throw Error(`changedRows did set to ${changedRows}, but ${ch.changedRows}, SQL: ${formatted}`)
 			} else if (affectedRows && affectedRows != ch.affectedRows) {
-				throw Error(`affectedRows did set to ${affectedRows}, but ${ch.affectedRows}`)
+				throw Error(`affectedRows did set to ${affectedRows}, but ${ch.affectedRows}, SQL: ${formatted}`)
 			}
 
 			if (this._connection.isSelect(query.sql)) {
@@ -589,9 +590,10 @@ module.exports = class Base {
 	_options() {
 		const options = {}
 
-		const formatted = this.FORMATTED(false)
+		const formatted = this.FORMATTED()
 		options.query = formatted.query
 		options.values = formatted.values
+		options.formatted = formatted.formatted
 
 		delete this._nestTables
 
