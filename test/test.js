@@ -414,10 +414,12 @@ describe('test PRE & AFTER', async () => {
 	it('1', async () => {
 		const query = Block
 			.UPDATE()
-			.SET('id = 2905,blocker = (SELECT @aa := blocker)')
+			.SET('id = 2905, blocker = (SELECT @aa := blocker)')
 			.WHERE({ id: 2905 })
 			.PRE('SET @aa := 0')
 			.AFTER('SELECT @aa id ')
+			.AFFECTED_ROWS(0)
+			.CHANGED_ROWS(0)
 
 		const results = await query.exec()
 		results.length.should.equals(3)

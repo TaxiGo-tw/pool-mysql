@@ -275,11 +275,11 @@ module.exports = class Base {
 
 
 			// check changedRows && affectedRows
-			const index = updated ? 1 : 0
-			if (changedRows && changedRows != results[index].changedRows) {
-				throw Error(`changedRows did set to ${changedRows}, but ${results[index].changedRows}`)
-			} else if (affectedRows && affectedRows != results[index].affectedRows) {
-				throw Error(`affectedRows did set to ${affectedRows}, but ${results[index].affectedRows}`)
+			const ch = updated ? results[1] : results
+			if (changedRows && changedRows != ch.changedRows) {
+				throw Error(`changedRows did set to ${changedRows}, but ${ch.changedRows}`)
+			} else if (affectedRows && affectedRows != ch.affectedRows) {
+				throw Error(`affectedRows did set to ${affectedRows}, but ${ch.affectedRows}`)
 			}
 
 			if (this._connection.isSelect(query.sql)) {
