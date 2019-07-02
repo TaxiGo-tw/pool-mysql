@@ -431,12 +431,14 @@ describe('test PRE & AFTER', async () => {
 			.UPDATE()
 			.SET('id = id')
 			.WHERE({ blocked: 3925 })
+			.AND({ blocked: 22762 })
 			.UPDATED('id', 'blocker')
 			.AFFECTED_ROWS(3)
 			.CHANGED_ROWS(0)
-
+			.PRINT()
 		const results = await query.exec()
 
+		console.log(results)
 		for (const result of results) {
 			result.should.have.property('id')
 			result.should.have.property('blocker')

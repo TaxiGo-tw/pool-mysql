@@ -138,6 +138,7 @@ const results = await Block
 		.SET('id = id')
 		.WHERE({ blocked: 3925 })
 		.UPDATED('id', 'blocker')
+		.CHANGED_ROW(1)  //throw if changedRows !== 1
 		.exec()
 
 for (const result of results) {
