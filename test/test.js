@@ -410,33 +410,14 @@ describe('test insert', async () => {
 
 
 
-describe('test PRE & AFTER', async () => {
+describe('test UPDATED', async () => {
 	it('1', async () => {
-		const query = Block
-			.UPDATE()
-			.SET('id = 2905, blocker = (SELECT @aa := blocker)')
-			.WHERE({ id: 2905 })
-			.PRE('SET @aa := 0')
-			.AFTER('SELECT @aa id ')
-			.AFFECTED_ROWS(0)
-			.CHANGED_ROWS(0)
-
-		const results = await query.exec()
-		results.length.should.equals(3)
-		results[2][0].should.have.property('id')
-	})
-
-	it('updated', async () => {
 		const query = Block
 			.UPDATE()
 			.SET('id = id')
 			.WHERE({ blocked: 22762 })
 			.AND({ blocked: 3925 })
 			.UPDATED('id', 'blocker')
-		// .AFFECTED_ROWS(1)
-		// .CHANGED_ROWS(0)
-		// .FIRST()
-		// .PRINT()
 		const results = await query.exec()
 
 		for (const result of results) {
@@ -445,8 +426,7 @@ describe('test PRE & AFTER', async () => {
 		}
 	})
 
-
-	it('updated', async () => {
+	it('2', async () => {
 		const trip_id = 29106
 
 		await Trips
@@ -463,6 +443,7 @@ describe('test PRE & AFTER', async () => {
 			.AND(`trip_status = 'DRIVER_RESERVED'`)
 			.UPDATED('trip_id', 'user_id', 'driver_id')
 			.AFFECTED_ROWS(1)
+			.CHANGED_ROWS(1)
 			.FIRST()
 			.exec()
 
