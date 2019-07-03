@@ -380,7 +380,7 @@ module.exports = class Base {
 				}
 
 				const updated = results.reverse()[0][0]
-				const updatedResults = []
+				let updatedResults = []
 
 				for (const key in updated) {
 					const arr = updated[key].replace(/,$/, '').split(',')
@@ -570,7 +570,7 @@ module.exports = class Base {
 			obj = obj.AND(`SELECT @${variable} := CONCAT_WS(',', ${variable}, @${variable})`)
 		}
 
-		let preParams = variables.map(r => `@${r} := ''`).join(',')
+		const preParams = variables.map(r => `@${r} := ''`).join(',')
 		obj = obj.PRE(`SET ${preParams}`)
 
 		const queryParams = variables.map(r => `@${r} ${r}`).join(',')

@@ -426,23 +426,49 @@ describe('test PRE & AFTER', async () => {
 		results[2][0].should.have.property('id')
 	})
 
-	it('2', async () => {
+	it('updated', async () => {
 		const query = Block
 			.UPDATE()
 			.SET('id = id')
-			.WHERE({ blocked: 3925 })
-			.AND({ blocked: 22762 })
+			.WHERE({ blocked: 22762 })
+			.AND({ blocked: 3925 })
 			.UPDATED('id', 'blocker')
-			.AFFECTED_ROWS(3)
-			.CHANGED_ROWS(0)
-			.PRINT()
+		// .AFFECTED_ROWS(1)
+		// .CHANGED_ROWS(0)
+		// .FIRST()
+		// .PRINT()
 		const results = await query.exec()
 
-		console.log(results)
 		for (const result of results) {
 			result.should.have.property('id')
 			result.should.have.property('blocker')
 		}
+	})
+
+
+	it('updated', async () => {
+		const trip_id = 29106
+
+		await Trips
+			.UPDATE()
+			.SET(`driver_id = 3925, trip_status = 'DRIVER_RESERVED'`)
+			.WHERE({ trip_id })
+			.FIRST()
+			.exec()
+
+		const result = await Trips
+			.UPDATE()
+			.SET(`driver_id = NULL, trip_status = 'REQUESTING_DRIVER'`)
+			.WHERE({ trip_id })
+			.AND(`trip_status = 'DRIVER_RESERVED'`)
+			.UPDATED('trip_id', 'user_id', 'driver_id')
+			.AFFECTED_ROWS(1)
+			.FIRST()
+			.exec()
+
+		result.should.have.property('trip_id')
+		result.should.have.property('user_id')
+		result.should.have.property('driver_id')
 	})
 })
 
