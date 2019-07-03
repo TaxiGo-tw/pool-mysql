@@ -96,6 +96,7 @@ class Pool {
 		extendRedis(this._redisClient)
 	}
 
+	//TODO: { limitKey, limit = 0 } = {}
 	async createConnection() {
 		return new Promise(async (resolve, reject) => {
 			this.getConnection((err, connection) => {
@@ -107,7 +108,7 @@ class Pool {
 		})
 	}
 
-	getConnection(callback, retry = 0) {
+	getConnection(callback) {
 		try {
 			//reuse
 			let connection = this.connectionPool.waiting.shift()
