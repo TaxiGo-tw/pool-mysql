@@ -26,28 +26,11 @@ class Pool {
 		console.log('pool-mysql writer host: ', this.options.writer.host)
 		console.log('pool-mysql reader host: ', this.options.reader.host)
 
-		this.runSchedulers()
+		this._runSchedulers()
 	}
 
 	get event() {
 		return Event
-	}
-
-	runSchedulers() {
-		//自動清多餘connection
-		setInterval(this._endFreeConnections.bind(this), 5 * 60 * 1000)
-
-		//清掉timeout的get connection requests
-		setInterval(() => {
-			const now = new Date()
-			const requestTimeOut = 10000
-
-			while (this._connectionRequests[0] && now - this._connectionRequests[0].requestTime > requestTimeOut) {
-				const callback = this._connectionRequests.shift()
-				const err = Error('get connection request timeout')
-				callback(err, null)
-			}
-		}, 1000)
 	}
 
 	get numberOfConnections() {
@@ -60,10 +43,6 @@ class Pool {
 
 		return amount
 	}
-
-	// set numberOfConnections(value) {
-	// 	this._numberOfConnections = value
-	// }
 
 	get Schema() {
 		return require('./Schema')
@@ -137,25 +116,13 @@ class Pool {
 				callback(undefined, connection)
 			}).catch(err => {
 				delete this.connectionPool.using[connection.id]
+				delete connection.limitKey
+
 				callback(err, undefined)
 			})
 		} catch (error) {
 			callback(error, undefined)
 		}
-	}
-
-	async _recycle(connection) {
-		const callback = this._connectionRequests.shift()
-		if (callback) {
-			Event.emit('recycle', connection)
-			connection.gotAt = new Date()
-			return callback(null, connection)
-		}
-
-		delete this.connectionPool.using[connection.id]
-		connection._resetStatus()
-		this.connectionPool.waiting.push(connection)
-		Event.emit('release', connection)
 	}
 
 	query(sql, b, c) {
@@ -178,6 +145,22 @@ class Pool {
 
 	release() { }
 
+	async _recycle(connection) {
+		const callback = this._connectionRequests.shift()
+		if (callback) {
+			Event.emit('recycle', connection)
+			connection.gotAt = new Date()
+			return callback(null, connection)
+		}
+
+		delete this.connectionPool.using[connection.id]
+		delete connection.limitKey
+
+		connection._resetStatus()
+		this.connectionPool.waiting.push(connection)
+		Event.emit('release', connection)
+	}
+
 	//結束一半的waiting connections, 至少留10個
 	_endFreeConnections() {
 		const atLeast = process.env.SQL_FREE_CONNECTIONS || 10
@@ -192,6 +175,24 @@ class Pool {
 			this.numberOfConnections
 			connection.end()
 		}
+	}
+
+
+	_runSchedulers() {
+		//自動清多餘connection
+		setInterval(this._endFreeConnections.bind(this), 5 * 60 * 1000)
+
+		//清掉timeout的get connection requests
+		setInterval(() => {
+			const now = new Date()
+			const requestTimeOut = 10000
+
+			while (this._connectionRequests[0] && now - this._connectionRequests[0].requestTime > requestTimeOut) {
+				const callback = this._connectionRequests.shift()
+				const err = Error('get connection request timeout')
+				callback(err, null)
+			}
+		}, 1000)
 	}
 }
 
