@@ -278,9 +278,9 @@ module.exports = class Base {
 			// check changedRows && affectedRows
 			const ch = updated ? results[1] : results
 			if (changedRows != undefined && changedRows != ch.changedRows) {
-				throw Error(`changedRows did set to ${changedRows}, but ${ch.changedRows}, SQL: ${formatted}`)
+				throw Error(`changedRows did set to ${changedRows}, but ${ch.changedRows}`)
 			} else if (affectedRows != undefined && affectedRows != ch.affectedRows) {
-				throw Error(`affectedRows did set to ${affectedRows}, but ${ch.affectedRows}, SQL: ${formatted}`)
+				throw Error(`affectedRows did set to ${affectedRows}, but ${ch.affectedRows}`)
 			}
 
 			if (this._connection.isSelect(query.sql)) {
