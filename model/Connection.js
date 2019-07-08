@@ -341,19 +341,6 @@ module.exports = class Connection {
 		mysqlConnection.on('error', err => {
 			//丟掉這個conneciton
 			connection.end()
-			// if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-			// 	// db error 重新連線
-			// 	connection.connect(err => {
-			// 		if (err) {
-			// 			setTimeout(() => {
-			// 				connection.connect()
-			// 			}, 300)
-			// 		}
-			// 	})
-			// } else {
-			// 	console.log('mysql connection', err)
-			// 	throw err
-			// }
 		})
 
 		mysqlConnection.q = (sql, values) => {
