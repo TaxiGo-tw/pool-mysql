@@ -1,3 +1,1 @@
-
-const Pool = require('./model/Pool')
-module.exports = Pool
+module.exports = require('./model/Pool')

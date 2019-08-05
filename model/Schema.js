@@ -253,6 +253,7 @@ module.exports = class Base {
 			const {
 				query,
 				values,
+				formatted,
 				mapCallback,
 				nested,
 				print,
@@ -275,11 +276,11 @@ module.exports = class Base {
 
 
 			// check changedRows && affectedRows
-			const index = updated ? 1 : 0
-			if (changedRows && changedRows != results[index].changedRows) {
-				throw Error(`changedRows did set to ${changedRows}, but ${results[index].changedRows}`)
-			} else if (affectedRows && affectedRows != results[index].affectedRows) {
-				throw Error(`affectedRows did set to ${affectedRows}, but ${results[index].affectedRows}`)
+			const ch = updated ? results[1] : results
+			if (changedRows != undefined && changedRows != ch.changedRows) {
+				throw Error(`changedRows did set to ${changedRows}, but ${ch.changedRows}`)
+			} else if (affectedRows != undefined && affectedRows != ch.affectedRows) {
+				throw Error(`affectedRows did set to ${affectedRows}, but ${ch.affectedRows}`)
 			}
 
 			if (this._connection.isSelect(query.sql)) {
@@ -379,7 +380,7 @@ module.exports = class Base {
 				}
 
 				const updated = results.reverse()[0][0]
-				const updatedResults = []
+				let updatedResults = []
 
 				for (const key in updated) {
 					const arr = updated[key].replace(/,$/, '').split(',')
@@ -565,12 +566,12 @@ module.exports = class Base {
 		return pk
 	}
 
-	PRE(command) {
+	_PRE(command) {
 		this._pre = command + ';'
 		return this
 	}
 
-	AFTER(command) {
+	_AFTER(command) {
 		this._after = ';' + command
 		return this
 	}
@@ -585,11 +586,11 @@ module.exports = class Base {
 			obj = obj.AND(`SELECT @${variable} := CONCAT_WS(',', ${variable}, @${variable})`)
 		}
 
-		let preParams = variables.map(r => `@${r} := ''`).join(',')
-		obj = obj.PRE(`SET ${preParams}`)
+		const preParams = variables.map(r => `@${r} := ''`).join(',')
+		obj = obj._PRE(`SET ${preParams}`)
 
 		const queryParams = variables.map(r => `@${r} ${r}`).join(',')
-		return obj.AFTER(`SELECT ${queryParams}`)
+		return obj._AFTER(`SELECT ${queryParams}`)
 	}
 
 	CHANGED_ROWS(changedRows) {
@@ -605,9 +606,10 @@ module.exports = class Base {
 	_options() {
 		const options = {}
 
-		const formatted = this.FORMATTED(false)
+		const formatted = this.FORMATTED()
 		options.query = formatted.query
 		options.values = formatted.values
+		options.formatted = formatted.formatted
 
 		delete this._nestTables
 

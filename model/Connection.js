@@ -6,10 +6,6 @@ const mysql = require('mysql')
 
 const Event = require('./Event')
 
-
-function trimed(params) {
-	return params.replace(/\t/g, '').replace(/\n/g, ' ').trim()
-}
 module.exports = class Connection {
 	constructor(pool) {
 		this._pool = pool
@@ -125,7 +121,7 @@ module.exports = class Connection {
 		this._print = false
 
 		const query = {
-			sql: mysql.format(trimed(sqlStatment), values),
+			sql: mysql.format(sqlStatment.trim(), values),
 			nestTables: sql.nestTables
 		}
 
@@ -281,7 +277,7 @@ module.exports = class Connection {
 	}
 
 	isSelect(sql) {
-		const command = trimed((sql.sql || sql).toLowerCase())
+		const command = (sql.sql || sql).trim().toLowerCase()
 
 		if ((/^select/i).test(command) && command.indexOf('for update') == -1) {
 			return true
@@ -341,19 +337,6 @@ module.exports = class Connection {
 		mysqlConnection.on('error', err => {
 			//丟掉這個conneciton
 			connection.end()
-			// if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-			// 	// db error 重新連線
-			// 	connection.connect(err => {
-			// 		if (err) {
-			// 			setTimeout(() => {
-			// 				connection.connect()
-			// 			}, 300)
-			// 		}
-			// 	})
-			// } else {
-			// 	console.log('mysql connection', err)
-			// 	throw err
-			// }
 		})
 
 		mysqlConnection.q = (sql, values) => {
