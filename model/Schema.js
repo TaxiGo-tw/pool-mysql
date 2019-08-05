@@ -475,14 +475,11 @@ module.exports = class Base {
 
 	VALUES(values) {
 		if (values instanceof Array) {
-			let values_str = ''
-			for (let i = 0; i < values.length; i++) {
-				values_str += `('${values[i].join("','")}')`
-				if (i != values.length - 1) {
-					values_str += ','
-				}
-			}
-			this._q.push({ type: 'VALUES', command: values_str })
+			const command = values.map(value => {
+				return `('${value.join(`','`)}')`
+			}).join(',')
+
+			this._q.push({ type: 'VALUES', command })
 			return this
 		} else {
 			throw Error(`${this.constructor.name} values is not an array`)
