@@ -472,6 +472,22 @@ module.exports = class Base {
 		return addQuery.bind(this)('SET', whereCaluse, value, false)
 	}
 
+	VALUES(values) {
+		if (values instanceof Array) {
+			let values_str = ''
+			for (let i = 0; i < values.length; i++) {
+				values_str += `('${values[i].join("','")}')`
+				if (i != values.length - 1) {
+					values_str += ','
+				}
+			}
+			this._q.push({ type: 'VALUES', command: values_str })
+			return this
+		} else {
+			throw Error(`${this.constructor.name} values is not an array`)
+		}
+	}
+
 	DUPLICATE(whereCaluse, whereCaluse2) {
 		if (whereCaluse instanceof Object) {
 			this._q.push({ type: 'ON DUPLICATE KEY', command: 'UPDATE ?', value: whereCaluse })
