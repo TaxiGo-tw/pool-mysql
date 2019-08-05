@@ -510,6 +510,12 @@ describe('test insert values', async () => {
 
 		assert.equal(query.FORMATTED().formatted, `INSERT  INTO block_personally (blocker, blocked, notes) VALUES ('101','301','101 block 301'),('101','402','101 block 402')`)
 	})
+
+
+	after(function () {
+		console.log('after all tests')
+		process.exit()
+	})
 })
 
 // pool.event.on('get', connection => {
