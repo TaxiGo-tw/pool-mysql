@@ -501,6 +501,17 @@ describe('test release before query warning', () => {
 	})
 })
 
+// describe('test insert values', async () => {
+// 	it('5', async () => {
+// 		const query = Block
+// 			.INSERT()
+// 			.INTO(`block_personally (blocker, blocked, notes)`)
+// 			.VALUES([[101, 301, "101 block 301"], [101, 402, "101 block 402"]])
+
+// 		await query.exec()
+// 	})
+// })
+
 // pool.event.on('get', connection => {
 // 	console.log(connection.id)
 // })
