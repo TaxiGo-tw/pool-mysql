@@ -130,7 +130,7 @@ class Pool {
 			const callback = c || b
 
 			const cb = (a, b, c) => {
-				this._recycle(connection).then()
+				this._recycle(connection)
 				callback(a, b, c)
 			}
 
@@ -145,7 +145,7 @@ class Pool {
 
 	release() { }
 
-	async _recycle(connection) {
+	_recycle(connection) {
 		const callback = this._connectionRequests.shift()
 		if (callback) {
 			Event.emit('recycle', connection)
