@@ -16,6 +16,11 @@ module.exports = class Connection {
 
 		this.id = pool.connectionID
 
+		this.tag = {
+			name: 'default',
+			limit: this._pool.options.connectionLimit
+		}
+
 		this.createdAt = new Date()
 		this.gotAt = new Date()
 
@@ -27,7 +32,7 @@ module.exports = class Connection {
 	}
 
 	get isUsing() {
-		return this._pool.connectionPool.using[this.id] != undefined
+		return this._pool.connectionPool.using[this.tag.name][this.id] != undefined
 	}
 
 	async connect() {
