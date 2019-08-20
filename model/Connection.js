@@ -268,7 +268,7 @@ module.exports = class Connection {
 		}
 		this._resetStatus()
 
-		this._pool._recycle(this).then().catch(console.log)
+		this._pool._recycle(this)
 	}
 
 	end() {

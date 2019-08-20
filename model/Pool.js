@@ -154,7 +154,7 @@ class Pool {
 			const callback = c || b
 
 			const cb = (a, b, c) => {
-				this._recycle(connection).then()
+				this._recycle(connection)
 				callback(a, b, c)
 			}
 
