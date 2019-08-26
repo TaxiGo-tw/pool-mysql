@@ -19,15 +19,15 @@ module.exports = class Base {
 			throw 'sql command needed'
 		}
 
-		this._connection = outSideConnection || await pool.createConnection()
+		const connection = outSideConnection || await pool.createConnection()
 
 		try {
-			return await this._connection.q(sql, values)
+			return await connection.q(sql, values)
 		} catch (error) {
 			throw error
 		} finally {
 			if (!outSideConnection) {
-				this._connection.release()
+				connection.release()
 			}
 		}
 	}
