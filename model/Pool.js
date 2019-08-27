@@ -85,9 +85,9 @@ class Pool {
 		extendRedis(this._redisClient)
 	}
 
-	//TODO: { limitKey, limit = 0 } = {}
-	async createConnection() {
-		return new Promise((resolve, reject) => {
+	//TODO: { tag, limit = 0 } = {}
+	async createConnection({ tag_name = 'default', limit = 0 } = {}) {
+		return new Promise(async (resolve, reject) => {
 			this.getConnection((err, connection) => {
 				if (err) {
 					return reject(err)
