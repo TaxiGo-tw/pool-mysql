@@ -84,7 +84,7 @@ class Pool {
 	}
 
 	//TODO: { tag, limit = 0 } = {}
-	async createConnection({ tag_name = 'default', limit = 0 } = {}) {
+	async createConnection({ tag_name = 'default', limit = this.options.connectionLimit } = {}) {
 		return new Promise(async (resolve, reject) => {
 			this.getConnection((err, connection) => {
 				if (err) {
