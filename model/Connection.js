@@ -81,7 +81,7 @@ module.exports = class Connection {
 			try {
 				this.commit((err) => {
 					if (err) {
-						throw err
+						return reject(err)
 					}
 					resolve()
 				})
@@ -121,6 +121,8 @@ module.exports = class Connection {
 
 		const mustUpdateOneRow = this._mustUpdateOneRow
 		this._mustUpdateOneRow = false
+		const mustUpdateOneRowMessage = this.__mustUpdateOneRowMessage
+		delete this.__mustUpdateOneRowMessage
 
 		const print = this._print
 		this._print = false
@@ -155,7 +157,7 @@ module.exports = class Connection {
 			Event.emit('did_query', query.sql)
 
 			if (mustUpdateOneRow && b && b.affectedRows != 1) {
-				return cb(a || Error('MUST_UPDATE_ONE_ROW'), b, c)
+				return cb(a || Error(mustUpdateOneRowMessage || 'MUST_UPDATE_ONE_ROW'), b, c)
 			}
 
 			cb(a, b, c)
@@ -246,7 +248,7 @@ module.exports = class Connection {
 		})
 	}
 
-	rollback() {
+	async rollback() {
 		return new Promise((resolve, reject) => {
 			const x = this.reader.rollback(() => {
 				const y = this.writer.rollback(() => {
@@ -306,6 +308,12 @@ module.exports = class Connection {
 
 	get noCache() {
 		this._noCache = true
+		return this
+	}
+
+	mustUpdate(message) {
+		this._mustUpdateOneRow = true
+		this.__mustUpdateOneRowMessage = message
 		return this
 	}
 

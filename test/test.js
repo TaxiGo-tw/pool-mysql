@@ -295,8 +295,6 @@ describe('test GROUP BY', async () => {
 			.GROUP_BY('driver_id', 'user_id')
 			.LIMIT(20)
 
-		const results = await query.exec()
-
 		results[0].should.have.property('driver_id')
 		results[0].should.have.property('count')
 		assert(results[0] instanceof Trips)
@@ -312,8 +310,6 @@ describe('test GROUP BY', async () => {
 			.GROUP_BY('driver_id, user_id')
 			.LIMIT(20)
 
-		const results = await query.exec()
-
 		results[0].should.have.property('driver_id')
 		results[0].should.have.property('count')
 		assert(results[0] instanceof Trips)
@@ -328,8 +324,6 @@ describe('test GROUP BY', async () => {
 			.AND('user_id IS NOT NULL')
 			.GROUP_BY('driver_id, user_id')
 			.LIMIT(20)
-
-		const results = await query.exec()
 
 		results[0].should.have.property('driver_id')
 		results[0].should.have.property('count')
@@ -487,17 +481,30 @@ describe('test pool.query()', () => {
 	})
 })
 
-describe('test release before query warning', () => {
-	it('1', (done) => {
-		pool.createConnection().then(connection => {
-			assert.equal(connection.isUsing, true)
-			connection.release()
-			assert.equal(connection.isUsing, false)
+describe('test must update one row message', async () => {
+	it('test 1', async () => {
 
-			connection.query('SELECT * FROM trips LIMIT 5', () => {
-				done()
-			})
-		})
+		const errMessage = 'kerker'
+		const connection = await pool.createConnection()
+		try {
+			await connection.mustUpdate(errMessage).q('UPDATE user_info SET uid = 31 where uid = 31')
+		} catch (error) {
+			assert(error.message == errMessage)
+		} finally {
+			connection.release()
+		}
+	})
+})
+
+describe('test release before query warning', () => {
+	it('1', async () => {
+		const connection = await pool.createConnection()
+		assert.equal(connection.isUsing, true)
+		connection.release()
+		assert.equal(connection.isUsing, false)
+
+		await connection.q('SELECT * FROM trips LIMIT 5')
+
 	})
 })
 
@@ -510,12 +517,11 @@ describe('test insert values', async () => {
 
 		assert.equal(query.FORMATTED().formatted, `INSERT  INTO block_personally (blocker, blocked, notes) VALUES ('101','301','101 block 301'),('101','402','101 block 402')`)
 	})
+})
 
-
-	after(function () {
-		console.log('after all tests')
-		process.exit()
-	})
+after(function () {
+	console.log('after all tests')
+	process.exit()
 })
 
 // pool.event.on('get', connection => {
