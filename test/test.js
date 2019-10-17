@@ -284,16 +284,18 @@ describe('test LEFT JOIN, NESTTABLES', async () => {
 	})
 })
 
-describe('test GROUP BY', async () => {
+describe('test GROUP BY', () => {
 	it('1', async () => {
-		const query = Trips.
-			SELECT('driver_id, count(*) count')
+		const results = await Trips
+			.SELECT('driver_id, count(*) count')
 			.FROM()
 			.WHERE('trip_status = "TRIP_PAYMENT_PROCESSED"')
+			.AND('trip_id < 100000')
 			.AND('driver_id IS NOT NULL')
 			.AND('user_id IS NOT NULL')
 			.GROUP_BY('driver_id', 'user_id')
-			.LIMIT(20)
+			.LIMIT(1)
+			.exec()
 
 		results[0].should.have.property('driver_id')
 		results[0].should.have.property('count')
@@ -301,14 +303,16 @@ describe('test GROUP BY', async () => {
 	})
 
 	it('2', async () => {
-		const query = Trips.
+		const results = await Trips.
 			SELECT('driver_id, count(*) count')
 			.FROM()
 			.WHERE('trip_status = "TRIP_PAYMENT_PROCESSED"')
+			.AND('trip_id < 20000')
 			.AND('driver_id IS NOT NULL')
 			.AND('user_id IS NOT NULL')
 			.GROUP_BY('driver_id, user_id')
-			.LIMIT(20)
+			.LIMIT(1)
+			.exec()
 
 		results[0].should.have.property('driver_id')
 		results[0].should.have.property('count')
@@ -316,35 +320,36 @@ describe('test GROUP BY', async () => {
 	})
 
 	it('3', async () => {
-		const query = Trips.
+		const results = await Trips.
 			SELECT('driver_id, count(*) count')
-			.FROM('trips')
+			.FROM()
 			.WHERE('trip_status = "TRIP_PAYMENT_PROCESSED"')
+			.AND('trip_id < 100000')
 			.AND('driver_id IS NOT NULL')
 			.AND('user_id IS NOT NULL')
 			.GROUP_BY('driver_id, user_id')
-			.LIMIT(20)
+			.LIMIT(1)
+			.exec()
 
 		results[0].should.have.property('driver_id')
-		results[0].should.have.property('count')
 		results[0].should.have.property('count')
 		assert(results[0] instanceof Trips)
 	})
 })
 
 
-describe('test HAVING', async () => {
+describe('test HAVING', () => {
 	it('1', async () => {
-		const query = Trips.
+		const results = await Trips.
 			SELECT('driver_id, count(*) count')
 			.FROM()
 			.WHERE('trip_status = "TRIP_PAYMENT_PROCESSED"')
+			.AND('trip_id < 100000')
 			.AND('driver_id IS NOT NULL')
 			.GROUP_BY('driver_id')
 			.HAVING('count > 100', 'driver_id < 10000')
 			.LIMIT()
-
-		const results = await query.exec()
+			.exec()
 
 		results[0].should.have.property('driver_id')
 		results[0].should.have.property('count')

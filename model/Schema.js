@@ -232,7 +232,6 @@ module.exports = class Base {
 			.map(q => q.value)
 			.reduce((q, b) => q.concat(b), [])
 
-
 		return {
 			query,
 			values,
