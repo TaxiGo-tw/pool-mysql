@@ -178,6 +178,17 @@ await connection.q('SELECT id FROM user WHERE uid = ?', userID, { EX: 60})
 User.SELECT().FROM().WHERE('uid = ?',id).EX(60).exec()
 ```
 
+### custom error message
+
+```js
+	await Trips.UPDATE('user_info')
+				.SET({ user_id: 31 })
+				.WHERE({ uid: 31 })
+				.CHANGED_ROWS(1)
+				.ON_ERR(errMessage) //string or callback
+				.exec()
+```
+
 
 ### Auto Free Connections
 
