@@ -190,6 +190,12 @@ module.exports = class Base {
 		return this
 	}
 
+	ON_ERR(callbackOrString) {
+		this._onErr = callbackOrString
+		return this
+	}
+
+
 	WRITER() {
 		this._forceWriter = true
 		return this
@@ -260,19 +266,24 @@ module.exports = class Base {
 				getFirst,
 				updated,
 				changedRows,
-				affectedRows
+				affectedRows,
+				onErr
 			} = this._options()
 
 			const ex = this._EX || {}
 			ex.redisPrint = print
 			this._EX = {}
 
+			let q = this._connection
 			if (print) {
-				results = await this._connection.print.q(query, values, ex)
-			} else {
-				results = await this._connection.q(query, values, ex)
+				q = q.print
 			}
 
+			if (onErr) {
+				q = q.onErr(onErr)
+			}
+
+			results = await q.q(query, values, ex)
 
 			// check changedRows && affectedRows
 			const ch = updated ? results[1] : results
@@ -433,17 +444,17 @@ module.exports = class Base {
 
 	//////////////////////////////Base.js
 	//UPDATE
-	static UPDATE() {
+	static UPDATE(table) {
 		const object = new this()
-		return object.UPDATE()
+		return object.UPDATE(table)
 	}
 
-	UPDATE() {
+	UPDATE(table = this.constructor.name) {
 		if (!this._q) {
 			this._q = []
 		}
 
-		this._q.push({ type: 'UPDATE', command: this.constructor.name })
+		this._q.push({ type: 'UPDATE', command: table })
 		return this
 	}
 
@@ -632,6 +643,9 @@ module.exports = class Base {
 
 		options.affectedRows = this._affectedRows
 		delete this._affectedRows
+
+		options.onErr = this._onErr
+		delete this._onErr
 
 		return options
 	}

@@ -116,8 +116,6 @@ module.exports = class Connection {
 
 		const mustUpdateOneRow = this._mustUpdateOneRow
 		this._mustUpdateOneRow = false
-		const mustUpdateOneRowMessage = this.__mustUpdateOneRowMessage
-		delete this.__mustUpdateOneRowMessage
 
 		const print = this._print
 		this._print = false
@@ -152,7 +150,7 @@ module.exports = class Connection {
 			Event.emit('did_query', query.sql)
 
 			if (mustUpdateOneRow && b && b.affectedRows != 1) {
-				return cb(a || Error(mustUpdateOneRowMessage || 'MUST_UPDATE_ONE_ROW'), b, c)
+				return cb(a || Error('MUST_UPDATE_ONE_ROW'), b, c)
 			}
 
 			cb(a, b, c)
@@ -174,59 +172,71 @@ module.exports = class Connection {
 	}
 
 	async q(sql, values, { key, EX, isJSON = true, cachedToResult, shouldRefreshInCache /*= (someThing) => { return true }*/, map, queryToResult, queryToCache, redisPrint } = {}) {
+		try {
+			if (!EX) {
+				return await this._q(sql, values)
+			} else if (!this._pool.redisClient && EX) {
+				console.error('should assign redis client to this._pool.redisClient')
+				return await this._q(sql, values)
+			}
 
-		if (!EX) {
-			return await this._q(sql, values)
-		} else if (!this._pool.redisClient && EX) {
-			console.error('should assign redis client to this._pool.redisClient')
-			return await this._q(sql, values)
-		}
+			const queryString = mysql.format((sql.sql || sql), values).split('\n').join(' ')
+			const cacheKey = key || queryString
 
-		const queryString = mysql.format((sql.sql || sql), values).split('\n').join(' ')
-		const cacheKey = key || queryString
+			let someThing = isJSON
+				? await this._pool.redisClient.getJSONAsync(cacheKey)
+				: await this._pool.redisClient.getAsync(cacheKey)
 
-		let someThing = isJSON
-			? await this._pool.redisClient.getJSONAsync(cacheKey)
-			: await this._pool.redisClient.getAsync(cacheKey)
+			//if cached
+			const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
+			if (someThing && keepCache) {
+				if (redisPrint) {
+					console.log('Cached in redis: true')
+				}
 
-		//if cached
-		const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
-		if (someThing && keepCache) {
+				if (someThing.isNull) {
+					return null
+				}
+
+				someThing = cachedToResult ? cachedToResult(someThing) : someThing
+				return someThing
+			}
+
+			const result = await this._q(sql, values)
+
 			if (redisPrint) {
-				console.log('Cached in redis: true')
+				console.log('Cached in redis: false ')
 			}
 
-			if (someThing.isNull) {
-				return null
+			let toCache = map
+				? map(result)
+				: queryToCache
+					? queryToCache(result)
+					: result
+
+			if (toCache === null) {
+				toCache = { isNull: true }
 			}
 
-			someThing = cachedToResult ? cachedToResult(someThing) : someThing
-			return someThing
+			isJSON
+				? await this._pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
+				: await this._pool.redisClient.setAsync(cacheKey, toCache, 'EX', EX)
+
+			return map
+				? map(result)
+				: queryToResult ? queryToResult(result) : result
+		} catch (error) {
+			const onErr = this._onErr
+			delete this._onErr
+
+			if (typeof onErr == 'string') {
+				throw Error(onErr)
+			} else if (onErr) {
+				throw onErr(error)
+			} else {
+				throw error
+			}
 		}
-
-		const result = await this._q(sql, values)
-
-		if (redisPrint) {
-			console.log('Cached in redis: false ')
-		}
-
-		let toCache = map
-			? map(result)
-			: queryToCache
-				? queryToCache(result)
-				: result
-
-		if (toCache === null) {
-			toCache = { isNull: true }
-		}
-
-		isJSON
-			? await this._pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
-			: await this._pool.redisClient.setAsync(cacheKey, toCache, 'EX', EX)
-
-		return map
-			? map(result)
-			: queryToResult ? queryToResult(result) : result
 	}
 
 	commit(cb) {
@@ -306,12 +316,6 @@ module.exports = class Connection {
 		return this
 	}
 
-	mustUpdate(message) {
-		this._mustUpdateOneRow = true
-		this.__mustUpdateOneRowMessage = message
-		return this
-	}
-
 	get mustUpdateOneRow() {
 		this._mustUpdateOneRow = true
 		return this
@@ -337,6 +341,10 @@ module.exports = class Connection {
 		return this
 	}
 
+	onErr(callbackOrString) {
+		this._onErr = callbackOrString
+		return this
+	}
 
 	_mysqlConnection(option, role, connection) {
 		const mysqlConnection = mysql.createConnection(option)

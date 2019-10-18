@@ -486,20 +486,6 @@ describe('test pool.query()', () => {
 	})
 })
 
-describe('test must update one row message', async () => {
-	it('test 1', async () => {
-
-		const errMessage = 'kerker'
-		const connection = await pool.createConnection()
-		try {
-			await connection.mustUpdate(errMessage).q('UPDATE user_info SET uid = 31 where uid = 31')
-		} catch (error) {
-			assert(error.message == errMessage)
-		} finally {
-			connection.release()
-		}
-	})
-})
 
 describe('test release before query warning', () => {
 	it('1', async () => {
@@ -523,6 +509,38 @@ describe('test insert values', async () => {
 		assert.equal(query.FORMATTED().formatted, `INSERT  INTO block_personally (blocker, blocked, notes) VALUES ('101','301','101 block 301'),('101','402','101 block 402')`)
 	})
 })
+
+describe('test update multi table', () => {
+	it('1', () => {
+
+		const query = Trips.UPDATE('trips, user_info')
+			.SET({ user_id: 3925 })
+			.WHERE({ uid: 3925 })
+			.AND('trips.user_id = user_info.uid')
+
+		assert.equal(query.FORMATTED().formatted, "UPDATE trips, user_info SET `user_id` = 3925 WHERE (`uid` = 3925) AND (trips.user_id = user_info.uid)", 'fail format')
+	})
+})
+
+describe('test onErr', () => {
+	it('1', async () => {
+		const errMessage = 'error kerker'
+		try {
+
+			await Trips.UPDATE('user_info')
+				.SET({ user_id: 31 })
+				.WHERE({ uid: 31 })
+				.CHANGED_ROWS(1)
+				.ON_ERR(errMessage)
+				.exec()
+
+			assert(false)
+		} catch (err) {
+			assert.equal(err.message, 'error kerker')
+		}
+	})
+})
+
 
 after(function () {
 	console.log('after all tests')
