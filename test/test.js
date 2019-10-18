@@ -523,7 +523,7 @@ describe('test update multi table', () => {
 })
 
 describe('test onErr', () => {
-	it('1', async () => {
+	it('string', async () => {
 		const errMessage = 'error kerker'
 		try {
 
@@ -539,6 +539,25 @@ describe('test onErr', () => {
 			assert.equal(err.message, 'error kerker')
 		}
 	})
+
+	it('callback', async () => {
+		const errMessage = 'error kerker'
+		try {
+			await Trips.UPDATE('user_info')
+				.SET({ user_id: 31 })
+				.WHERE({ uid: 31 })
+				.CHANGED_ROWS(1)
+				.ON_ERR((e) => {
+					return errMessage
+				})
+				.exec()
+
+			assert(false)
+		} catch (err) {
+			assert.equal(err.message, 'error kerker')
+		}
+	})
+
 })
 
 

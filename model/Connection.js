@@ -226,15 +226,18 @@ module.exports = class Connection {
 				? map(result)
 				: queryToResult ? queryToResult(result) : result
 		} catch (error) {
+
+
 			const onErr = this._onErr
 			delete this._onErr
 
-			if (typeof onErr == 'string') {
-				throw Error(onErr)
-			} else if (onErr) {
-				throw onErr(error)
-			} else {
-				throw error
+			switch (true) {
+				case typeof onErr == 'string':
+					throw Error(onErr)
+				case typeof onErr == 'function':
+					throw Error(onErr(error))
+				default:
+					throw error
 			}
 		}
 	}
