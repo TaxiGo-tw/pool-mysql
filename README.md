@@ -185,14 +185,14 @@ await Trips.UPDATE('user_info')
 		.SET({ user_id: 31 })
 		.WHERE({ uid: 31 })
 		.CHANGED_ROWS(1)
-		.ON_ERR(errMessage)
+		.ON_ERR(errMessage) // string
 		.exec()
 // or callback
 await Trips.UPDATE('user_info')
 		.SET({ user_id: 31 })
 		.WHERE({ uid: 31 })
 		.CHANGED_ROWS(1)
-		.ON_ERR(err=>{
+		.ON_ERR(err => {
 			return 'error value'
 		})
 		.exec()

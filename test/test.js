@@ -547,7 +547,7 @@ describe('test onErr', () => {
 				.SET({ user_id: 31 })
 				.WHERE({ uid: 31 })
 				.CHANGED_ROWS(1)
-				.ON_ERR((e) => {
+				.ON_ERR(err => {
 					return errMessage
 				})
 				.exec()
