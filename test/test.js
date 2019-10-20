@@ -16,8 +16,8 @@ bluebird.promisifyAll(Redis.RedisClient.prototype)
 bluebird.promisifyAll(Redis.Multi.prototype)
 pool.redisClient = Redis.createClient({
 	host: process.env.REDIS_HOST,
-	port: process.env.REDIS_PORT,
-	db: process.env.NODE_ENV == 'production' ? 14 : 15
+	port: process.env.REDIS_PORT
+	// db: process.env.NODE_ENV == 'production' ? 14 : 15
 })
 
 describe('test query', async () => {
@@ -34,9 +34,7 @@ describe('test query', async () => {
 			.LIMIT()
 			.EX(2)
 
-		let results = await query.exec()
-		results = await query.exec()
-
+		const results = await query.exec()
 
 		results.length.should.equal(0)
 	})
@@ -518,13 +516,16 @@ describe('test update multi table', () => {
 			.WHERE({ uid: 3925 })
 			.AND('trips.user_id = user_info.uid')
 
-		assert.equal(query.FORMATTED().formatted, "UPDATE trips, user_info SET `user_id` = 3925 WHERE (`uid` = 3925) AND (trips.user_id = user_info.uid)", 'fail format')
+		assert.equal(
+			query.FORMATTED().formatted,
+			"UPDATE trips, user_info SET `user_id` = 3925 WHERE (`uid` = 3925) AND (trips.user_id = user_info.uid)", 'fail format'
+		)
 	})
 })
 
 describe('test onErr', () => {
 	it('string', async () => {
-		const errMessage = 'error kerker'
+		const errMessage = 'yoyoyoyoyoyo'
 		try {
 
 			await Trips.UPDATE('user_info')
@@ -536,12 +537,12 @@ describe('test onErr', () => {
 
 			assert(false)
 		} catch (err) {
-			assert.equal(err.message, 'error kerker')
+			assert.equal(err.message, 'yoyoyoyoyoyo')
 		}
 	})
 
 	it('callback', async () => {
-		const errMessage = 'error kerker'
+		const errMessage = 'yoyoyoyoyoyo'
 		try {
 			await Trips.UPDATE('user_info')
 				.SET({ user_id: 31 })
@@ -554,7 +555,7 @@ describe('test onErr', () => {
 
 			assert(false)
 		} catch (err) {
-			assert.equal(err.message, 'error kerker')
+			assert.equal(err.message, 'yoyoyoyoyoyo')
 		}
 	})
 

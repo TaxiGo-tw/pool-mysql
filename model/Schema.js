@@ -1,7 +1,7 @@
 const pool = require('./Pool')
 const Types = require('./Types')
 const mysql = require('mysql')
-
+const throwError = require('./throwError')
 module.exports = class Base {
 	constructor(dict) {
 		if (dict) {
@@ -24,7 +24,7 @@ module.exports = class Base {
 		try {
 			return await connection.q(sql, values)
 		} catch (error) {
-			throw error
+			throwError(error)
 		} finally {
 			if (!outSideConnection) {
 				connection.release()
@@ -288,9 +288,9 @@ module.exports = class Base {
 			// check changedRows && affectedRows
 			const ch = updated ? results[1] : results
 			if (changedRows != undefined && changedRows != ch.changedRows) {
-				throw Error(`changedRows did set to ${changedRows}, but ${ch.changedRows}`)
+				throwError(`changedRows did set to ${changedRows}, but ${ch.changedRows}`, onErr)
 			} else if (affectedRows != undefined && affectedRows != ch.affectedRows) {
-				throw Error(`affectedRows did set to ${affectedRows}, but ${ch.affectedRows}`)
+				throwError(`affectedRows did set to ${affectedRows}, but ${ch.affectedRows}`, onErr)
 			}
 
 			if (this._connection.isSelect(query.sql)) {
@@ -416,7 +416,7 @@ module.exports = class Base {
 
 			return results
 		} catch (error) {
-			throw error
+			throwError(error)
 		} finally {
 			if (!outSideConnection) {
 				this._connection.release()
@@ -492,7 +492,7 @@ module.exports = class Base {
 			this._q.push({ type: 'VALUES', command })
 			return this
 		} else {
-			throw Error(`${this.constructor.name} values is not an array`)
+			throwError(`${this.constructor.name} values is not an array`)
 		}
 	}
 
@@ -518,7 +518,7 @@ module.exports = class Base {
 
 	static FIND_PK(pk) {
 		if (!this.columns) {
-			throw Error(`${this.constructor.name} columns not defined`)
+			throwError(`${this.constructor.name} columns not defined`)
 		}
 
 		let find
@@ -530,7 +530,7 @@ module.exports = class Base {
 		}
 
 		if (!find) {
-			throw Error(`${this.constructor.name}.PK columns not defined`)
+			throwError(`${this.constructor.name}.PK columns not defined`)
 		}
 
 		return this.SELECT().FROM().WHERE(`${find} = ?`, pk).FIRST()
@@ -555,7 +555,7 @@ module.exports = class Base {
 
 	get _pk() {
 		if (!this.columns) {
-			throw Error(`${this.constructor.name} columns not defined`)
+			throwError(`${this.constructor.name} columns not defined`)
 		}
 
 		let pk
@@ -567,7 +567,7 @@ module.exports = class Base {
 		}
 
 		if (!pk) {
-			throw Error(`${this.constructor.name}.PK columns not defined`)
+			throwError(`${this.constructor.name}.PK columns not defined`)
 		}
 
 		return pk
