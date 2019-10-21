@@ -1,7 +1,10 @@
+# ReadME
+
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a86fa5fa33cd4effb4ca5120d9e5ed67)](https://app.codacy.com/app/vivalalova0/pool-mysql?utm_source=github.com&utm_medium=referral&utm_content=vivalalova/pool-mysql&utm_campaign=Badge_Grade_Dashboard)
 
 This is depend on [mysql](https://github.com/mysqljs/mysql)
 which made for migrating to features
+
 * connection pool
 * connection writer/reader
 * async/await
@@ -10,15 +13,15 @@ which made for migrating to features
 
 [Examples](https://github.com/vivalalova/pool-mysql/blob/master/test/test.js)
 
-### Installation
+## Installation
 
 ```bash
   npm i pool-mysql --save
 ```
 
-### Usage
+## Usage
 
-##### Settings
+### Settings
 
 pool-mysql loads settings from process.env
 There is a helpful package [dotenv](https://github.com/motdotla/dotenv)
@@ -32,7 +35,7 @@ SQL_PASSWORD={{passwd}}
 SQL_TABLE={{table name}}
 ```
 
-#### Query
+### Normal Query
 
 Require `pool-mysql`
 
@@ -44,7 +47,7 @@ pool.query(sql, value, (err, data) => {
 })
 ```
 
-##### Create connection
+### Create connection
 
 ```js
 const connection = await pool.createConnection()
@@ -62,7 +65,7 @@ try {
 }
 ```
 
-#### Model setting
+### Model setting
 
 ```js
 const Schema = require('pool-mysql').Schema
@@ -89,7 +92,8 @@ const User = class user extends Schema {
     }
 }
 ```
-#### Query
+
+### Query
 
 ```js
 await Posts
@@ -102,23 +106,23 @@ await Posts
       .exec()
 ```
 
-#### Nested Query
+### Nested Query
 
 ```js
 const results = Trips.SELECT(Trips.KEYS, Users.KEYS)
-	.FROM()
-	.LEFTJOIN('user_info ON uid = trips.user_id')
-	.WHERE('trip_id = ?', 23890)
-	.AND('trip_id > 0')
-	.LIMIT()
-	.NESTTABLES()
-	.MAP(result => {
-		const trip = result.trips
-		trip.user = result.user_info
-		return trip
-	})
-	.FIRST()
-	.exec()
+    .FROM()
+    .LEFTJOIN('user_info ON uid = trips.user_id')
+    .WHERE('trip_id = ?', 23890)
+    .AND('trip_id > 0')
+    .LIMIT()
+    .NESTTABLES()
+    .MAP(result => {
+        const trip = result.trips
+        trip.user = result.user_info
+        return trip
+    })
+    .FIRST()
+    .exec()
 
 results.should.have.property('trip_id')
 results.trip_id.should.equal(23890)
@@ -134,16 +138,16 @@ return value after updated
 
 ```js
 const results = await Block
-		.UPDATE()
-		.SET('id = id')
-		.WHERE({ blocked: 3925 })
-		.UPDATED('id', 'blocker')
-		.CHANGED_ROW(1)  //throw if changedRows !== 1
-		.exec()
+        .UPDATE()
+        .SET('id = id')
+        .WHERE({ blocked: 3925 })
+        .UPDATED('id', 'blocker')
+        .CHANGED_ROW(1)  //throw if changedRows !== 1
+        .exec()
 
 for (const result of results) {
-	result.should.have.property('id')
-	result.should.have.property('blocker')
+    result.should.have.property('id')
+    result.should.have.property('blocker')
 }
 ```
 
@@ -182,22 +186,21 @@ User.SELECT().FROM().WHERE('uid = ?',id).EX(60).exec()
 
 ```js
 await Trips.UPDATE('user_info')
-		.SET({ user_id: 31 })
-		.WHERE({ uid: 31 })
-		.CHANGED_ROWS(1)
-		.ON_ERR(errMessage) // string
-		.exec()
+    .SET({ user_id: 31 })
+    .WHERE({ uid: 31 })
+    .CHANGED_ROWS(1)
+       .ON_ERR(errMessage) // string
+    .exec()
 // or callback
 await Trips.UPDATE('user_info')
-		.SET({ user_id: 31 })
-		.WHERE({ uid: 31 })
-		.CHANGED_ROWS(1)
-		.ON_ERR(err => {
-			return 'error value'
-		})
-		.exec()
+    .SET({ user_id: 31 })
+    .WHERE({ uid: 31 })
+    .CHANGED_ROWS(1)
+    .ON_ERR(err => {
+        return 'error value'
+    })
+    .exec()
 ```
-
 
 ### Auto Free Connections
 
@@ -229,10 +232,9 @@ But will keep at least 10 reader&writer connections
 
 ```js
 pool.event.on('get', connection => {
-	console.log(connection.id)
+    console.log(connection.id)
 })
 ```
-
 
 ### Log level
 
