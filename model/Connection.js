@@ -172,6 +172,9 @@ module.exports = class Connection {
 	}
 
 	async q(sql, values, { key, EX, isJSON = true, cachedToResult, shouldRefreshInCache /*= (someThing) => { return true }*/, map, queryToResult, queryToCache, redisPrint } = {}) {
+		const onErr = this._onErr
+		delete this._onErr
+
 		try {
 			if (!EX) {
 				return await this._q(sql, values)
@@ -226,11 +229,6 @@ module.exports = class Connection {
 				? map(result)
 				: queryToResult ? queryToResult(result) : result
 		} catch (error) {
-
-
-			const onErr = this._onErr
-			delete this._onErr
-
 			switch (true) {
 				case typeof onErr == 'string':
 					throw Error(onErr)
