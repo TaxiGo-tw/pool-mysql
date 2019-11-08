@@ -179,7 +179,7 @@ await connection.q('SELECT id FROM user WHERE uid = ?', userID, {
 
 await connection.q('SELECT id FROM user WHERE uid = ?', userID, { EX: 60})
 
-User.SELECT().FROM().WHERE('uid = ?',id).EX(60).exec()
+User.SELECT().FROM().WHERE('uid = ?',id).EX(60, { forceUpdate: true }).exec()
 ```
 
 ### custom error message

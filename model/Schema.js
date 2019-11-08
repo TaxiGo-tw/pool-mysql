@@ -216,8 +216,14 @@ module.exports = class Base {
 		return this
 	}
 
-	EX(expireSecond, cacheKey) {
-		this._EX = { key: cacheKey, EX: expireSecond }
+	EX(expireSecond, { key, forceUpdate = false, shouldRefreshInCache } = {}) {
+		this._EX = {
+			key,
+			EX: expireSecond,
+			shouldRefreshInCache: forceUpdate ? () => { return forceUpdate } : shouldRefreshInCache,
+			redisPrint: this._print
+		}
+
 		return this
 	}
 
@@ -274,6 +280,7 @@ module.exports = class Base {
 			ex.redisPrint = print
 			this._EX = {}
 
+			// eslint-disable-next-line no-unused-vars
 			let q = this._connection
 			if (print) {
 				q = q.print

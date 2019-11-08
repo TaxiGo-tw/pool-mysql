@@ -46,12 +46,8 @@ module.exports = class Connection {
 			})
 		}
 
-		try {
-			await create(this.reader)
-			await create(this.writer)
-		} catch (error) {
-			throw error
-		}
+		await create(this.reader)
+		await create(this.writer)
 
 		return this
 	}
@@ -72,7 +68,7 @@ module.exports = class Connection {
 	}
 
 	async awaitCommit() {
-		return new Promise(async (resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			try {
 				this.commit((err) => {
 					if (err) {

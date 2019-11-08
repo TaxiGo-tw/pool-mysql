@@ -54,6 +54,22 @@ describe('test query', async () => {
 		results[0].should.not.have.property('user')
 	})
 
+
+	it('with cache force update', async () => {
+		const query = Trips.
+			SELECT()
+			.FROM()
+			.WHERE({ trip_id: 23890 })
+			.AND({ trip_id: 23890 })
+			.LIMIT()
+			.EX(2, { forceUpdate: true })
+
+		const results = await query.exec()
+
+		results[0].should.have.property('trip_id')
+		results[0].should.not.have.property('user')
+	})
+
 	it('without cache', async () => {
 		const id = 23890
 		const query = Trips.
