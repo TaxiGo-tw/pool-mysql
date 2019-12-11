@@ -1,7 +1,9 @@
 const pool = require('./Pool')
 const Types = require('./Types')
+const Encryption = require('./Encryption')
 const mysql = require('mysql')
 const throwError = require('./throwError')
+
 module.exports = class Base {
 	constructor(dict) {
 		if (dict) {
@@ -273,7 +275,8 @@ module.exports = class Base {
 				updated,
 				changedRows,
 				affectedRows,
-				onErr
+				onErr,
+				decryption
 			} = this._options()
 
 			const ex = this._EX || {}
@@ -292,6 +295,16 @@ module.exports = class Base {
 
 			results = await q.q(query, values, ex)
 
+			if (decryption) {
+				results = results.map((result) => {
+					decryption.forEach(column => {
+						if (result[column]) {
+							result[column] = Encryption.decrypt(result[column])
+						}
+					})
+					return result
+				})
+			}
 			// check changedRows && affectedRows
 			const ch = updated ? results[1] : results
 			if (changedRows != undefined && changedRows != ch.changedRows) {
@@ -465,7 +478,7 @@ module.exports = class Base {
 		return this
 	}
 
-	SET(whereCaluse, whereCaluse2, { passUndefined = false } = {}) {
+	SET(whereCaluse, whereCaluse2, { passUndefined = false, encryption = undefined } = {}) {
 		function passUndefinedIfNeeded(passUndefined, value) {
 			if (!passUndefined || !(value instanceof Object)) {
 				return value
@@ -480,13 +493,32 @@ module.exports = class Base {
 			return result
 		}
 
+		function encryptIfNeeded(encryption, value) {
+			if (!encryption || !(value instanceof Object) || !encryption.length) {
+				return value
+			}
+
+			const result = JSON.parse(JSON.stringify(value))
+			Object.keys(result).forEach((key) => {
+				encryption.forEach(column => {
+					if (key === column) {
+						result[key] = Encryption.encrypt(result[key])
+					}
+				})
+
+			})
+			return result
+		}
+
 		if (whereCaluse instanceof Object) {
-			const value = passUndefinedIfNeeded(passUndefined, whereCaluse)
+			let value = passUndefinedIfNeeded(passUndefined, whereCaluse)
+			value = encryptIfNeeded(encryption, whereCaluse)
 			this._q.push({ type: 'SET', command: '?', value })
 			return this
 		}
 
-		const value = passUndefinedIfNeeded(passUndefined, whereCaluse2)
+		let value = passUndefinedIfNeeded(passUndefined, whereCaluse2)
+		value = encryptIfNeeded(encryption, whereCaluse2)
 		return addQuery.bind(this)('SET', whereCaluse, value, false)
 	}
 
@@ -590,6 +622,11 @@ module.exports = class Base {
 		return this
 	}
 
+	DECRYPT(...decryption) {
+		this._decryption = decryption
+		return this
+	}
+
 	UPDATED(...variables) {
 		this._updated = true
 
@@ -653,6 +690,9 @@ module.exports = class Base {
 
 		options.onErr = this._onErr
 		delete this._onErr
+
+		options.decryption = this._decryption
+		delete this._decryption
 
 		return options
 	}
