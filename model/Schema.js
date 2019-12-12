@@ -295,16 +295,15 @@ module.exports = class Base {
 
 			results = await q.q(query, values, ex)
 
-			if (decryption) {
+			decryption.forEach(column => {
 				results = results.map((result) => {
-					decryption.forEach(column => {
-						if (result[column]) {
-							result[column] = Encryption.decrypt(result[column])
-						}
-					})
+					if (result[column]) {
+						result[column] = Encryption.decrypt(result[column])
+					}
 					return result
 				})
-			}
+			})
+
 			// check changedRows && affectedRows
 			const ch = updated ? results[1] : results
 			if (changedRows != undefined && changedRows != ch.changedRows) {
@@ -478,7 +477,7 @@ module.exports = class Base {
 		return this
 	}
 
-	SET(whereCaluse, whereCaluse2, { passUndefined = false, encryption = undefined } = {}) {
+	SET(whereCaluse, whereCaluse2, { passUndefined = false, encryption = [] } = {}) {
 		function passUndefinedIfNeeded(passUndefined, value) {
 			if (!passUndefined || !(value instanceof Object)) {
 				return value
@@ -494,18 +493,17 @@ module.exports = class Base {
 		}
 
 		function encryptIfNeeded(encryption, value) {
-			if (!encryption || !(value instanceof Object) || !encryption.length) {
+			if (!(value instanceof Object) || !encryption.length) {
 				return value
 			}
 
 			const result = JSON.parse(JSON.stringify(value))
-			Object.keys(result).forEach((key) => {
-				encryption.forEach(column => {
+			encryption.forEach(column => {
+				Object.keys(result).forEach((key) => {
 					if (key === column) {
 						result[key] = Encryption.encrypt(result[key])
 					}
 				})
-
 			})
 			return result
 		}
@@ -691,7 +689,7 @@ module.exports = class Base {
 		options.onErr = this._onErr
 		delete this._onErr
 
-		options.decryption = this._decryption
+		options.decryption = this._decryption || []
 		delete this._decryption
 
 		return options
