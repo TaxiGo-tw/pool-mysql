@@ -364,11 +364,10 @@ module.exports = class Base {
 							const PKColumn = Object.keys(refType.columns).filter(column => refType.columns[column] == Base.Types.PK)[0]
 							const populates = await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).PRINT(print || false).exec(this._connection)
 
-							results = results.map(result => {
+							results.forEach(result => {
 								if (result[refColumn]) {
 									result[column] = populates.filter(populate => result[refColumn] == populate[PKColumn])[0] || result[refColumn]
 								}
-								return result
 							})
 						}
 					}
