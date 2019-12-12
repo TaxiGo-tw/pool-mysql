@@ -48,6 +48,10 @@ class Pool {
 		return require('./Schema')
 	}
 
+	get Encryption() {
+		return require('./Encryption')
+	}
+
 	get logger() {
 		return this._logger
 	}
