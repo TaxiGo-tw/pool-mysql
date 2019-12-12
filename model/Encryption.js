@@ -1,6 +1,9 @@
+const assert = require('assert')
+assert.ok(process.env.DATA_ENCRYPTION_KEY, 'process.env.DATA_ENCRYPTION_KEY is undefined')
+assert.ok(process.env.DATA_ENCRYPTION_IV, 'process.env.DATA_ENCRYPTION_IV is undefined')
+
 const crypto = require('crypto')
 const algorithm = 'aes-256-cbc'
-
 const key = Buffer.from(process.env.DATA_ENCRYPTION_KEY, 'hex')
 const iv = Buffer.from(process.env.DATA_ENCRYPTION_IV, 'hex')
 
