@@ -534,7 +534,7 @@ describe('test update multi table', () => {
 
 		assert.equal(
 			query.FORMATTED().formatted,
-			"UPDATE trips, user_info SET `user_id` = 3925 WHERE (`uid` = 3925) AND (trips.user_id = user_info.uid)", 'fail format'
+			'UPDATE trips, user_info SET `user_id` = 3925 WHERE (`uid` = 3925) AND (trips.user_id = user_info.uid)', 'fail format'
 		)
 	})
 })
