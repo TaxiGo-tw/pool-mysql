@@ -227,8 +227,12 @@ module.exports = class Connection {
 		} catch (error) {
 			switch (true) {
 				case typeof onErr == 'string':
+					// eslint-disable-next-line no-console
+					console.log('true error', error)
 					throw Error(onErr)
 				case typeof onErr == 'function':
+					// eslint-disable-next-line no-console
+					console.log('true error', error)
 					throw Error(onErr(error))
 				default:
 					throw error
