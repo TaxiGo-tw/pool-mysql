@@ -4,28 +4,49 @@ should()  // Modifies `Object.prototype`
 const assert = require('assert')
 
 
-const { Validations } = require('../model/Schema')
+const { Num, Str, Email, JSONString } = require('../model/Schema').Types
 
 describe('test Validations', async () => {
 	it('string', async () => {
-		assert.equal(Validations.isString('hi'), true)
-		assert.equal(Validations.isString(1), false)
-		assert.equal(Validations.isString(true), false)
-		assert.equal(Validations.isString(new Date()), false)
+		assert.equal(Str.validate('hi'), true)
+		assert.equal(Str.validate(1), false)
+		assert.equal(Str.validate(true), false)
+		assert.equal(Str.validate(new Date()), false)
 	})
 
 	it('number', async () => {
-		assert.equal(Validations.isNUMBER('hi'), false)
-		assert.equal(Validations.isNUMBER(1), true)
-		assert.equal(Validations.isNUMBER(true), false)
-		assert.equal(Validations.isNUMBER(new Date()), false)
+		assert.equal(Num.validate('hi'), false)
+		assert.equal(Num.validate(1), true)
+		assert.equal(Num.validate(true), false)
+		assert.equal(Num.validate(new Date()), false)
 	})
 
 	it('JSON String', async () => {
-		assert.equal(Validations.isJSONString('{}'), true)
-		assert.equal(Validations.isJSONString('{"hi":1}'), true)
-		assert.equal(Validations.isJSONString('{\"hi\":1}'), true)
-		assert.equal(Validations.isJSONString('{hi:1}'), false)
-		assert.equal(Validations.isJSONString(''), false)
+		assert.equal(JSONString.validate('{}'), true)
+		assert.equal(JSONString.validate('{"hi":1}'), true)
+		assert.equal(JSONString.validate('{\"hi\":1}'), true)
+		assert.equal(JSONString.validate('{hi:1}'), false)
+		assert.equal(JSONString.validate(''), false)
+	})
+
+	it('Email String', async () => {
+		assert.equal(Email.validate('12312gggg@gmail.com'), true)
+		assert.equal(Email.validate('@gmail'), false)
+		assert.equal(Email.validate('12312gggg@gmail'), false)
+		assert.equal(Email.validate('{"hi":1}'), false)
+		assert.equal(Email.validate('{\"hi\":1}'), false)
+		assert.equal(Email.validate('{hi:1}'), false)
+		assert.equal(Email.validate(''), false)
+	})
+})
+
+describe('test model Validations', async () => {
+	it('JSON model', async () => {
+		const DriverReviewStatus = require('./model/DriverReviewStatus')
+		const obj = new DriverReviewStatus({ uid: 123, first_name: 'lova', email: '123@gg.mail', car_brand: '' })
+
+		assert.throws(() => {
+			obj.validate()
+		}, 'driver_review_status.car_brand must be type: JSONString {"uid":123,"first_name":"lova","email":"123@gg.mail","car_brand":""}')
 	})
 })

@@ -16,13 +16,9 @@ module.exports = class Base {
 		}
 	}
 
-	static get Validations() {
-		return require('./Validations')
-	}
-
 	static async native(outSideConnection, sql, values) {
 		if (!sql) {
-			throw 'sql command needed'
+			throwError('sql command needed')
 		}
 
 		const connection = outSideConnection || await pool.createConnection()
@@ -328,7 +324,7 @@ module.exports = class Base {
 
 							const tColumn = Object.keys(type.columns).filter(c => type.columns[c].name == this.constructor.name)[0]
 
-							const PKColumn = Object.keys(this.columns).filter(column => this.columns[column] == Base.Types.PK)[0]
+							const PKColumn = Object.keys(this.columns).filter(column => this.columns[column] == Base.Types.PK || this.columns[column].type == Base.Types.PK)[0]
 							const ids = results.map(result => result[PKColumn])
 							const populates = await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print || false).exec(this._connection)
 
@@ -696,6 +692,40 @@ module.exports = class Base {
 		delete this._decryption
 
 		return options
+	}
+
+	validate() {
+		const columns = this.columns
+
+		for (const [key, option] of Object.entries(columns)) {
+			// pass if not defined
+			if (typeof option !== 'object') {
+				continue
+			}
+
+			const { type, required } = option
+
+			const value = this[key]
+			//throw if required
+			if (required && value == undefined) {
+				throwError(`${key} is required`)
+			} else if (!required && value == undefined) {
+				continue
+			}
+
+			const validate = type.validate
+			//pass if not defined
+			if (!validate) {
+				continue
+			}
+
+			//throw if invalid
+			if (!validate(this[key])) {
+				throwError(`${this.constructor.name}.${key} must be type: ${type.name} ${JSON.stringify(this)}`)
+			}
+		}
+
+		return true
 	}
 }
 

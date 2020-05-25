@@ -1,25 +1,37 @@
-const Base = require('../../index').Schema
+const Scheme = require('../../index').Schema
 
-module.exports = class driver_review_status extends Base {
+class PlateNumber extends Scheme.Types.Base {
+	static validate(string) {
+		return string.match(/[0-9]+-[A-Z]+/)
+	}
+}
+
+module.exports = class driver_review_status extends Scheme {
 
 	get columns() {
 		return {
-			'uid': Base.Types.PK,
-			'first_name': String,
+			'uid': {
+				type: Scheme.Types.PK,
+				required: true
+			},
+			'first_name': {
+				type: Scheme.Types.Str,
+				required: true
+			},
 			'last_name': String,
-			'car_brand': String,
-			'model': String,
-			'plate_number': String
-		}
-	}
-
-	//triggered at every insert, update
-	validations({ uid, first_name, last_name, car_brand, model, plate_number }) {
-		switch (true) {
-			case Base.Validations.isNUMBER(uid):
-				return false
-			case Base.Validations.isJSONString(first_name):
-				throw ''
+			'car_brand': {
+				type: Scheme.Types.JSONString,
+			},
+			'model': {
+				type: String
+			},
+			'plate_number': {
+				type: PlateNumber
+			},
+			'email': {
+				type: Scheme.Types.Email,
+				required: true
+			}
 		}
 	}
 }
