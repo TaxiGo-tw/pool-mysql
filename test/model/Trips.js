@@ -15,7 +15,12 @@ module.exports = class trips extends Schema {
 	get columns() {
 		return {
 			trip_id: Schema.Types.PK,
-			user_id: Number,
+
+			// trip_id: {
+			// 	type: Schema.Types.PK,
+			// 	// required: true
+			// },
+			user_id: Schema.Types.Num,
 			user: {
 				ref: require('./Users'),
 				column: 'user_id'

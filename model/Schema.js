@@ -477,6 +477,11 @@ module.exports = class Base {
 	}
 
 	SET(whereCaluse, whereCaluse2, { passUndefined = false, encryption = [] } = {}) {
+
+		if (typeof whereCaluse === 'object') {
+			validate.bind(this)(whereCaluse)
+		}
+
 		function passUndefinedIfNeeded(passUndefined, value) {
 			if (!passUndefined || !(value instanceof Object)) {
 				return value
@@ -747,4 +752,16 @@ function addQuery(reservedWord, whereCaluse, whereCaluse2, inBrackets = true) {
 	}
 
 	return this
+}
+
+function validate(params) {
+	const object = new this.constructor(params)
+	switch (this._q[0].type) {
+		case 'INSERT':
+			object.validate()
+			break
+		case 'UPDATE':
+			object.validate()
+			break
+	}
 }

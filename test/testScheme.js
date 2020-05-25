@@ -22,8 +22,8 @@ describe('test query', async () => {
 	it('with cache', async () => {
 		const id = 23890
 		let ii
-		const query = Trips.
-			SELECT()
+		const query = Trips
+			.SELECT()
 			.FROM()
 			.WHERE({ trip_id: id })
 			.AND({ trip_id: id })
@@ -38,18 +38,23 @@ describe('test query', async () => {
 	})
 
 	it('with cache', async () => {
-		const query = Trips.
-			SELECT()
-			.FROM()
-			.WHERE({ trip_id: 23890 })
-			.AND({ trip_id: 23890 })
-			.LIMIT()
-			.EX(2)
+		try {
 
-		const results = await query.exec()
+			const query = Trips
+				.SELECT()
+				.FROM()
+				.WHERE({ trip_id: 23890 })
+				.AND({ trip_id: 23890 })
+				.LIMIT()
+				.EX(2)
 
-		results[0].should.have.property('trip_id')
-		results[0].should.not.have.property('user')
+			const results = await query.exec()
+
+			results[0].should.have.property('trip_id')
+			results[0].should.not.have.property('user')
+		} catch (error) {
+			console.log(error)
+		}
 	})
 
 
@@ -70,8 +75,8 @@ describe('test query', async () => {
 
 	it('without cache', async () => {
 		const id = 23890
-		const query = Trips.
-			SELECT()
+		const query = Trips
+			.SELECT()
 			.FROM()
 			.WHERE('trip_id = ?', id)
 			.AND('trip_id <> ?', id, { isExec: false })
@@ -88,8 +93,8 @@ describe('test query', async () => {
 	it('object entity', async () => {
 		const trip = new Trips()
 
-		const query = trip.
-			SELECT()
+		const query = trip
+			.SELECT()
 			.FROM()
 			.WHERE({ trip_id: 23890 })
 			.AND({ trip_id: 23890 })
@@ -397,6 +402,18 @@ describe('test long query', async () => {
 
 describe('test insert', async () => {
 	it('3', async () => {
+		try {
+			const query = Block
+				.INSERT(true)
+				.INTO()
+				.SET({ blocker: 201, blocked: 203, notes: 'test' })
+				.DUPLICATE({ notes: 'ggg' })
+
+			await query.exec()
+
+		} catch (error) {
+			console.log(error.message)
+		}
 		const query = Block
 			.INSERT(true)
 			.INTO()

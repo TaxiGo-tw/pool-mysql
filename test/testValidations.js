@@ -6,6 +6,14 @@ const assert = require('assert')
 
 const { Num, Str, Email, JSONString } = require('../model/Schema').Types
 
+describe('test model Validations', async () => {
+	it('get pk ', async () => {
+		const DriverReviewStatus = require('./model/DriverReviewStatus')
+		console.log('pk is ', DriverReviewStatus._pk)
+	})
+})
+
+
 describe('test Validations', async () => {
 	it('string', async () => {
 		assert.equal(Str.validate('hi'), true)
