@@ -16,6 +16,10 @@ module.exports = class Base {
 		}
 	}
 
+	static get Validations() {
+		return require('./Validations')
+	}
+
 	static async native(outSideConnection, sql, values) {
 		if (!sql) {
 			throw 'sql command needed'
