@@ -14,12 +14,11 @@ module.exports = class trips extends Schema {
 
 	get columns() {
 		return {
-			trip_id: Schema.Types.PK,
-
-			// trip_id: {
-			// 	type: Schema.Types.PK,
-			// 	// required: true
-			// },
+			// trip_id: Schema.Types.PK,
+			trip_id: {
+				type: Schema.Types.PK,
+				// required: true
+			},
 			user_id: Schema.Types.Num,
 			user: {
 				ref: require('./Users'),

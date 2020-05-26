@@ -18,7 +18,10 @@ module.exports = class driver_review_status extends Scheme {
 				type: Scheme.Types.Str,
 				required: true
 			},
-			'last_name': String,
+			'last_name': {
+				type: Scheme.Types.Str,
+				required: true
+			},
 			'car_brand': {
 				type: Scheme.Types.JSONString,
 			},

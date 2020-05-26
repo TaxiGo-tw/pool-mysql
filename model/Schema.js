@@ -41,7 +41,7 @@ module.exports = class Base {
 		const keys = []
 		for (const key in columns) {
 			const value = columns[key]
-			if (value && !(value instanceof Array) && !(typeof value == 'object')) {
+			if (isRealType(value)) {
 				keys.push(`${object.constructor.name}.${key}`)
 			}
 		}
@@ -570,8 +570,8 @@ module.exports = class Base {
 
 		let find
 		for (const key in this.columns) {
-			const value = this.columns[key]
-			if (value == Base.Types.PK) {
+			const type = realType(this.columns[key])
+			if (type == Base.Types.PK) {
 				find = key
 			}
 		}
@@ -779,4 +779,10 @@ function validate(params) {
 
 function realType(type) {
 	return type.type || type
+}
+
+
+function isRealType(value) {
+	const type = realType(value)
+	return type && !(type instanceof Array) && typeof type !== 'object'
 }

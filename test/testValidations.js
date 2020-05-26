@@ -1,3 +1,4 @@
+const DriverReviewStatus = require('./model/DriverReviewStatus')
 
 const { should } = require('chai')  // Using Assert style
 should()  // Modifies `Object.prototype`
@@ -50,7 +51,6 @@ describe('test Validations', async () => {
 
 describe('test model Validations', async () => {
 	it('JSON model', async () => {
-		const DriverReviewStatus = require('./model/DriverReviewStatus')
 		const obj = new DriverReviewStatus({ uid: 123, first_name: 'lova', email: '123@gg.mail', car_brand: '' })
 
 		assert.throws(() => {
