@@ -9,8 +9,7 @@ const { Num, Str, Email, JSONString } = require('../model/Schema').Types
 
 describe('test model Validations', async () => {
 	it('get pk ', async () => {
-		const DriverReviewStatus = require('./model/DriverReviewStatus')
-		console.log('pk is ', DriverReviewStatus._pk)
+		DriverReviewStatus._pk.should.equal('uid')
 	})
 })
 
@@ -43,7 +42,7 @@ describe('test Validations', async () => {
 		assert.equal(Email.validate('@gmail'), false)
 		assert.equal(Email.validate('12312gggg@gmail'), false)
 		assert.equal(Email.validate('{"hi":1}'), false)
-		assert.equal(Email.validate('{\"hi\":1}'), false)
+		assert.equal(Email.validate('{___}'), false)
 		assert.equal(Email.validate('{hi:1}'), false)
 		assert.equal(Email.validate(''), false)
 	})

@@ -81,7 +81,7 @@ class Pool {
 
 	//TODO: { limitKey, limit = 0 } = {}
 	async createConnection() {
-		return new Promise(async (resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			this.getConnection((err, connection) => {
 				if (err) {
 					return reject(err)

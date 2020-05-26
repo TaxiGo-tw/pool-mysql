@@ -41,16 +41,6 @@ module.exports = class Base {
 		return Object.keys(columns)
 			.filter(column => isRealColumn(columns[column]))
 			.map(column => `${object.constructor.name}.${column}`)
-
-
-		const keys = []
-		for (const key in columns) {
-			const value = columns[key]
-			if (isRealColumn(value)) {
-				keys.push(`${object.constructor.name}.${key}`)
-			}
-		}
-		return keys
 	}
 
 	// EXPLAIN() {
@@ -564,7 +554,7 @@ module.exports = class Base {
 
 	static FIND(...whereCaluse) {
 		const object = new this()
-		return object.SELECT().FROM().WHERE(...arguments)
+		return object.SELECT().FROM().WHERE(...whereCaluse)
 	}
 
 	static FIND_PK(pk) {
@@ -611,7 +601,7 @@ module.exports = class Base {
 
 		let pk
 		for (const key in this.columns) {
-			const value = this.columns[key]
+			const value = realType(this.columns[key])
 			if (value == Base.Types.PK) {
 				pk = key
 			}
@@ -622,6 +612,11 @@ module.exports = class Base {
 		}
 
 		return pk
+	}
+
+	static get _pk() {
+		const x = new this()
+		return x._pk
 	}
 
 	_PRE(command) {
