@@ -58,7 +58,26 @@ describe('test Validations', async () => {
 	})
 })
 
-describe('test model Validations', async () => {
+describe('test JSON model Validations', async () => {
+	it('JSON model pass', async () => {
+		const obj = new DriverReviewStatus({
+			uid: 123,
+			first_name: 'lova5',
+			last_name: 'hi',
+			email: '123@gg.mail',
+			car_brand: '{"brand":"bmw"}',
+			phone_number: '0911957274',
+			plate_number: '123-AAA'
+		})
+
+		try {
+			obj.validate()
+		} catch (error) {
+			console.log(error)
+		}
+		assert(obj.validate())
+	})
+
 	it('JSON model', async () => {
 		const obj = new DriverReviewStatus({ uid: 123, first_name: 'lova', email: '123@gg.mail', car_brand: '' })
 
@@ -66,4 +85,6 @@ describe('test model Validations', async () => {
 			obj.validate()
 		}, 'driver_review_status.car_brand must be type: JSONString {"uid":123,"first_name":"lova","email":"123@gg.mail","car_brand":""}')
 	})
+
+
 })

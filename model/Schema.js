@@ -705,7 +705,6 @@ module.exports = class Base {
 	}
 
 	validate(isInsert) {
-		console.log('validate')
 		const columns = this.columns
 
 		//columns not defined
@@ -719,7 +718,7 @@ module.exports = class Base {
 				continue
 			}
 
-			const { type, required } = option
+			const { type, required, length } = option
 
 			const value = this[key]
 			//throw if required
@@ -744,8 +743,18 @@ module.exports = class Base {
 			}
 
 			//throw if invalid
-			if (!typeValidator(this[key])) {
+			if (!typeValidator(value)) {
 				throwError(`${this.constructor.name}.${key} must be type: ${type.name} ${JSON.stringify(this)}`)
+			}
+
+			//validate value length
+			//ex: length: 3
+			if (typeof length === 'number' && value.length != length) {
+				throwError(`${this.constructor.name}.${key} length should be: ${length} ${JSON.stringify(this)}`)
+			}
+			//ex: length: { min:3 , max: 5 }
+			else if (typeof length === 'object' && (value.length < length.min || value.length > length.max)) {
+				throwError(`${this.constructor.name}.${key} length should between: ${length.min} and ${length.max} ${JSON.stringify(this)}`)
 			}
 		}
 

@@ -16,7 +16,8 @@ module.exports = class driver_review_status extends Scheme {
 			},
 			'first_name': {
 				type: Scheme.Types.Str,
-				required: true
+				required: true,
+				length: 5
 			},
 			'last_name': {
 				type: Scheme.Types.Str,
@@ -28,8 +29,15 @@ module.exports = class driver_review_status extends Scheme {
 			'model': {
 				type: String
 			},
+			'phone_number': {
+				type: Scheme.Types.Str,
+				required: true,
+				length: 10
+			},
 			'plate_number': {
-				type: PlateNumber
+				type: PlateNumber,
+				required: true,
+				length: { min: 5, max: 8 }
 			}
 		}
 	}
