@@ -722,21 +722,19 @@ module.exports = class Base {
 
 			const value = this[key]
 
-			if (isInsert || required) {
-				validateRequired.bind(this)({ key, value, required, isInsert })
-			}
+			validateRequired.bind(this)({ key, value, required, isInsert })
 
 			//throw if required
 			if (isInsert) {
-				if (required && value == undefined) {
+				if (required && value === undefined) {
 					throwError(`${key} is required`)
 				} else if (!required) {
 					continue
 				}
 			} else {
-				if (required && value == null) {
+				if (required && value === null) {
 					throwError(`${key} is required`)
-				} else if (value == undefined) {
+				} else if (value === undefined) {
 					continue
 				}
 			}
@@ -747,9 +745,7 @@ module.exports = class Base {
 				throwError(`${this.constructor.name}.${key} must be type: ${type.name} ${JSON.stringify(this)}`)
 			}
 
-			if (isInsert || value !== undefined) {
-				validateLength.bind(this)({ key, value, length, isInsert })
-			}
+			validateLength.bind(this)({ key, value, length, isInsert })
 		}
 
 		return true
@@ -817,10 +813,15 @@ function validateRequired({ key, value, required, isInsert }) {
 	}
 }
 
-function validateLength({ key, value, length, isInsert }) {
-	if (value === undefined) {
-		throwError(`${key} is required`)
+function validateLength({ key, value, length }) {
+	if (!length) {
+		return
 	}
+
+	if (value === undefined || value === null) {
+		return
+	}
+
 	//validate value length
 	//ex: length: 3
 	if (typeof length === 'number' && value.length != length) {

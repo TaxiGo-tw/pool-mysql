@@ -70,21 +70,14 @@ describe('test JSON model Validations', async () => {
 			plate_number: '123-AAA'
 		})
 
-		try {
-			obj.validate()
-		} catch (error) {
-			console.log(error)
-		}
-		assert(obj.validate())
+		assert(obj.validate(true))
 	})
 
 	it('JSON model', async () => {
 		const obj = new DriverReviewStatus({ uid: 123, first_name: 'lova', email: '123@gg.mail', car_brand: '' })
 
 		assert.throws(() => {
-			obj.validate()
+			obj.validate(true)
 		}, 'driver_review_status.car_brand must be type: JSONString {"uid":123,"first_name":"lova","email":"123@gg.mail","car_brand":""}')
 	})
-
-
 })

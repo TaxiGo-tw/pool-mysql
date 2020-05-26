@@ -13,17 +13,18 @@ module.exports = class trips extends Schema {
 
 	get columns() {
 		return {
-			// trip_id: Schema.Types.PK,
 			trip_id: {
 				type: Schema.Types.PK,
-				// required: true
 			},
 			user_id: Schema.Types.Num,
 			user: {
 				ref: require('./Users'),
 				column: 'user_id'
 			},
-			driver_id: Number,
+			driver_id: {
+				type: Schema.Types.Num,
+				required: true
+			},
 			driver_loc: {
 				ref: require('./Drivers'),
 				column: 'driver_id'

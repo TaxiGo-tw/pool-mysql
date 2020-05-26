@@ -34,9 +34,18 @@ class ENUM {
 	}
 }
 
-class JSONString extends String {
+
+class Str extends String {
+	static validate(string) {
+		return typeof string === 'string'
+	}
+}
+
+class JSONString extends Str {
 
 	static validate(str) {
+		super.validate()
+
 		try {
 			if (!str) {
 				return false
@@ -64,20 +73,13 @@ class Email extends String {
 	}
 }
 
-class URL extends String {
+class URL extends Str {
 	static validate(string) {
-		if (!string) {
-			return false
-		}
+		super.validate()
 
 		const lowerCased = string.toLowerCase()
 
 		return lowerCased.match(/(^https?:\/\/)/) ? true : false
-	}
-}
-class Str extends String {
-	static validate(string) {
-		return typeof string === 'string'
 	}
 }
 
@@ -87,8 +89,9 @@ class Num extends Number {
 	}
 }
 
-class NumberString extends Number {
+class NumberString extends Str {
 	static validate(string) {
+		super.validate()
 		return !isNaN(string) && Number(string) == string
 	}
 }
