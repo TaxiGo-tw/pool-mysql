@@ -77,7 +77,13 @@ module.exports = class Base {
 		} else {
 			const keys = this.columns
 				? Object.keys(this.columns)
-					.filter(column => !(this.columns[column] instanceof Array) && !(typeof this.columns[column] == 'object'))
+					.filter(column => {
+						if (this.columns[column].type) {
+							return true
+						}
+
+						return !(this.columns[column] instanceof Array) && !(typeof this.columns[column] == 'object')
+					})
 					.map(column => `${this.constructor.name}.${column}`)
 					.join(', ')
 				: '*'
@@ -323,8 +329,7 @@ module.exports = class Base {
 							const type = populateType[0]
 
 							const tColumn = Object.keys(type.columns).filter(c => type.columns[c].name == this.constructor.name)[0]
-
-							const PKColumn = Object.keys(this.columns).filter(column => this.columns[column] == Base.Types.PK || this.columns[column].type == Base.Types.PK)[0]
+							const PKColumn = Object.keys(this.columns).filter(column => realType(this.columns[column]) == Base.Types.PK)[0]
 							const ids = results.map(result => result[PKColumn])
 							const populates = await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print || false).exec(this._connection)
 
@@ -361,7 +366,8 @@ module.exports = class Base {
 								continue
 							}
 
-							const PKColumn = Object.keys(refType.columns).filter(column => refType.columns[column] == Base.Types.PK)[0]
+							const PKColumn = Object.keys(refType.columns).filter(column => realType(refType.columns[column]) == Base.Types.PK)[0]
+
 							const populates = await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).PRINT(print || false).exec(this._connection)
 
 							results.forEach(result => {
@@ -702,6 +708,11 @@ module.exports = class Base {
 	validate() {
 		const columns = this.columns
 
+		//columns not defined
+		if (!columns) {
+			return true
+		}
+
 		for (const [key, option] of Object.entries(columns)) {
 			// pass if not defined
 			if (typeof option !== 'object') {
@@ -764,4 +775,8 @@ function validate(params) {
 			object.validate()
 			break
 	}
+}
+
+function realType(type) {
+	return type.type || type
 }

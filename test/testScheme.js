@@ -38,23 +38,18 @@ describe('test query', async () => {
 	})
 
 	it('with cache', async () => {
-		try {
+		const query = Trips
+			.SELECT()
+			.FROM()
+			.WHERE({ trip_id: 23890 })
+			.AND({ trip_id: 23890 })
+			.LIMIT()
+			.EX(2)
 
-			const query = Trips
-				.SELECT()
-				.FROM()
-				.WHERE({ trip_id: 23890 })
-				.AND({ trip_id: 23890 })
-				.LIMIT()
-				.EX(2)
+		const results = await query.exec()
 
-			const results = await query.exec()
-
-			results[0].should.have.property('trip_id')
-			results[0].should.not.have.property('user')
-		} catch (error) {
-			console.log(error)
-		}
+		results[0].should.have.property('trip_id')
+		results[0].should.not.have.property('user')
 	})
 
 
@@ -402,18 +397,6 @@ describe('test long query', async () => {
 
 describe('test insert', async () => {
 	it('3', async () => {
-		try {
-			const query = Block
-				.INSERT(true)
-				.INTO()
-				.SET({ blocker: 201, blocked: 203, notes: 'test' })
-				.DUPLICATE({ notes: 'ggg' })
-
-			await query.exec()
-
-		} catch (error) {
-			console.log(error.message)
-		}
 		const query = Block
 			.INSERT(true)
 			.INTO()
@@ -421,7 +404,6 @@ describe('test insert', async () => {
 			.DUPLICATE({ notes: 'ggg' })
 
 		await query.exec()
-
 	})
 
 	it('4', async () => {
@@ -435,8 +417,6 @@ describe('test insert', async () => {
 
 	})
 })
-
-
 
 describe('test UPDATED', async () => {
 	it('1', async () => {

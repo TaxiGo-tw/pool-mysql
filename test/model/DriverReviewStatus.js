@@ -27,10 +27,6 @@ module.exports = class driver_review_status extends Scheme {
 			},
 			'plate_number': {
 				type: PlateNumber
-			},
-			'email': {
-				type: Scheme.Types.Email,
-				required: true
 			}
 		}
 	}
