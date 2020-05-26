@@ -814,10 +814,10 @@ function validateLength({ key, value, length }) {
 	//validate value length
 	//ex: length: 3
 	if (typeof length === 'number' && value.length != length) {
-		throwError(`${this.constructor.name}.${key} length should be: ${length} ${JSON.stringify(this)}`)
+		throwError(`${this.constructor.name}.${key}.length should be ${length}, now is ${value.length}`)
 	}
 	//ex: length: { min:3 , max: 5 }
 	else if (typeof length === 'object' && (value.length < length.min || value.length > length.max)) {
-		throwError(`${this.constructor.name}.${key} length should between: ${length.min} and ${length.max} ${JSON.stringify(this)}`)
+		throwError(`${this.constructor.name}.${key}.length should between ${length.min} and ${length.max}, now is ${value.length}`)
 	}
 }
