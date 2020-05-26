@@ -323,7 +323,7 @@ module.exports = class Base {
 							const type = populateType[0]
 
 							const tColumn = Object.keys(type.columns).filter(c => type.columns[c].name == this.constructor.name)[0]
-							const PKColumn = Object.keys(this.columns).filter(column => realType(this.columns[column]) == Base.Types.PK)[0]
+							const PKColumn = Object.keys(this.columns).filter(column => isInherit(realType(this.columns[column]), Base.Types.PK))[0]
 							const ids = results.map(result => result[PKColumn])
 							const populates = await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print || false).exec(this._connection)
 
@@ -360,7 +360,7 @@ module.exports = class Base {
 								continue
 							}
 
-							const PKColumn = Object.keys(refType.columns).filter(column => realType(refType.columns[column]) == Base.Types.PK)[0]
+							const PKColumn = Object.keys(refType.columns).filter(column => isInherit(realType(refType.columns[column]), Base.Types.PK))[0]
 
 							const populates = await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).PRINT(print || false).exec(this._connection)
 
@@ -562,13 +562,7 @@ module.exports = class Base {
 			throwError(`${this.constructor.name} columns not defined`)
 		}
 
-		let find
-		for (const key in this.columns) {
-			const type = realType(this.columns[key])
-			if (type == Base.Types.PK) {
-				find = key
-			}
-		}
+		const find = this._pk
 
 		if (!find) {
 			throwError(`${this.constructor.name}.PK columns not defined`)
@@ -594,6 +588,11 @@ module.exports = class Base {
 		await this.UPDATE().SET(value).WHERE(where).exec()
 	}
 
+	static get _pk() {
+		const x = new this()
+		return x._pk
+	}
+
 	get _pk() {
 		if (!this.columns) {
 			throwError(`${this.constructor.name} columns not defined`)
@@ -602,7 +601,7 @@ module.exports = class Base {
 		let pk
 		for (const key in this.columns) {
 			const value = realType(this.columns[key])
-			if (value == Base.Types.PK) {
+			if (isInherit(value, Base.Types.PK)) {
 				pk = key
 			}
 		}
@@ -612,11 +611,6 @@ module.exports = class Base {
 		}
 
 		return pk
-	}
-
-	static get _pk() {
-		const x = new this()
-		return x._pk
 	}
 
 	_PRE(command) {
@@ -820,4 +814,9 @@ function validateLength({ key, value, length }) {
 	else if (typeof length === 'object' && (value.length < length.min || value.length > length.max)) {
 		throwError(`${this.constructor.name}.${key}.length should between ${length.min} and ${length.max}, now is ${value.length}`)
 	}
+}
+
+function isInherit(type, pk) {
+	return type == pk
+		|| type.prototype instanceof pk
 }
