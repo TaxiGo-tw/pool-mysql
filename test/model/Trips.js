@@ -16,7 +16,9 @@ module.exports = class trips extends Schema {
 			trip_id: {
 				type: Schema.Types.PK,
 			},
-			user_id: Schema.Types.Num,
+			user_id: {
+				type: Schema.Types.Str
+			},
 			user: {
 				ref: require('./Users'),
 				column: 'user_id'

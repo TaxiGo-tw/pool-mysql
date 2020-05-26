@@ -722,30 +722,19 @@ module.exports = class Base {
 
 			const value = this[key]
 
+			//detect if required
 			validateRequired.bind(this)({ key, value, required, isInsert })
 
-			//throw if required
-			if (isInsert) {
-				if (required && value === undefined) {
-					throwError(`${key} is required`)
-				} else if (!required) {
-					continue
-				}
-			} else {
-				if (required && value === null) {
-					throwError(`${key} is required`)
-				} else if (value === undefined) {
-					continue
-				}
-			}
-
 			//throw if invalid
-			const typeValidator = type.validate
-			if (typeValidator && !typeValidator(value)) {
-				throwError(`${this.constructor.name}.${key} must be type: ${type.name} ${JSON.stringify(this)}`)
+			if (type) {
+				const typeValidator = type.validate
+				if (value !== undefined && value !== null && typeValidator && !typeValidator(value)) {
+					throwError(`${this.constructor.name}.${key} must be type: '${type.name}', not '${typeof value}' ${JSON.stringify(this)}`)
+				}
 			}
 
-			validateLength.bind(this)({ key, value, length, isInsert })
+			//detect length
+			validateLength.bind(this)({ key, value, length })
 		}
 
 		return true

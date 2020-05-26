@@ -73,11 +73,31 @@ describe('test JSON model Validations', async () => {
 		assert(obj.validate(true))
 	})
 
+	it('JSON model pass 2', async () => {
+		const obj = new DriverReviewStatus({
+			uid: 123,
+			first_name: 'lova5',
+			last_name: 'hi',
+			email: '123@gg.mail',
+			car_brand: '{"brand":"bmw"}'
+		})
+
+		assert(obj.validate())
+	})
+
+	it('JSON model pass 2', async () => {
+		const obj = new DriverReviewStatus({
+			uid: 123,
+		})
+
+		assert(obj.validate())
+	})
+
+
 	it('JSON model', async () => {
 		const obj = new DriverReviewStatus({ uid: 123, first_name: 'lova', email: '123@gg.mail', car_brand: '' })
 
-		assert.throws(() => {
-			obj.validate(true)
-		}, 'driver_review_status.car_brand must be type: JSONString {"uid":123,"first_name":"lova","email":"123@gg.mail","car_brand":""}')
+		const errorMessage = 'driver_review_status.car_brand must be type: JSONString {"uid":123,"first_name":"lova","email":"123@gg.mail","car_brand":""}'
+		assert.throws(() => { obj.validate(true) }, errorMessage)
 	})
 })
