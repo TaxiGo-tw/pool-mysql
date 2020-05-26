@@ -1,15 +1,44 @@
-const Base = require('../../index').Schema
+const Scheme = require('../../index').Schema
 
-module.exports = class driver_review_status extends Base {
+class PlateNumber extends Scheme.Types.Base {
+	static validate(string) {
+		return string.match(/[0-9]+-[A-Z]+/)
+	}
+}
+
+module.exports = class driver_review_status extends Scheme {
 
 	get columns() {
 		return {
-			'uid': Base.Types.PK,
-			'first_name': String,
-			'last_name': String,
-			'car_brand': String,
-			'model': String,
-			'plate_number': String
+			'uid': {
+				type: Scheme.Types.PK,
+				required: true
+			},
+			'first_name': {
+				type: Scheme.Types.Str,
+				required: true,
+				length: 5
+			},
+			'last_name': {
+				type: Scheme.Types.Str,
+				required: true
+			},
+			'car_brand': {
+				type: Scheme.Types.JSONString,
+			},
+			'model': {
+				type: String
+			},
+			'phone_number': {
+				type: Scheme.Types.Str,
+				required: true,
+				length: 10
+			},
+			'plate_number': {
+				type: PlateNumber,
+				required: true,
+				length: { min: 5, max: 8 }
+			}
 		}
 	}
 }

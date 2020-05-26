@@ -18,7 +18,7 @@ module.exports = class Base {
 
 	static async native(outSideConnection, sql, values) {
 		if (!sql) {
-			throw 'sql command needed'
+			throwError('sql command needed')
 		}
 
 		const connection = outSideConnection || await pool.createConnection()
@@ -38,15 +38,9 @@ module.exports = class Base {
 		const object = new this()
 		const columns = object.columns
 
-		const keys = []
-		for (const key in columns) {
-			const value = columns[key]
-			if (value && !(value instanceof Array) && !(typeof value == 'object')) {
-				keys.push(`${object.constructor.name}.${key}`)
-			}
-		}
-
-		return keys
+		return Object.keys(columns)
+			.filter(column => isRealColumn(columns[column]))
+			.map(column => `${object.constructor.name}.${column}`)
 	}
 
 	// EXPLAIN() {
@@ -77,7 +71,13 @@ module.exports = class Base {
 		} else {
 			const keys = this.columns
 				? Object.keys(this.columns)
-					.filter(column => !(this.columns[column] instanceof Array) && !(typeof this.columns[column] == 'object'))
+					.filter(column => {
+						if (this.columns[column].type) {
+							return true
+						}
+
+						return !(this.columns[column] instanceof Array) && !(typeof this.columns[column] == 'object')
+					})
 					.map(column => `${this.constructor.name}.${column}`)
 					.join(', ')
 				: '*'
@@ -323,8 +323,7 @@ module.exports = class Base {
 							const type = populateType[0]
 
 							const tColumn = Object.keys(type.columns).filter(c => type.columns[c].name == this.constructor.name)[0]
-
-							const PKColumn = Object.keys(this.columns).filter(column => this.columns[column] == Base.Types.PK)[0]
+							const PKColumn = Object.keys(this.columns).filter(column => isInherit(realType(this.columns[column]), Base.Types.PK))[0]
 							const ids = results.map(result => result[PKColumn])
 							const populates = await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print || false).exec(this._connection)
 
@@ -361,7 +360,8 @@ module.exports = class Base {
 								continue
 							}
 
-							const PKColumn = Object.keys(refType.columns).filter(column => refType.columns[column] == Base.Types.PK)[0]
+							const PKColumn = Object.keys(refType.columns).filter(column => isInherit(realType(refType.columns[column]), Base.Types.PK))[0]
+
 							const populates = await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).PRINT(print || false).exec(this._connection)
 
 							results.forEach(result => {
@@ -477,6 +477,11 @@ module.exports = class Base {
 	}
 
 	SET(whereCaluse, whereCaluse2, { passUndefined = false, encryption = [] } = {}) {
+
+		if (typeof whereCaluse === 'object') {
+			validate.bind(this)(whereCaluse)
+		}
+
 		function passUndefinedIfNeeded(passUndefined, value) {
 			if (!passUndefined || !(value instanceof Object)) {
 				return value
@@ -549,7 +554,7 @@ module.exports = class Base {
 
 	static FIND(...whereCaluse) {
 		const object = new this()
-		return object.SELECT().FROM().WHERE(...arguments)
+		return object.SELECT().FROM().WHERE(...whereCaluse)
 	}
 
 	static FIND_PK(pk) {
@@ -557,13 +562,7 @@ module.exports = class Base {
 			throwError(`${this.constructor.name} columns not defined`)
 		}
 
-		let find
-		for (const key in this.columns) {
-			const value = this.columns[key]
-			if (value == Base.Types.PK) {
-				find = key
-			}
-		}
+		const find = this._pk
 
 		if (!find) {
 			throwError(`${this.constructor.name}.PK columns not defined`)
@@ -589,6 +588,11 @@ module.exports = class Base {
 		await this.UPDATE().SET(value).WHERE(where).exec()
 	}
 
+	static get _pk() {
+		const x = new this()
+		return x._pk
+	}
+
 	get _pk() {
 		if (!this.columns) {
 			throwError(`${this.constructor.name} columns not defined`)
@@ -596,8 +600,8 @@ module.exports = class Base {
 
 		let pk
 		for (const key in this.columns) {
-			const value = this.columns[key]
-			if (value == Base.Types.PK) {
+			const value = realType(this.columns[key])
+			if (isInherit(value, Base.Types.PK)) {
 				pk = key
 			}
 		}
@@ -693,6 +697,42 @@ module.exports = class Base {
 
 		return options
 	}
+
+	validate(isInsert) {
+		const columns = this.columns
+
+		//columns not defined
+		if (!columns) {
+			return true
+		}
+
+		for (const [key, option] of Object.entries(columns)) {
+			// pass if not defined
+			if (typeof option !== 'object') {
+				continue
+			}
+
+			const { type, required, length } = option
+
+			const value = this[key]
+
+			//detect if required
+			validateRequired.bind(this)({ key, value, required, isInsert })
+
+			//throw if invalid
+			if (type) {
+				const typeValidator = type.validate
+				if (value !== undefined && value !== null && typeValidator && !typeValidator(value)) {
+					throwError(`${this.constructor.name}.${key} must be type: '${type.name}', not '${typeof value}' ${JSON.stringify(this)}`)
+				}
+			}
+
+			//detect length
+			validateLength.bind(this)({ key, value, length })
+		}
+
+		return true
+	}
 }
 
 function addQuery(reservedWord, whereCaluse, whereCaluse2, inBrackets = true) {
@@ -713,4 +753,70 @@ function addQuery(reservedWord, whereCaluse, whereCaluse2, inBrackets = true) {
 	}
 
 	return this
+}
+
+////////////////////////////////////////////////////////////
+
+function validate(params) {
+	const object = new this.constructor(params)
+	switch (this._q[0].type) {
+		case 'INSERT':
+			object.validate(true)
+			break
+		case 'UPDATE':
+			object.validate()
+			break
+	}
+}
+
+function isRealColumn(column) {
+	const type = realType(column)
+
+	return type
+		&& (type instanceof Array === false)
+		&& typeof type !== 'object'
+}
+
+function realType(type) {
+	return type.type || type
+}
+
+
+// insert 時 required 都要有值
+// update 時 只看required不能是null
+function validateRequired({ key, value, required, isInsert }) {
+	if (!required) {
+		return
+	}
+
+	if (isInsert && (value === undefined || value === null)) {
+		throwError(`${key} is required`)
+	} else if (!isInsert && value === null) {
+		throwError(`${key} is required`)
+	}
+}
+
+function validateLength({ key, value, length }) {
+	if (!length) {
+		return
+	}
+
+	if (value === undefined || value === null) {
+		return
+	}
+
+	//validate value length
+	//ex: length: 3
+	if (typeof length === 'number' && value.length != length) {
+		throwError(`${this.constructor.name}.${key}.length should be ${length}, now is ${value.length}`)
+	}
+	//ex: length: { min:3 , max: 5 }
+	else if (typeof length === 'object' && (value.length < length.min || value.length > length.max)) {
+		throwError(`${this.constructor.name}.${key}.length should between ${length.min} and ${length.max}, now is ${value.length}`)
+	}
+}
+
+function isInherit(type, pk) {
+	return type == pk
+		|| type.prototype instanceof pk
 }

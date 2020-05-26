@@ -236,6 +236,71 @@ pool.event.on('get', connection => {
 })
 ```
 
+### Validation
+
+Triggered on UPDATE()..SET(object) and INSERT()...SET(object)
+
+* `values must be object`
+
+[default types](https://github.com/TaxiGo-tw/pool-mysql/blob/feature/validator/model/Types.js)
+
+##### Variables
+
+* type:
+
+* required: default to false
+	* INSERT() checks all required
+	* UPDATE() checks SET()
+
+* length:
+
+```js
+
+// Custom Validate
+class PlateNumber extends Scheme.Types.Base {
+	static validate(string) {
+		return string.match(/[0-9]+-[A-Z]+/)
+	}
+}
+
+module.exports = class driver_review_status extends Scheme {
+
+	get columns() {
+		return {
+			'uid': {
+				type: Scheme.Types.PK,
+				required: true
+			},
+			'first_name': {
+				type: Scheme.Types.Str,
+				required: true,
+			},
+			'last_name': String,
+			'car_brand': {
+				type: Scheme.Types.JSONString
+			},
+			'model': {
+				type: String
+			},
+			'phone_number': {
+				type: Scheme.Types.Str,
+				required: true,
+				length: 10
+			},
+			'plate_number': {
+				type: PlateNumber,
+				length: { min: 6 , max: 9 }
+			},
+			'email': {
+				type: Scheme.Types.Email,
+				required: true
+			}
+		}
+	}
+}
+```
+
+
 ### Log level
 
 * `all` print logs anywhere
