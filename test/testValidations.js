@@ -91,6 +91,13 @@ describe('test JSON model Validations', async () => {
 		})
 
 		assert(obj.validate())
+
+		const obj2 = new DriverReviewStatus({ last_name: 123 })
+		assert.throws(() => { obj2.validate() }, `driver_review_status.last_name must be type: 'Str', not 'number' {"last_name":123}`)
+
+		const obj3 = new DriverReviewStatus({ last_name: 123 })
+		assert.throws(() => { obj3.validate(true) }, `uid is required`)
+
 	})
 
 
