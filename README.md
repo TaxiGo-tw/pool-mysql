@@ -246,17 +246,17 @@ Triggered on UPDATE()..SET(object) and INSERT()...SET(object)
 
 ##### Variables
 
-* type:
+* type: to limit type
 
 * required: default to false
 	* INSERT() checks all required
 	* UPDATE() checks SET()
 
-* length:
+* length: limit something.length
 
 ```js
 
-// Custom Validate
+// Custom Validator
 class PlateNumber extends Scheme.Types.Base {
 	static validate(string) {
 		return string.match(/[0-9]+-[A-Z]+/)
