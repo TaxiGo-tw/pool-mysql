@@ -238,9 +238,19 @@ pool.event.on('get', connection => {
 
 ### Validation
 
-* Triggered on UPDATE() and INSERT()
+Triggered on UPDATE() and INSERT()
 
-* [default types](https://github.com/TaxiGo-tw/pool-mysql/blob/feature/validator/model/Types.js)
+[default types](https://github.com/TaxiGo-tw/pool-mysql/blob/feature/validator/model/Types.js)
+
+##### Variables
+
+* type:
+
+* required: default to false
+	* INSERT() checks all required
+	* UPDATE() checks SET()
+
+* length:
 
 ```js
 
@@ -277,7 +287,7 @@ module.exports = class driver_review_status extends Scheme {
 			},
 			'plate_number': {
 				type: PlateNumber,
-				length: {min: 2 , max: 3}
+				length: { min: 6 , max: 9 }
 			},
 			'email': {
 				type: Scheme.Types.Email,

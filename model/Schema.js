@@ -721,6 +721,11 @@ module.exports = class Base {
 			const { type, required, length } = option
 
 			const value = this[key]
+
+			if (isInsert || required) {
+				validateRequired.bind(this)({ key, value, required, isInsert })
+			}
+
 			//throw if required
 			if (isInsert) {
 				if (required && value == undefined) {
@@ -736,25 +741,14 @@ module.exports = class Base {
 				}
 			}
 
-			const typeValidator = type.validate
-			//pass if not defined
-			if (!typeValidator) {
-				continue
-			}
-
 			//throw if invalid
-			if (!typeValidator(value)) {
+			const typeValidator = type.validate
+			if (typeValidator && !typeValidator(value)) {
 				throwError(`${this.constructor.name}.${key} must be type: ${type.name} ${JSON.stringify(this)}`)
 			}
 
-			//validate value length
-			//ex: length: 3
-			if (typeof length === 'number' && value.length != length) {
-				throwError(`${this.constructor.name}.${key} length should be: ${length} ${JSON.stringify(this)}`)
-			}
-			//ex: length: { min:3 , max: 5 }
-			else if (typeof length === 'object' && (value.length < length.min || value.length > length.max)) {
-				throwError(`${this.constructor.name}.${key} length should between: ${length.min} and ${length.max} ${JSON.stringify(this)}`)
+			if (isInsert || value !== undefined) {
+				validateLength.bind(this)({ key, value, length, isInsert })
 			}
 		}
 
@@ -782,6 +776,8 @@ function addQuery(reservedWord, whereCaluse, whereCaluse2, inBrackets = true) {
 	return this
 }
 
+////////////////////////////////////////////////////////////
+
 function validate(params) {
 	const object = new this.constructor(params)
 	switch (this._q[0].type) {
@@ -804,4 +800,34 @@ function isRealColumn(column) {
 
 function realType(type) {
 	return type.type || type
+}
+
+
+// insert 時 required 都要有值
+// update 時 只看required不能是null
+function validateRequired({ key, value, required, isInsert }) {
+	if (!required) {
+		return
+	}
+
+	if (isInsert && (value === undefined || value === null)) {
+		throwError(`${key} is required`)
+	} else if (!isInsert && value === null) {
+		throwError(`${key} is required`)
+	}
+}
+
+function validateLength({ key, value, length, isInsert }) {
+	if (value === undefined) {
+		throwError(`${key} is required`)
+	}
+	//validate value length
+	//ex: length: 3
+	if (typeof length === 'number' && value.length != length) {
+		throwError(`${this.constructor.name}.${key} length should be: ${length} ${JSON.stringify(this)}`)
+	}
+	//ex: length: { min:3 , max: 5 }
+	else if (typeof length === 'object' && (value.length < length.min || value.length > length.max)) {
+		throwError(`${this.constructor.name}.${key} length should between: ${length.min} and ${length.max} ${JSON.stringify(this)}`)
+	}
 }
