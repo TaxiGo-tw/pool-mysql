@@ -50,11 +50,10 @@ describe('test Validations', async () => {
 	it('Number String', async () => {
 		assert.equal(NumberString.validate('123'), true)
 		assert.equal(NumberString.validate('33312'), true)
-		// assert.equal(NumberString.validate('12312gggg@gmail'), false)
-		// assert.equal(NumberString.validate('{"hi":1}'), false)
-		// assert.equal(NumberString.validate('{___}'), false)
-		// assert.equal(NumberString.validate('{hi:1}'), false)
-		// assert.equal(NumberString.validate(''), false)
+		assert.equal(NumberString.validate('12312gggg@gmail'), false)
+		assert.equal(NumberString.validate('{"hi":1}'), false)
+		assert.equal(NumberString.validate('{___}'), false)
+		assert.equal(NumberString.validate('{hi:1}'), false)
 	})
 })
 

@@ -44,7 +44,10 @@ class Str extends String {
 class JSONString extends Str {
 
 	static validate(str) {
-		super.validate()
+		if (!super.validate(str)) {
+			return false
+		}
+
 
 		try {
 			if (!str) {
@@ -75,7 +78,9 @@ class Email extends String {
 
 class URL extends Str {
 	static validate(string) {
-		super.validate()
+		if (!super.validate(string)) {
+			return false
+		}
 
 		const lowerCased = string.toLowerCase()
 
@@ -91,7 +96,10 @@ class Num extends Number {
 
 class NumberString extends Str {
 	static validate(string) {
-		super.validate()
+		if (!super.validate(string)) {
+			return false
+		}
+
 		return !isNaN(string) && Number(string) == string
 	}
 }
