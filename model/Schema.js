@@ -704,7 +704,8 @@ module.exports = class Base {
 		return options
 	}
 
-	validate() {
+	validate(isInsert) {
+		console.log('validate')
 		const columns = this.columns
 
 		//columns not defined
@@ -722,20 +723,28 @@ module.exports = class Base {
 
 			const value = this[key]
 			//throw if required
-			if (required && value == undefined) {
-				throwError(`${key} is required`)
-			} else if (!required && value == undefined) {
-				continue
+			if (isInsert) {
+				if (required && value == undefined) {
+					throwError(`${key} is required`)
+				} else if (!required) {
+					continue
+				}
+			} else {
+				if (required && value == null) {
+					throwError(`${key} is required`)
+				} else if (value == undefined) {
+					continue
+				}
 			}
 
-			const validate = type.validate
+			const typeValidator = type.validate
 			//pass if not defined
-			if (!validate) {
+			if (!typeValidator) {
 				continue
 			}
 
 			//throw if invalid
-			if (!validate(this[key])) {
+			if (!typeValidator(this[key])) {
 				throwError(`${this.constructor.name}.${key} must be type: ${type.name} ${JSON.stringify(this)}`)
 			}
 		}
@@ -768,7 +777,7 @@ function validate(params) {
 	const object = new this.constructor(params)
 	switch (this._q[0].type) {
 		case 'INSERT':
-			object.validate()
+			object.validate(true)
 			break
 		case 'UPDATE':
 			object.validate()

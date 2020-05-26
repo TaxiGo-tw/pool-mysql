@@ -9,7 +9,6 @@ module.exports = class trips extends Schema {
 		const Drivers = require('./Drivers')
 		this.driver_info = trip && trip.driver_info ? new DriverReviewStatus(trip.driver_info) : undefined
 		this.driver_info = trip && trip.driver_loc ? new Drivers(trip.driver_info) : undefined
-
 	}
 
 	get columns() {

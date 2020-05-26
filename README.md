@@ -238,7 +238,7 @@ pool.event.on('get', connection => {
 
 ### Validation
 
-* Triggered on update and insert
+* Triggered on UPDATE() and INSERT()
 
 * [default types](https://github.com/TaxiGo-tw/pool-mysql/blob/feature/validator/model/Types.js)
 
