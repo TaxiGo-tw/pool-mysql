@@ -5,7 +5,7 @@ should()  // Modifies `Object.prototype`
 const assert = require('assert')
 
 
-const { Num, Str, Email, JSONString } = require('../model/Schema').Types
+const { Num, Str, Email, JSONString, NumberString } = require('../model/Schema').Types
 
 describe('test model Validations', async () => {
 	it('get pk ', async () => {
@@ -45,6 +45,16 @@ describe('test Validations', async () => {
 		assert.equal(Email.validate('{___}'), false)
 		assert.equal(Email.validate('{hi:1}'), false)
 		assert.equal(Email.validate(''), false)
+	})
+
+	it('Number String', async () => {
+		assert.equal(NumberString.validate('123'), true)
+		assert.equal(NumberString.validate('33312'), true)
+		// assert.equal(NumberString.validate('12312gggg@gmail'), false)
+		// assert.equal(NumberString.validate('{"hi":1}'), false)
+		// assert.equal(NumberString.validate('{___}'), false)
+		// assert.equal(NumberString.validate('{hi:1}'), false)
+		// assert.equal(NumberString.validate(''), false)
 	})
 })
 

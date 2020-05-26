@@ -240,16 +240,16 @@ pool.event.on('get', connection => {
 
 * Triggered on update and insert
 
-* [default types](https://github.com/TaxiGo-tw/pool-mysql/blob/feature/validator/model/Types.js#L90)
+* [default types](https://github.com/TaxiGo-tw/pool-mysql/blob/feature/validator/model/Types.js)
 
 ```js
-// custom validate
+
+// Custom Validate
 class PlateNumber extends Scheme.Types.Base {
 	static validate(string) {
 		return string.match(/[0-9]+-[A-Z]+/)
 	}
 }
-
 
 module.exports = class driver_review_status extends Scheme {
 

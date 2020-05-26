@@ -83,7 +83,13 @@ class Str extends String {
 
 class Num extends Number {
 	static validate(number) {
-		return typeof number === 'number'
+		return !isNaN(number) && typeof number === 'number'
+	}
+}
+
+class NumberString extends Number {
+	static validate(string) {
+		return !isNaN(string) && Number(string) == string
 	}
 }
 
@@ -95,6 +101,7 @@ module.exports = {
 	Num,
 	Str,
 	JSONString,
+	NumberString,
 	Email,
 	URL
 }
