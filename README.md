@@ -11,7 +11,7 @@ which made for migrating to features
 * model.query
 * log print
 
-[Examples](https://github.com/vivalalova/pool-mysql/blob/master/test/test.js)
+See the test [Examples](https://github.com/TaxiGo-tw/pool-mysql/tree/master/test)
 
 ## Installation
 
