@@ -240,9 +240,7 @@ pool.event.on('get', connection => {
 
 * Triggered on update and insert
 
-* default types
-	* Str
-	*
+* [default types](https://github.com/TaxiGo-tw/pool-mysql/blob/feature/validator/model/Types.js#L90)
 
 ```js
 // custom validate

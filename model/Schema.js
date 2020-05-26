@@ -38,14 +38,18 @@ module.exports = class Base {
 		const object = new this()
 		const columns = object.columns
 
+		return Object.keys(columns)
+			.filter(column => isRealColumn(columns[column]))
+			.map(column => `${object.constructor.name}.${column}`)
+
+
 		const keys = []
 		for (const key in columns) {
 			const value = columns[key]
-			if (isRealType(value)) {
+			if (isRealColumn(value)) {
 				keys.push(`${object.constructor.name}.${key}`)
 			}
 		}
-
 		return keys
 	}
 
@@ -777,12 +781,14 @@ function validate(params) {
 	}
 }
 
-function realType(type) {
-	return type.type || type
+function isRealColumn(column) {
+	const type = realType(column)
+
+	return type
+		&& (type instanceof Array === false)
+		&& typeof type !== 'object'
 }
 
-
-function isRealType(value) {
-	const type = realType(value)
-	return type && !(type instanceof Array) && typeof type !== 'object'
+function realType(type) {
+	return type.type || type
 }
