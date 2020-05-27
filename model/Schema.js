@@ -797,7 +797,7 @@ function validateRequired({ key, value, required, isInsert }) {
 }
 
 function validateLength({ key, value, length }) {
-	if (!length) {
+	if (!length || value instanceof Array) {
 		return
 	}
 
