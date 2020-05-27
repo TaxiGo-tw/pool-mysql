@@ -38,7 +38,8 @@ module.exports = class driver_review_status extends Scheme {
 				type: PlateNumber,
 				required: true,
 				length: { min: 5, max: 8 }
-			}
+			},
+			'enum': ['a', 'b']
 		}
 	}
 }

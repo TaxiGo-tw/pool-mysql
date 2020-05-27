@@ -712,14 +712,15 @@ module.exports = class Base {
 				continue
 			}
 
-			const { type, required, length } = option
+
 
 			const value = this[key]
 
 			//detect if required
-			validateRequired.bind(this)({ key, value, required, isInsert })
+			validateRequired.bind(this)({ key, value, option, isInsert })
 
 			//throw if invalid
+			const { type } = option
 			if (type) {
 				const typeValidator = type.validate
 				if (value !== undefined && value !== null && typeValidator && !typeValidator(value)) {
@@ -728,7 +729,7 @@ module.exports = class Base {
 			}
 
 			//detect length
-			validateLength.bind(this)({ key, value, length })
+			validateLength.bind(this)({ key, value, option })
 		}
 
 		return true
@@ -784,7 +785,8 @@ function realType(type) {
 
 // insert 時 required 都要有值
 // update 時 只看required不能是null
-function validateRequired({ key, value, required, isInsert }) {
+function validateRequired({ key, value, option, isInsert }) {
+	const { required } = option
 	if (!required) {
 		return
 	}
@@ -796,14 +798,16 @@ function validateRequired({ key, value, required, isInsert }) {
 	}
 }
 
-function validateLength({ key, value, length }) {
-	if (!length || value instanceof Array) {
+function validateLength({ key, value, option }) {
+	if (option instanceof Array || !option.length) {
 		return
 	}
 
 	if (value === undefined || value === null) {
 		return
 	}
+
+	const { length } = option
 
 	//validate value length
 	//ex: length: 3

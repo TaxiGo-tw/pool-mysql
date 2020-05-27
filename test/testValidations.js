@@ -66,7 +66,8 @@ describe('test JSON model Validations', async () => {
 			email: '123@gg.mail',
 			car_brand: '{"brand":"bmw"}',
 			phone_number: '0911957274',
-			plate_number: '123-AAA'
+			plate_number: '123-AAA',
+			enum: '123123'
 		})
 
 		assert(obj.validate(true))
