@@ -15,19 +15,16 @@ class PK {
 
 class Point {
 	static validate(value) {
+		if (typeof value === 'object') {
+			const x = parseFloat(value.x)
+			const y = parseFloat(value.y)
 
-		const isValidString = typeof value === 'string'
-			&& value.replace(/ /g, '').match(/[0-9]{1,3},[0-9]{1,3}/)
+			return x == value.x && y == value.y
+		} else if (typeof value === 'string') {
+			return value.match(/\d+.\d+/g)
+		}
 
-		const isValidObject = typeof value === 'object'
-			&& typeof value.x === 'number'
-			&& typeof value.y === 'number'
-			&& value.x >= 0
-			&& value.x <= 180
-			&& value.y >= 0
-			&& value.y <= 180
-
-		return isValidString || isValidObject
+		return false
 	}
 
 	static inputMapper(value) {
@@ -36,10 +33,10 @@ class Point {
 		}
 
 		if (typeof value === 'string') {
-			const [x, y] = value.replace(/ /g, '').split(',').map(n => parseFloat(n))
+			const [x, y] = value.match(/\d+.\d+/g)
 			return mysql.raw(`POINT(${x}, ${y})`)
 		} else if (typeof value === 'object') {
-			return mysql.raw(`POINT(${mysql.escape(Number(value.x))}, ${mysql.escape(Number(value.y))})`)
+			return mysql.raw(`POINT(${parseFloat(value.x)}, ${parseFloat(value.y)})`)
 		}
 
 		throw 'input mapper failed'
