@@ -1,7 +1,7 @@
 const throwError = (error, onErr) => {
-	if (process.env.NODE_ENV === 'TESTING') {
-		console.log(error)
-	}
+	// if (process.env.NODE_ENV === 'TESTING') {
+	// 	console.log(error)
+	// }
 
 	switch (true) {
 		case typeof onErr === 'string':
