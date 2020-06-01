@@ -459,6 +459,29 @@ describe('test UPDATED', async () => {
 		result.should.have.property('user_id')
 		result.should.have.property('driver_id')
 	})
+
+	it('3 test point', async () => {
+		const trip_id = 29106
+
+		const result = await Trips
+			.UPDATE()
+			.SET({
+				driver_id: 3925,
+				trip_status: 'DRIVER_RESERVED',
+				//update POINT
+				start_latlng: {
+					x: 25,
+					y: 121
+				},
+				//update POINT
+				end_latlng: '25, 123'
+			})
+			.WHERE({ trip_id })
+			.FIRST()
+			.exec()
+
+		assert.equal(result.affectedRows, 1)
+	})
 })
 
 describe('test connection.query()', () => {

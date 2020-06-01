@@ -480,6 +480,13 @@ module.exports = class Base {
 
 		if (typeof whereCaluse === 'object') {
 			validate.bind(this)(whereCaluse)
+
+			for (const key of Object.keys(whereCaluse)) {
+				if (this.columns && this.columns[key] && this.columns[key].type && this.columns[key].type.inputMapper) {
+					const { inputMapper } = this.columns[key].type
+					whereCaluse[key] = inputMapper(whereCaluse[key])
+				}
+			}
 		}
 
 		function passUndefinedIfNeeded(passUndefined, value) {
@@ -711,8 +718,6 @@ module.exports = class Base {
 			if (typeof option !== 'object') {
 				continue
 			}
-
-
 
 			const value = this[key]
 

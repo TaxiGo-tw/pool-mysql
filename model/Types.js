@@ -1,3 +1,5 @@
+const mysql = require('mysql')
+
 class Base {
 	// eslint-disable-next-line no-unused-vars
 	static validate(value) {
@@ -12,13 +14,34 @@ class PK {
 }
 
 class Point {
-	constructor(x = 0, y = 0) {
-		this.x = x
-		this.y = y
+	static validate(value) {
+
+		const isValidString = typeof value === 'string'
+			&& value.replace(/ /g, '').match(/[0-9]{1,3},[0-9]{1,3}/)
+
+		const isValidObject = typeof value === 'object'
+			&& typeof value.x === 'number'
+			&& typeof value.y === 'number'
+			&& value.x >= 0
+			&& value.x <= 180
+			&& value.y >= 0
+			&& value.y <= 180
+
+		return isValidString || isValidObject
 	}
 
-	static validate() {
-		return true
+	static inputMapper(value) {
+		if (!Point.validate(value)) {
+			throw 'invalid'
+		}
+
+		if (typeof value === 'string') {
+			return mysql.raw(`POINT(${value})`)
+		} else if (typeof value === 'object') {
+			return mysql.raw(`POINT(${mysql.escape(Number(value.x))}, ${mysql.escape(Number(value.y))})`)
+		}
+
+		return ''
 	}
 }
 

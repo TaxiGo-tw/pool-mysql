@@ -35,6 +35,12 @@ module.exports = class trips extends Schema {
 				ref: require('./DriverReviewStatus'),
 				column: 'driver_id'
 			},
+			start_latlng: {
+				type: Schema.Types.Point
+			},
+			end_latlng: {
+				type: Schema.Types.Point
+			}
 		}
 	}
 }
