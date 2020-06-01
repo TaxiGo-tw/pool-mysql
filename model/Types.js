@@ -36,7 +36,7 @@ class Point {
 		}
 
 		if (typeof value === 'string') {
-			return mysql.raw(`POINT(${value})`)
+			return mysql.raw(`POINT(${mysql.escape(value)})`)
 		} else if (typeof value === 'object') {
 			return mysql.raw(`POINT(${mysql.escape(Number(value.x))}, ${mysql.escape(Number(value.y))})`)
 		}
