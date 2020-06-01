@@ -470,17 +470,39 @@ describe('test UPDATED', async () => {
 				trip_status: 'DRIVER_RESERVED',
 				//update POINT
 				start_latlng: {
-					x: 25,
-					y: 121
+					x: 25.5,
+					y: 121.5
 				},
 				//update POINT
-				end_latlng: '25, 123'
+				end_latlng: '25.5, 123.5'
 			})
 			.WHERE({ trip_id })
 			.FIRST()
 			.exec()
 
 		assert.equal(result.affectedRows, 1)
+	})
+
+	it('4 test point fail', async () => {
+		const trip_id = 29106
+
+		const result = await Trips
+			.UPDATE()
+			.SET({
+				driver_id: 3925,
+				trip_status: 'DRIVER_RESERVED',
+				//update POINT
+				start_latlng: {
+					x: 25.5,
+					y: 121.5
+				},
+				//update POINT
+				end_latlng: '25.5, 123.5'
+			})
+			.WHERE({ trip_id })
+			.FIRST()
+
+		assert.equal(result.FORMATTED().formatted, 'UPDATE trips SET `driver_id` = 3925, `trip_status` = \'DRIVER_RESERVED\', `start_latlng` = POINT(25.5, 121.5), `end_latlng` = POINT(25.5, 123.5) WHERE (`trip_id` = 29106) LIMIT 1')
 	})
 })
 
