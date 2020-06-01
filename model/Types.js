@@ -41,7 +41,7 @@ class Point {
 			return mysql.raw(`POINT(${mysql.escape(Number(value.x))}, ${mysql.escape(Number(value.y))})`)
 		}
 
-		return ''
+		throw 'input mapper failed'
 	}
 }
 
