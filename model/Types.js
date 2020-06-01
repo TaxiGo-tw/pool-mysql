@@ -36,7 +36,7 @@ class Point {
 		}
 
 		if (typeof value === 'string') {
-			const [, x, y] = mysql.escape(value).match(/([0-9]{1,3}), ([0-9]{1,3})/)
+			const [x, y] = value.replace(/ /g, '').split(',').map(n => parseFloat(n))
 			return mysql.raw(`POINT(${x}, ${y})`)
 		} else if (typeof value === 'object') {
 			return mysql.raw(`POINT(${mysql.escape(Number(value.x))}, ${mysql.escape(Number(value.y))})`)
