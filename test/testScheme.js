@@ -640,13 +640,12 @@ describe('test onErr', () => {
 			assert.equal(err.message, 'yoyoyoyoyoyo')
 		}
 	})
-
 })
 
 
 after(function () {
 	console.log('after all tests')
-	process.exit()
+	// process.exit()
 })
 
 // pool.event.on('get', connection => {
