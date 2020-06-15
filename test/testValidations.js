@@ -83,6 +83,8 @@ describe('test Validations', async () => {
 		assert.equal(Point.inputMapper('25, 123').toSqlString(), 'POINT(25, 123)')
 		assert.equal(Point.inputMapper('POINT(25.5, 123)').toSqlString(), 'POINT(25.5, 123)')
 		assert.equal(Point.inputMapper('POINT(25.5, 123.5)').toSqlString(), 'POINT(25.5, 123.5)')
+		assert.equal(Point.inputMapper({ x: 25, y: 123 }).toSqlString(), 'POINT(25, 123)')
+		assert.equal(Point.inputMapper({ x: 25, y: 123.5 }).toSqlString(), 'POINT(25, 123.5)')
 	})
 })
 
