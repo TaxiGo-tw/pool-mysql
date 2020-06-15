@@ -3,7 +3,7 @@ const Types = require('./Types')
 const Encryption = require('./Encryption')
 const mysql = require('mysql')
 const throwError = require('./throwError')
-
+const stream = require('stream')
 module.exports = class Base {
 	constructor(dict) {
 		if (dict) {
@@ -439,6 +439,62 @@ module.exports = class Base {
 			if (!outSideConnection) {
 				this._connection.release()
 			}
+		}
+	}
+
+	//select only
+	async stream({ connection, res }) {
+		this._connection = connection || await pool.createConnection()
+
+		res.setHeader('Content-Type', 'application/json')
+		res.setHeader('Cache-Control', 'no-cache')
+
+		try {
+			const { formatted, print } = this._options()
+
+			if (!this._connection.isSelect(formatted)) {
+				throwError(`'Stream query' must be SELECT, but "${formatted}"`)
+			}
+
+			if (print) {
+				//TODO: improve
+				// eslint-disable-next-line no-console
+				console.log(formatted)
+			}
+
+			this._connection.querying = formatted
+
+			this._connection.reader.query(formatted)
+				.stream()
+				.pipe(stream.Transform({
+					objectMode: true,
+					transform: (data, encoding, callback) => {
+						try {
+							res.write(JSON.stringify(data))
+						} catch (error) { }
+
+						callback()
+					}
+				}))
+				.on('finish', () => {
+					res.end()
+
+					this._connection.querying = undefined
+					if (!connection) {
+						this._connection.release()
+					}
+				})
+		} catch (error) {
+			this._connection.querying = undefined
+
+			// res.write(JSON.stringify({ msg: error.message }))
+			res.end()
+
+			if (!connection) {
+				this._connection.release()
+			}
+
+			// throw error
 		}
 	}
 
