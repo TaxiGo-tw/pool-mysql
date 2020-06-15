@@ -93,15 +93,16 @@ describe('test JSON model Validations', async () => {
 		assert(obj.validate())
 
 		const obj2 = new DriverReviewStatus({ last_name: 123 })
-		assert.throws(() => { obj2.validate() }, `driver_review_status.last_name must be type: 'Str', not 'number' {"last_name":123}`)
-		assert.throws(() => { obj2.validate(true) }, `uid is required`)
+		assert.throws(() => { obj2.validate() }, { message: `driver_review_status.last_name must be type: 'Str', not 'number' {"last_name":123}` })
+		assert.throws(() => { obj2.validate(true) }, { message: `uid is required` })
 	})
 
 
 	it('JSON model', async () => {
 		const obj = new DriverReviewStatus({ uid: 123, first_name: 'lova', email: '123@gg.mail', car_brand: '' })
 
-		const errorMessage = 'driver_review_status.car_brand must be type: JSONString {"uid":123,"first_name":"lova","email":"123@gg.mail","car_brand":""}'
-		assert.throws(() => { obj.validate(true) }, errorMessage)
+		assert.throws(() => { obj.validate(true) }, {
+			message: 'driver_review_status.first_name.length should be 5, now is 4'
+		})
 	})
 })
