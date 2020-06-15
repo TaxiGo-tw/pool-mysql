@@ -1,4 +1,5 @@
 const mysql = require('mysql')
+const throwError = require('./throwError')
 
 class Base {
 	// eslint-disable-next-line no-unused-vars
@@ -14,6 +15,10 @@ class PK {
 }
 
 class Point {
+	static get regex() {
+		return /(\d+\.\d+)|(\d+)/g
+	}
+
 	static validate(value) {
 		if (typeof value === 'object') {
 			const x = parseFloat(value.x)
@@ -21,7 +26,8 @@ class Point {
 
 			return x == value.x && y == value.y
 		} else if (typeof value === 'string') {
-			return value.match(/\d+.\d+/g)
+			const matched = value.match(Point.regex)
+			return (matched && matched.length == 2)
 		}
 
 		return false
@@ -33,13 +39,13 @@ class Point {
 		}
 
 		if (typeof value === 'string') {
-			const [x, y] = value.match(/\d+.\d+/g)
+			const [x, y] = value.match(Point.regex)
 			return mysql.raw(`POINT(${x}, ${y})`)
 		} else if (typeof value === 'object') {
 			return mysql.raw(`POINT(${parseFloat(value.x)}, ${parseFloat(value.y)})`)
 		}
 
-		throw 'input mapper failed'
+		throwError('input mapper failed')
 	}
 }
 
