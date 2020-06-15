@@ -67,14 +67,22 @@ describe('test Validations', async () => {
 		assert.equal(Point.validate('POINT(25.5, 123.5)'), true)
 
 
-		assert.equal(Point.inputMapper('25.5, 123.5').toSqlString(), 'POINT(25.5, 123.5)')
-		assert.equal(Point.inputMapper('25.5,123.5').toSqlString(), 'POINT(25.5, 123.5)')
-		assert.equal(Point.inputMapper('25,123').toSqlString(), 'POINT(25, 123)')
-		assert.equal(Point.inputMapper('25,123.5').toSqlString(), 'POINT(25, 123.5)')
+		assert.equal(Point.validate({ x: 25, y: 123 }), true)
+		assert.equal(Point.validate({ x: 255, y: 123 }), false)
+		assert.equal(Point.validate({ x: 55, y: 223 }), false)
+		assert.equal(Point.validate({ x: -255, y: 123 }), false)
 
-		assert.equal(Point.inputMapper('25, 123').toSqlString(), 'POINT(25, 123)')
-		assert.equal(Point.inputMapper('POINT(25.5, 123)').toSqlString(), 'POINT(25.5, 123)')
-		assert.equal(Point.inputMapper('POINT(25.5, 123.5)').toSqlString(), 'POINT(25.5, 123.5)')
+		// assert.equal(Point.validate('5, 3.00'), false)
+
+
+		// assert.equal(Point.inputMapper('25.5, 123.5').toSqlString(), 'POINT(25.5, 123.5)')
+		// assert.equal(Point.inputMapper('25.5,123.5').toSqlString(), 'POINT(25.5, 123.5)')
+		// assert.equal(Point.inputMapper('25,123').toSqlString(), 'POINT(25, 123)')
+		// assert.equal(Point.inputMapper('25,123.5').toSqlString(), 'POINT(25, 123.5)')
+
+		// assert.equal(Point.inputMapper('25, 123').toSqlString(), 'POINT(25, 123)')
+		// assert.equal(Point.inputMapper('POINT(25.5, 123)').toSqlString(), 'POINT(25.5, 123)')
+		// assert.equal(Point.inputMapper('POINT(25.5, 123.5)').toSqlString(), 'POINT(25.5, 123.5)')
 	})
 })
 

@@ -21,10 +21,9 @@ class Point {
 
 	static validate(value) {
 		if (typeof value === 'object') {
-			const x = parseFloat(value.x)
-			const y = parseFloat(value.y)
-
-			return x == value.x && y == value.y
+			return Point.rangeValidator(value)
+				&& parseFloat(value.x) == value.x
+				&& parseFloat(value.y) == value.y
 		} else if (typeof value === 'string') {
 			const matched = value.match(Point.regex)
 			return (matched && matched.length == 2)
@@ -38,14 +37,32 @@ class Point {
 			throw 'invalid'
 		}
 
+		let x, y
+
 		if (typeof value === 'string') {
-			const [x, y] = value.match(Point.regex)
-			return mysql.raw(`POINT(${x}, ${y})`)
+			([x, y] = value.match(Point.regex))
 		} else if (typeof value === 'object') {
-			return mysql.raw(`POINT(${parseFloat(value.x)}, ${parseFloat(value.y)})`)
+			({ x, y } = value)
+		} else {
+			throwError('input mapper failed')
 		}
 
-		throwError('input mapper failed')
+		if (!Point.rangeValidator({ x, y })) {
+			throwError('range invalid')
+		}
+
+		return mysql.raw(`POINT(${parseFloat(x)}, ${parseFloat(y)})`)
+	}
+
+	static rangeValidator({ x, y }) {
+		const xx = Number(x)
+		const yy = Number(y)
+
+		if (xx != x || yy != y || xx < -180 || xx > 180 || yy < -180 || yy > 180) {
+			return false
+		}
+
+		return true
 	}
 }
 
