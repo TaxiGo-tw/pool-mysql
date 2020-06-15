@@ -27,6 +27,7 @@ class Point {
 		} else if (typeof value === 'string') {
 			const matched = value.match(Point.regex)
 			return (matched && matched.length == 2)
+				&& Point.rangeValidator({ x: matched[0], y: matched[1] })
 		}
 
 		return false
@@ -45,10 +46,6 @@ class Point {
 			({ x, y } = value)
 		} else {
 			throwError('input mapper failed')
-		}
-
-		if (!Point.rangeValidator({ x, y })) {
-			throwError('range invalid')
 		}
 
 		return mysql.raw(`POINT(${parseFloat(x)}, ${parseFloat(y)})`)
