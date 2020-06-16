@@ -640,17 +640,30 @@ describe('test onErr', () => {
 			assert.equal(err.message, 'yoyoyoyoyoyo')
 		}
 	})
+})
 
-	it('ttt', async () => {
-		const r = await Trips
+describe('test map', () => {
+	it('string', async () => {
+		const result = await Trips
 			.SELECT('UPPER(city) AS city')
 			.FROM('fix_fare_open_city')
-			.EX(3600 * 24)
-			.NESTTABLES()
 			.MAP(row => row.city)
+			.FIRST()
 			.exec()
 
-		assert.equal(typeof r[0], 'string')
+		assert.equal(typeof result, 'string')
+	})
+
+	it('object', async () => {
+		const result = await Trips
+			.SELECT('UPPER(city) AS city')
+			.FROM('fix_fare_open_city')
+			.MAP(row => row)
+			.FIRST()
+			.exec()
+
+		assert.equal(typeof result, 'object')
+		assert(result instanceof Trips)
 	})
 })
 
