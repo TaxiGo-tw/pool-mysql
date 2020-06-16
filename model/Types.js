@@ -84,22 +84,29 @@ class Str extends String {
 
 class JSONString extends Str {
 
-	static validate(str) {
-		if (!super.validate(str)) {
-			return false
-		}
-
-
+	static validate(value) {
 		try {
-			if (!str) {
+			if (typeof value === 'object') {
+				return true
+			}
+
+			if (!value) {
 				return false
 			}
 
-			JSON.parse(str)
+			JSON.parse(value)
 			return true
 		} catch (e) {
 			return false
 		}
+	}
+
+	static inputMapper(value) {
+		if (typeof value === 'object') {
+			return JSON.stringify(value)
+		}
+
+		return value
 	}
 }
 

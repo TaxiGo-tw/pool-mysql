@@ -35,6 +35,13 @@ describe('test Validations', async () => {
 		assert.equal(JSONString.validate('{\"hi\":1}'), true)
 		assert.equal(JSONString.validate('{hi:1}'), false)
 		assert.equal(JSONString.validate(''), false)
+		assert.equal(JSONString.validate([]), true)
+		assert.equal(JSONString.validate([{ a: 1 }]), true)
+
+		assert.equal(JSONString.inputMapper({}), '{}')
+		assert.equal(JSONString.inputMapper({ a: 1 }), '{"a":1}')
+		assert.equal(JSONString.inputMapper([]), '[]')
+		assert.equal(JSONString.inputMapper([{ a: 1 }]), '[{"a":1}]')
 	})
 
 	it('Email String', async () => {
