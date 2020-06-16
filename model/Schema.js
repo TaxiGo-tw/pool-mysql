@@ -389,7 +389,7 @@ module.exports = class Base {
 						}
 						return new this.constructor(r)
 					})
-				} else {
+				} else if (results.length && typeof results[0] === 'object') {
 					results = results.map(result => new this.constructor(result))
 				}
 

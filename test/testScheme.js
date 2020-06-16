@@ -640,6 +640,18 @@ describe('test onErr', () => {
 			assert.equal(err.message, 'yoyoyoyoyoyo')
 		}
 	})
+
+	it('ttt', async () => {
+		const r = await Trips
+			.SELECT('UPPER(city) AS city')
+			.FROM('fix_fare_open_city')
+			.EX(3600 * 24)
+			.NESTTABLES()
+			.MAP(row => row.city)
+			.exec()
+
+		assert.equal(typeof r[0], 'string')
+	})
 })
 
 
