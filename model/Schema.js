@@ -295,14 +295,16 @@ module.exports = class Base {
 
 			results = await q.q(query, values, ex)
 
-			decryption.forEach(column => {
-				results = results.map((result) => {
-					if (result[column]) {
-						result[column] = Encryption.decrypt(result[column])
-					}
-					return result
+			if (decryption) {
+				decryption.forEach(column => {
+					results = results.map((result) => {
+						if (result[column]) {
+							result[column] = Encryption.decrypt(result[column])
+						}
+						return result
+					})
 				})
-			})
+			}
 
 			// check changedRows && affectedRows
 			const ch = updated ? results[1] : results
@@ -450,16 +452,21 @@ module.exports = class Base {
 		res.setHeader('Cache-Control', 'no-cache')
 
 		try {
-			const { formatted, print } = this._options()
+			const options = this._options()
+			const { formatted, print } = options
+
+			for (const key of Object.keys(options)) {
+				if (options[key] && ['query', 'values', 'formatted', 'print'].includes(key) == false) {
+					throwError(`function '${key}' is not support in stream() `)
+				}
+			}
 
 			if (!this._connection.isSelect(formatted)) {
 				throwError(`'Stream query' must be SELECT, but "${formatted}"`)
 			}
 
 			if (print) {
-				//TODO: improve
-				// eslint-disable-next-line no-console
-				console.log(formatted)
+				pool._logger(formatted)
 			}
 
 			this._connection.querying = formatted
@@ -484,17 +491,18 @@ module.exports = class Base {
 						this._connection.release()
 					}
 				})
+
 		} catch (error) {
 			this._connection.querying = undefined
 
 			// res.write(JSON.stringify({ msg: error.message }))
-			res.end()
-
+			// res.end()
+			// res.status(400).send()
 			if (!connection) {
 				this._connection.release()
 			}
 
-			// throw error
+			throwError(error)
 		}
 	}
 
@@ -755,7 +763,7 @@ module.exports = class Base {
 		options.onErr = this._onErr
 		delete this._onErr
 
-		options.decryption = this._decryption || []
+		options.decryption = this._decryption
 		delete this._decryption
 
 		return options
