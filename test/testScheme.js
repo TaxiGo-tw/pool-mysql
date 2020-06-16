@@ -642,6 +642,31 @@ describe('test onErr', () => {
 	})
 })
 
+describe('test map', () => {
+	it('string', async () => {
+		const result = await Trips
+			.SELECT('UPPER(city) AS city')
+			.FROM('fix_fare_open_city')
+			.MAP(row => row.city)
+			.FIRST()
+			.exec()
+
+		assert.equal(typeof result, 'string')
+	})
+
+	it('object', async () => {
+		const result = await Trips
+			.SELECT('UPPER(city) AS city')
+			.FROM('fix_fare_open_city')
+			.MAP(row => row)
+			.FIRST()
+			.exec()
+
+		assert.equal(typeof result, 'object')
+		assert(result instanceof Trips)
+	})
+})
+
 
 describe('test stream', () => {
 	it('success', (done) => {

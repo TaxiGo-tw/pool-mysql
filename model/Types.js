@@ -1,4 +1,5 @@
 const mysql = require('mysql')
+const throwError = require('./throwError')
 
 class Base {
 	// eslint-disable-next-line no-unused-vars
@@ -14,14 +15,19 @@ class PK {
 }
 
 class Point {
+	static get regex() {
+		return /(\d+\.\d+)|(\d+)/g
+	}
+
 	static validate(value) {
 		if (typeof value === 'object') {
-			const x = parseFloat(value.x)
-			const y = parseFloat(value.y)
-
-			return x == value.x && y == value.y
+			return Point.rangeValidator(value)
+				&& parseFloat(value.x) == value.x
+				&& parseFloat(value.y) == value.y
 		} else if (typeof value === 'string') {
-			return value.match(/\d+.\d+/g)
+			const matched = value.match(Point.regex)
+			return (matched && matched.length == 2)
+				&& Point.rangeValidator({ x: matched[0], y: matched[1] })
 		}
 
 		return false
@@ -32,14 +38,28 @@ class Point {
 			throw 'invalid'
 		}
 
+		let x, y
+
 		if (typeof value === 'string') {
-			const [x, y] = value.match(/\d+.\d+/g)
-			return mysql.raw(`POINT(${x}, ${y})`)
+			([x, y] = value.match(Point.regex))
 		} else if (typeof value === 'object') {
-			return mysql.raw(`POINT(${parseFloat(value.x)}, ${parseFloat(value.y)})`)
+			({ x, y } = value)
+		} else {
+			throwError('input mapper failed')
 		}
 
-		throw 'input mapper failed'
+		return mysql.raw(`POINT(${parseFloat(x)}, ${parseFloat(y)})`)
+	}
+
+	static rangeValidator({ x, y }) {
+		const xx = Number(x)
+		const yy = Number(y)
+
+		if (xx != x || yy != y || xx < -180 || xx > 180 || yy < -180 || yy > 180) {
+			return false
+		}
+
+		return true
 	}
 }
 
@@ -64,22 +84,29 @@ class Str extends String {
 
 class JSONString extends Str {
 
-	static validate(str) {
-		if (!super.validate(str)) {
-			return false
-		}
-
-
+	static validate(value) {
 		try {
-			if (!str) {
+			if (typeof value === 'object') {
+				return true
+			}
+
+			if (!value) {
 				return false
 			}
 
-			JSON.parse(str)
+			JSON.parse(value)
 			return true
 		} catch (e) {
 			return false
 		}
+	}
+
+	static inputMapper(value) {
+		if (typeof value === 'object') {
+			return JSON.stringify(value)
+		}
+
+		return value
 	}
 }
 

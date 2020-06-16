@@ -5,7 +5,7 @@ should()  // Modifies `Object.prototype`
 const assert = require('assert')
 
 
-const { Num, Str, Email, JSONString, NumberString } = require('../model/Schema').Types
+const { Num, Str, Email, JSONString, NumberString, Point } = require('../model/Schema').Types
 
 describe('test model Validations', async () => {
 	it('get pk ', async () => {
@@ -35,6 +35,13 @@ describe('test Validations', async () => {
 		assert.equal(JSONString.validate('{\"hi\":1}'), true)
 		assert.equal(JSONString.validate('{hi:1}'), false)
 		assert.equal(JSONString.validate(''), false)
+		assert.equal(JSONString.validate([]), true)
+		assert.equal(JSONString.validate([{ a: 1 }]), true)
+
+		assert.equal(JSONString.inputMapper({}), '{}')
+		assert.equal(JSONString.inputMapper({ a: 1 }), '{"a":1}')
+		assert.equal(JSONString.inputMapper([]), '[]')
+		assert.equal(JSONString.inputMapper([{ a: 1 }]), '[{"a":1}]')
 	})
 
 	it('Email String', async () => {
@@ -54,6 +61,37 @@ describe('test Validations', async () => {
 		assert.equal(NumberString.validate('{"hi":1}'), false)
 		assert.equal(NumberString.validate('{___}'), false)
 		assert.equal(NumberString.validate('{hi:1}'), false)
+	})
+
+	it('POINT String', async () => {
+		assert.equal(Point.validate('25.5, 123.5'), true)
+		assert.equal(Point.validate('25.5,123.5'), true)
+		assert.equal(Point.validate('25,123'), true)
+		assert.equal(Point.validate('25,123.5'), true)
+
+		assert.equal(Point.validate('25, 123'), true)
+		assert.equal(Point.validate('POINT(25.5, 123)'), true)
+		assert.equal(Point.validate('POINT(25.5, 123.5)'), true)
+
+
+		assert.equal(Point.validate({ x: 25, y: 123 }), true)
+		assert.equal(Point.validate({ x: 255, y: 123 }), false)
+		assert.equal(Point.validate({ x: 55, y: 223 }), false)
+		assert.equal(Point.validate({ x: -255, y: 123 }), false)
+
+		assert.equal(Point.validate('5, 300'), false)
+
+
+		assert.equal(Point.inputMapper('25.5, 123.5').toSqlString(), 'POINT(25.5, 123.5)')
+		assert.equal(Point.inputMapper('25.5,123.5').toSqlString(), 'POINT(25.5, 123.5)')
+		assert.equal(Point.inputMapper('25,123').toSqlString(), 'POINT(25, 123)')
+		assert.equal(Point.inputMapper('25,123.5').toSqlString(), 'POINT(25, 123.5)')
+
+		assert.equal(Point.inputMapper('25, 123').toSqlString(), 'POINT(25, 123)')
+		assert.equal(Point.inputMapper('POINT(25.5, 123)').toSqlString(), 'POINT(25.5, 123)')
+		assert.equal(Point.inputMapper('POINT(25.5, 123.5)').toSqlString(), 'POINT(25.5, 123.5)')
+		assert.equal(Point.inputMapper({ x: 25, y: 123 }).toSqlString(), 'POINT(25, 123)')
+		assert.equal(Point.inputMapper({ x: 25, y: 123.5 }).toSqlString(), 'POINT(25, 123.5)')
 	})
 })
 
