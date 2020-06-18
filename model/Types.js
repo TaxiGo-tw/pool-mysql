@@ -63,6 +63,69 @@ class Point {
 	}
 }
 
+class Polygon {
+	//POLYGON((121.528596788208 25.022269222,121.5256136639099 25.021092746,121.5290786639099 25.017816165,121.5313911890412 25.020237154,121.528596788208 25.022269222))
+
+	static _isObjectArray(arr) {
+		return arr instanceof Array
+			&& arr.length == arr.filter(a => typeof a === 'object').length
+	}
+
+	static _isAllContentsHasValue(arr) {
+		for (const { x, y } of arr) {
+			if (x == undefined || y == undefined || x < -180 || x > 180 || y < -180 || y > 180) {
+				return false
+			}
+		}
+
+		//頭尾相連
+		if (arr[0].x != arr[arr.length - 1].x || arr[0].y != arr[arr.length - 1].y) {
+			return false
+		}
+
+		return true
+	}
+
+	// [[{x,y}...],[{x,y}...]]
+	// '((x y,x y,x y),(x y,x y,x y))'
+	// 'POLYGON((x y,x y,x y),(x y,x y,x y))'
+
+	static validate(value) {
+		switch (true) {
+			case value instanceof Array:
+				for (const arr of value) {
+					const pass = Polygon._isObjectArray(arr) && Polygon._isAllContentsHasValue(arr)
+					if (!pass) {
+						return false
+					}
+				}
+				return true
+			case typeof value === 'string':
+				return value.match(/[POLYGON]?\(\s*\(\s*([+-]?\d*\.\d+)\s+([+-]?\d*\.\d+)\s*(,\s*[+-]?\d*\.\d+\s+[+-]?\d*\.\d+)+\s*,\s*\1\s+\2\s*\)\s*\)/i) != null
+			default:
+				return false
+		}
+	}
+
+	static inputMapper(value) {
+		if (value instanceof Array) {
+			const result = value.map(array => {
+				const string = array.map(r => `${r.x} ${r.y}`).join(',')
+				return `(${string})`
+			}).join(',')
+
+			return mysql.raw(`POLYGON(${result})`)
+		} else if (typeof value === 'string') {
+			const matched = value.match(/\(\s*\(\s*([+-]?\d*\.\d+)\s+([+-]?\d*\.\d+)\s*(,\s*[+-]?\d*\.\d+\s+[+-]?\d*\.\d+)+\s*,\s*\1\s+\2\s*\)\s*\)/i)
+			if (matched) {
+				return mysql.raw(`POLYGON${matched[0]}`)
+			}
+		}
+
+		return mysql.raw(``)
+	}
+}
+
 class ENUM {
 	static cases(...cases) {
 		const instance = new this()
@@ -156,6 +219,7 @@ module.exports = {
 	Base, // for extends
 	PK,
 	Point,
+	Polygon,
 	ENUM,
 	Num,
 	Str,
