@@ -642,7 +642,9 @@ module.exports = class Base {
 
 		for (const i in variables) {
 			const variable = variables[i]
-			obj = obj.AND(`SELECT @${variable} := CONCAT_WS(',', ${variable}, @${variable})`)
+
+			//updated字串 + 1就會過喔 (不知道為啥)
+			obj = obj.AND(`SELECT @${variable} := CONCAT_WS(',', ${variable}, @${variable}) + 1`)
 		}
 
 		const preParams = variables.map(r => `@${r} := ''`).join(',')
