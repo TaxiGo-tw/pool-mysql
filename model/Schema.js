@@ -411,7 +411,7 @@ module.exports = class Base {
 				let updatedResults = []
 
 				for (const key in updated) {
-					const arr = updated[key].replace(/,$/, '').split(',')
+					const arr = typeof updated[key] === 'string' ? updated[key].replace(/,$/, '').split(',') : [updated[key]]
 					for (let i = 0; i < arr.length; i++) {
 						if (!updatedResults[i]) {
 							updatedResults[i] = {}
@@ -643,8 +643,8 @@ module.exports = class Base {
 		for (const i in variables) {
 			const variable = variables[i]
 
-			//updated字串 + 1就會過喔 (不知道為啥)
-			obj = obj.AND(`SELECT @${variable} := CONCAT_WS(',', ${variable}, @${variable}) + 1`)
+			// updated字串 + 1就會過喔 (不知道為啥)
+			obj = obj.AND(`(SELECT @${variable} := CONCAT_WS(',', ${variable}, @${variable})) + 1`)
 		}
 
 		const preParams = variables.map(r => `@${r} := ''`).join(',')

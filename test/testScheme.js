@@ -437,10 +437,11 @@ describe('test UPDATED', async () => {
 	it('2', async () => {
 		const trip_id = 29106
 
-		await Trips
+		const r = await Trips
 			.UPDATE()
-			.SET(`driver_id = 3925, trip_status = 'DRIVER_RESERVED'`)
+			.SET(`driver_id = 3925, trip_status = 'TRIP_STARTED'`)
 			.WHERE({ trip_id })
+			.UPDATED('trip_id', 'user_id', 'driver_id', 'trip_status')
 			.FIRST()
 			.exec()
 
@@ -448,7 +449,7 @@ describe('test UPDATED', async () => {
 			.UPDATE()
 			.SET(`driver_id = NULL, trip_status = 'REQUESTING_DRIVER'`)
 			.WHERE({ trip_id })
-			.AND(`trip_status = 'DRIVER_RESERVED'`)
+			.AND(`trip_status = 'TRIP_STARTED'`)
 			.UPDATED('trip_id', 'user_id', 'driver_id')
 			.AFFECTED_ROWS(1)
 			.CHANGED_ROWS(1)
