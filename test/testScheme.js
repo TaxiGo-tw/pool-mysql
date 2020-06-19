@@ -447,10 +447,10 @@ describe('test UPDATED', async () => {
 
 		const result = await Trips
 			.UPDATE()
-			.SET(`driver_id = NULL, trip_status = 'REQUESTING_DRIVER'`)
+			.SET(`driver_id = NULL, trip_status = 'REQUESTING_DRIVER', start_address = '台北車站'`)
 			.WHERE({ trip_id })
 			.AND(`trip_status = 'TRIP_STARTED'`)
-			.UPDATED('trip_id', 'user_id', 'driver_id')
+			.UPDATED('trip_id', 'user_id', 'driver_id', 'trip_status', 'start_address', 'start_latlng')
 			.AFFECTED_ROWS(1)
 			.CHANGED_ROWS(1)
 			.FIRST()
