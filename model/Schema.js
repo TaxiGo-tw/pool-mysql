@@ -380,7 +380,7 @@ module.exports = class Base {
 				}
 
 				if (nested) {
-					const mapped = results.map(nestedHandler.bind(this))
+					const mapped = results.map(nestedMapper.bind(this))
 					if (typeof mapped === 'object') {
 						results = new this.constructor(mapped)
 					} else {
@@ -803,7 +803,7 @@ function isInherit(type, pk) {
 		|| type.prototype instanceof pk
 }
 
-function nestedHandler(result) {
+function nestedMapper(result) {
 	const r = result[this.constructor.name]
 	for (const key in result) {
 		if (key == this.constructor.name) {
