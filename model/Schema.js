@@ -312,6 +312,7 @@ module.exports = class Base {
 				throwError(`affectedRows did set to ${affectedRows}, but ${ch.affectedRows}`, onErr)
 			}
 
+			//SELECT()
 			if (this._connection.isSelect(query.sql)) {
 				//populate
 				if (this._populadtes.length && results.length) {
@@ -379,16 +380,12 @@ module.exports = class Base {
 				}
 
 				if (nested) {
-					results = results.map(result => {
-						const r = result[this.constructor.name]
-						for (const key in result) {
-							if (key == this.constructor.name) {
-								continue
-							}
-							r[key] = result[key]
-						}
-						return new this.constructor(r)
-					})
+					const mapped = results.map(nestedHandler.bind(this))
+					if (typeof mapped === 'object') {
+						results = new this.constructor(mapped)
+					} else {
+						results = mapped
+					}
 				} else if (results.length && typeof results[0] === 'object') {
 					results = results.map(result => new this.constructor(result))
 				}
@@ -403,33 +400,7 @@ module.exports = class Base {
 			}
 			//select with query
 			else if (updated) {
-				if (results[1].affectedRows == 0) {
-					return []
-				}
-
-				const updated = results.reverse()[0][0]
-				let updatedResults = []
-
-				for (const key in updated) {
-					const arr = typeof updated[key] === 'string' ? updated[key].replace(/,$/, '').split(',') : [updated[key]]
-					for (let i = 0; i < arr.length; i++) {
-						if (!updatedResults[i]) {
-							updatedResults[i] = {}
-						}
-
-						updatedResults[i][key] = arr[i]
-					}
-				}
-
-				if (filter) {
-					updatedResults = updatedResults.filter(filter)
-				}
-
-				if (getFirst) {
-					return updatedResults[0]
-				}
-
-				return updatedResults
+				return updatedHandler({ results, filter, getFirst })
 			}
 
 			return results
@@ -830,4 +801,47 @@ function validateLength({ key, value, option }) {
 function isInherit(type, pk) {
 	return type == pk
 		|| type.prototype instanceof pk
+}
+
+function nestedHandler(result) {
+	const r = result[this.constructor.name]
+	for (const key in result) {
+		if (key == this.constructor.name) {
+			continue
+		}
+		r[key] = result[key]
+	}
+	return new this.constructor(r)
+}
+
+function updatedHandler({ results, filter, getFirst }) {
+	if (results[1].affectedRows == 0) {
+		return []
+	}
+
+	const updated = results.reverse()[0][0]
+	let updatedResults = []
+
+	for (const key in updated) {
+		const arr = typeof updated[key] === 'string'
+			? updated[key].replace(/,$/, '').split(',')
+			: [updated[key]]
+		for (let i = 0; i < arr.length; i++) {
+			if (!updatedResults[i]) {
+				updatedResults[i] = {}
+			}
+
+			updatedResults[i][key] = arr[i]
+		}
+	}
+
+	if (filter) {
+		updatedResults = updatedResults.filter(filter)
+	}
+
+	if (getFirst) {
+		return updatedResults[0]
+	}
+
+	return updatedResults
 }
