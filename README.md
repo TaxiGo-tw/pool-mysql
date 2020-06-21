@@ -272,7 +272,7 @@ module.exports = class driver_review_status extends Scheme {
 				required: true
 			},
 			'first_name': {
-				type: Scheme.Types.Str,
+				type: Scheme.Types.String,
 				required: true,
 			},
 			'last_name': String,
@@ -283,7 +283,7 @@ module.exports = class driver_review_status extends Scheme {
 				type: String
 			},
 			'phone_number': {
-				type: Scheme.Types.Str,
+				type: Scheme.Types.String,
 				required: true,
 				length: 10
 			},

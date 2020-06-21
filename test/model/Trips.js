@@ -17,14 +17,14 @@ module.exports = class trips extends Schema {
 				type: Schema.Types.PK,
 			},
 			user_id: {
-				type: Schema.Types.Num
+				type: Schema.Types.Number
 			},
 			user: {
 				ref: require('./Users'),
 				column: 'user_id'
 			},
 			driver_id: {
-				type: Schema.Types.Num,
+				type: Schema.Types.Number,
 				required: true
 			},
 			driver_loc: {

@@ -5,7 +5,7 @@ should()  // Modifies `Object.prototype`
 const assert = require('assert')
 
 
-const { Num, Str, Email, JSONString, NumberString, Point, Polygon } = require('../model/Schema').Types
+const { Number, String, Email, JSONString, NumberString, Point, Polygon } = require('../model/Schema').Types
 
 describe('test model Validations', async () => {
 	it('get pk ', async () => {
@@ -16,17 +16,17 @@ describe('test model Validations', async () => {
 
 describe('test Validations', async () => {
 	it('string', async () => {
-		assert.equal(Str.validate('hi'), true)
-		assert.equal(Str.validate(1), false)
-		assert.equal(Str.validate(true), false)
-		assert.equal(Str.validate(new Date()), false)
+		assert.equal(String.validate('hi'), true)
+		assert.equal(String.validate(1), false)
+		assert.equal(String.validate(true), false)
+		assert.equal(String.validate(new Date()), false)
 	})
 
 	it('number', async () => {
-		assert.equal(Num.validate('hi'), false)
-		assert.equal(Num.validate(1), true)
-		assert.equal(Num.validate(true), false)
-		assert.equal(Num.validate(new Date()), false)
+		assert.equal(Number.validate('hi'), false)
+		assert.equal(Number.validate(1), true)
+		assert.equal(Number.validate(true), false)
+		assert.equal(Number.validate(new Date()), false)
 	})
 
 	it('JSON String', async () => {
