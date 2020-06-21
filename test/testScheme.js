@@ -445,23 +445,32 @@ describe('test UPDATED', async () => {
 			.FIRST()
 			.exec()
 
-		const result = await Trips
+		const results = await Trips
 			.UPDATE()
-			.SET(`driver_id = NULL, trip_status = 'REQUESTING_DRIVER', start_address = '台北車站'`)
-			.WHERE({ trip_id })
-			.AND(`trip_status = 'TRIP_STARTED'`)
-			.UPDATED('trip_id', 'user_id', 'driver_id', 'trip_status', 'start_address', 'start_latlng')
-			.AFFECTED_ROWS(1)
+			.SET(`trip_status = 'REQUESTING_DRIVER', start_address = '台北車站'`)
+			.WHERE('trip_id IN (?, 29107, 29108)', [trip_id])
+			// .AND(`trip_status = 'TRIP_STARTED'`)
+			// .UPDATED('trip_id')
+			.UPDATED('trip_id', 'user_id', 'driver_id')
+			// .AFFECTED_ROWS(1)
+			// .CHANGED_ROWS(1)
+			// .FIRST()
+			.AFFECTED_ROWS(3)
 			.CHANGED_ROWS(1)
-			.FIRST()
+			.PRINT()
 			.exec()
 
-		result.should.have.property('trip_id')
-		result.should.have.property('user_id')
-		result.should.have.property('driver_id')
-		result.should.have.property('trip_status')
-		result.should.have.property('start_address')
-		result.should.have.property('start_latlng')
+
+		assert.equal(results.length, 3)
+
+		for (const result of results) {
+			result.should.have.property('trip_id')
+			result.should.have.property('user_id')
+			result.should.have.property('driver_id')
+			result.should.have.property('trip_status')
+			result.should.have.property('start_address')
+			// result.should.have.property('start_latlng')
+		}
 	})
 
 	it('3 test point', async () => {
