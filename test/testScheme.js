@@ -451,7 +451,7 @@ describe('test UPDATED', async () => {
 			.WHERE('trip_id IN (?, 29107, 29108)', [trip_id])
 			// .AND(`trip_status = 'TRIP_STARTED'`)
 			// .UPDATED('trip_id')
-			.UPDATED('trip_id', 'user_id', 'driver_id')
+			.UPDATED('trip_id', 'user_id', 'driver_id', 'trip_status', 'start_address')
 			// .AFFECTED_ROWS(1)
 			// .CHANGED_ROWS(1)
 			// .FIRST()
@@ -460,15 +460,14 @@ describe('test UPDATED', async () => {
 			.PRINT()
 			.exec()
 
-
 		assert.equal(results.length, 3)
 
 		for (const result of results) {
 			result.should.have.property('trip_id')
 			result.should.have.property('user_id')
 			// result.should.have.property('driver_id')
-			// result.should.have.property('trip_status')
-			// result.should.have.property('start_address')
+			result.should.have.property('trip_status')
+			result.should.have.property('start_address')
 			// result.should.have.property('start_latlng')
 		}
 	})
