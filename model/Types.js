@@ -45,7 +45,8 @@ class Point {
 		} else if (typeof value === 'object') {
 			({ x, y } = value)
 		} else {
-			throwError('input mapper failed')
+			throwError(`map to POINT failed, input: ${value}`)
+
 		}
 
 		return mysql.raw(`POINT(${parseFloat(x)}, ${parseFloat(y)})`)
@@ -122,7 +123,7 @@ class Polygon {
 			}
 		}
 
-		return mysql.raw(``)
+		throwError(`map to polygon failed, input: ${value}`)
 	}
 }
 
