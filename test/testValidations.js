@@ -5,7 +5,7 @@ should()  // Modifies `Object.prototype`
 const assert = require('assert')
 
 
-const { Number, String, Email, JSONString, NumberString, Point, Polygon } = require('../model/Schema').Types
+const { Number, String, Email, JSONString, NumberString, Point, Polygon, ENUM } = require('../model/Schema').Types
 
 describe('test model Validations', async () => {
 	it('get pk ', async () => {
@@ -102,6 +102,18 @@ describe('test Validations', async () => {
 		assert.equal(Polygon.inputMapper('((120.6142697642792 24.11499926195014,120.6127945925903 24.11337369999999,120.6125585158691 24.10833031791588,120.6166891539673 24.10824218209207,120.6192361 24.1116606,120.6192801441803 24.11480335381689,120.6142697642792 24.11499926195014))').toSqlString(), 'POLYGON((120.6142697642792 24.11499926195014,120.6127945925903 24.11337369999999,120.6125585158691 24.10833031791588,120.6166891539673 24.10824218209207,120.6192361 24.1116606,120.6192801441803 24.11480335381689,120.6142697642792 24.11499926195014))')
 		assert.equal(Polygon.inputMapper('POLYGON((120.6142697642792 24.11499926195014,120.6127945925903 24.11337369999999,120.6125585158691 24.10833031791588,120.6166891539673 24.10824218209207,120.6192361 24.1116606,120.6192801441803 24.11480335381689,120.6142697642792 24.11499926195014))').toSqlString(), 'POLYGON((120.6142697642792 24.11499926195014,120.6127945925903 24.11337369999999,120.6125585158691 24.10833031791588,120.6166891539673 24.10824218209207,120.6192361 24.1116606,120.6192801441803 24.11480335381689,120.6142697642792 24.11499926195014))')
 		assert.equal(Polygon.inputMapper([[{ x: 25, y: 123 }, { x: 26, y: 124 }], [{ x: 20, y: 21 }, { x: 21, y: 22 }]]).toSqlString(), 'POLYGON((25 123,26 124),(20 21,21 22))')
+	})
+
+	it('ENUM', async () => {
+		const ClassA = ENUM('A', 'B', 'C')
+		assert.equal(ClassA.validate('A'), true)
+		assert.equal(ClassA.validate('D'), false)
+
+		const ClassB = ENUM('D', 'E', 'F')
+		assert.equal(ClassB.validate('A'), false)
+		assert.equal(ClassB.validate('D'), true)
+		assert.equal(ClassB.validate('E'), true)
+		assert.equal(ClassB.validate('F'), true)
 	})
 })
 

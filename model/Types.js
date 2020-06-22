@@ -126,18 +126,18 @@ class Polygon {
 	}
 }
 
-class ENUM {
-	static cases(...cases) {
-		const instance = new this()
-		instance._cases = cases
-		return instance
-	}
+//dynamic type
+function EnumGenerator(...values) {
+	return class GenericType {
+		static get enum() {
+			return values
+		}
 
-	static validate() {
-		return true
+		static validate(value) {
+			return GenericType.enum.includes(value)
+		}
 	}
 }
-
 
 class Str extends String {
 	static validate(string) {
@@ -220,7 +220,7 @@ module.exports = {
 	PK,
 	Point,
 	Polygon,
-	ENUM,
+	ENUM: EnumGenerator,
 	Number: Num,
 	String: Str,
 	JSONString,
