@@ -457,7 +457,6 @@ describe('test UPDATED', async () => {
 			// .FIRST()
 			.AFFECTED_ROWS(3)
 			.CHANGED_ROWS(1)
-			.PRINT()
 			.exec()
 
 		assert.equal(results.length, 3)
@@ -465,7 +464,7 @@ describe('test UPDATED', async () => {
 		for (const result of results) {
 			result.should.have.property('trip_id')
 			result.should.have.property('user_id')
-			// result.should.have.property('driver_id')
+			result.should.have.property('driver_id')
 			result.should.have.property('trip_status')
 			result.should.have.property('start_address')
 			// result.should.have.property('start_latlng')
