@@ -615,7 +615,7 @@ module.exports = class Base {
 			const variable = variables[i]
 
 			// updated字串 + 1就會過喔 (不知道為啥)
-			obj = obj.AND(`(SELECT @${variable} := CONCAT_WS(',', ${variable}, @${variable})) + 1`)
+			obj = obj.AND(`(SELECT @${variable} := CONCAT_WS(',', IF(${variable} IS NULL, "{{NULL}}",${variable}), @${variable})) + 1`)
 		}
 
 		const preParams = variables.map(r => `@${r} := ''`).join(',')
@@ -831,7 +831,11 @@ function updatedHandler({ results, filter, getFirst }) {
 				updatedResults[i] = {}
 			}
 
-			updatedResults[i][key] = arr[i]
+			if (arr[i] === '{{NULL}}') {
+				updatedResults[i][key] = undefined
+			} else {
+				updatedResults[i][key] = arr[i]
+			}
 		}
 	}
 
