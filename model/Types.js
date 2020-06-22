@@ -46,7 +46,6 @@ class Point {
 			({ x, y } = value)
 		} else {
 			throwError(`map to POINT failed, input: ${value}`)
-
 		}
 
 		return mysql.raw(`POINT(${parseFloat(x)}, ${parseFloat(y)})`)
@@ -202,7 +201,7 @@ class URL extends Str {
 
 class Num extends Number {
 	static validate(number) {
-		return !isNaN(number) && typeof number === 'number'
+		return !isNaN(number) && Number(number) == number
 	}
 }
 

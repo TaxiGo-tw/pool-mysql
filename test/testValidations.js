@@ -25,7 +25,7 @@ describe('test Validations', async () => {
 	it('number', async () => {
 		assert.equal(Number.validate('hi'), false)
 		assert.equal(Number.validate(1), true)
-		assert.equal(Number.validate(true), false)
+		assert.equal(Number.validate(true), true)
 		assert.equal(Number.validate(new Date()), false)
 	})
 
