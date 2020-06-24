@@ -128,13 +128,14 @@ class Polygon {
 
 //dynamic type
 function EnumGenerator(...values) {
-	return class GenericType {
+	//GenericType
+	return class Enum {
 		static get enum() {
 			return values
 		}
 
 		static validate(value) {
-			return GenericType.enum.includes(value)
+			return Enum.enum.includes(value)
 		}
 	}
 }
