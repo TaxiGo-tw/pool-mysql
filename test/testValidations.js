@@ -128,7 +128,6 @@ describe('test Validations', async () => {
 		assert.equal(UNIX_TIMESTAMP.inputMapper(1592972101), 1592972101)
 	})
 
-
 	it('Date Time', async () => {
 		assert.equal(DateTime.validate('2020-01-01'), true)
 		assert.equal(DateTime.validate('2020-01-01 05:00'), true)
