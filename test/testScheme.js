@@ -456,7 +456,7 @@ describe('test UPDATED', async () => {
 			// .CHANGED_ROWS(1)
 			// .FIRST()
 			.AFFECTED_ROWS(3)
-			.CHANGED_ROWS(1)
+			// .CHANGED_ROWS(1)
 			.exec()
 
 		assert.equal(results.length, 3)
