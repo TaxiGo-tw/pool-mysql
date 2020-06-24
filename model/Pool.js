@@ -27,6 +27,8 @@ class Pool {
 		console.log('pool-mysql reader host: ', this.options.reader.host)
 
 		this._runSchedulers()
+
+		this.Schema = require('./Schema')
 	}
 
 	get event() {
@@ -42,10 +44,6 @@ class Pool {
 		}
 
 		return amount
-	}
-
-	get Schema() {
-		return require('./Schema')
 	}
 
 	get Encryption() {

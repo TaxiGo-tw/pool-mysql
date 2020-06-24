@@ -1,10 +1,9 @@
-const pool = require('./Pool')
 const Types = require('./Types')
 const Encryption = require('./Encryption')
 const mysql = require('mysql')
 const throwError = require('./throwError')
 
-module.exports = class Base {
+module.exports = class Schema {
 	constructor(dict) {
 		if (dict) {
 			for (const key in dict) {
@@ -16,12 +15,16 @@ module.exports = class Base {
 		}
 	}
 
+	static get _pool() {
+		return require('./Pool')
+	}
+
 	static async native(outSideConnection, sql, values) {
 		if (!sql) {
 			throwError('sql command needed')
 		}
 
-		const connection = outSideConnection || await pool.createConnection()
+		const connection = outSideConnection || await Schema._pool.createConnection()
 
 		try {
 			return await connection.q(sql, values)
@@ -256,7 +259,7 @@ module.exports = class Base {
 	}
 
 	async exec(outSideConnection = null) {
-		this._connection = outSideConnection || await pool.createConnection()
+		this._connection = outSideConnection || await Schema._pool.createConnection()
 		try {
 			let results
 
@@ -324,7 +327,7 @@ module.exports = class Base {
 							const type = populateType[0]
 
 							const tColumn = Object.keys(type.columns).filter(c => type.columns[c].name == this.constructor.name)[0]
-							const PKColumn = Object.keys(this.columns).filter(column => isInherit(realType(this.columns[column]), Base.Types.PK))[0]
+							const PKColumn = Object.keys(this.columns).filter(column => isInherit(realType(this.columns[column]), Schema.Types.PK))[0]
 							const ids = results.map(result => result[PKColumn])
 							const populates = await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print || false).exec(this._connection)
 
@@ -361,7 +364,7 @@ module.exports = class Base {
 								continue
 							}
 
-							const PKColumn = Object.keys(refType.columns).filter(column => isInherit(realType(refType.columns[column]), Base.Types.PK))[0]
+							const PKColumn = Object.keys(refType.columns).filter(column => isInherit(realType(refType.columns[column]), Schema.Types.PK))[0]
 
 							const populates = await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).PRINT(print || false).exec(this._connection)
 
@@ -579,7 +582,7 @@ module.exports = class Base {
 		let pk
 		for (const key in this.columns) {
 			const value = realType(this.columns[key])
-			if (isInherit(value, Base.Types.PK)) {
+			if (isInherit(value, Schema.Types.PK)) {
 				pk = key
 			}
 		}
