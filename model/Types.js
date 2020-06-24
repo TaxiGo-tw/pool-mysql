@@ -216,6 +216,23 @@ class NumberString extends Str {
 	}
 }
 
+class UNIX_TIMESTAMP {
+	static validate(value) {
+		return new Date(value).toString() !== 'Invalid Date'
+	}
+
+	static inputMapper(value) {
+		switch (typeof value) {
+			case 'string':
+				return new Date(value).getTime() / 1000
+			case 'number':
+				return value
+			default:
+				throwError(`invalid date input ${value}`)
+		}
+	}
+}
+
 module.exports = {
 	Base, // for extends
 	PK,
@@ -227,5 +244,6 @@ module.exports = {
 	JSONString,
 	NumberString,
 	Email,
-	URL
+	URL,
+	UNIX_TIMESTAMP
 }

@@ -5,7 +5,7 @@ should()  // Modifies `Object.prototype`
 const assert = require('assert')
 
 
-const { Number, String, Email, JSONString, NumberString, Point, Polygon, ENUM } = require('../model/Schema').Types
+const { Number, String, Email, JSONString, NumberString, Point, Polygon, ENUM, UNIX_TIMESTAMP } = require('../model/Schema').Types
 
 describe('test model Validations', async () => {
 	it('get pk ', async () => {
@@ -114,6 +114,17 @@ describe('test Validations', async () => {
 		assert.equal(ClassB.validate('D'), true)
 		assert.equal(ClassB.validate('E'), true)
 		assert.equal(ClassB.validate('F'), true)
+	})
+
+	it('Timstamp', async () => {
+		assert.equal(UNIX_TIMESTAMP.validate('2020-01-01'), true)
+		assert.equal(UNIX_TIMESTAMP.validate('2020-01-01 05:00'), true)
+		assert.equal(UNIX_TIMESTAMP.validate(1592972101), true)
+		assert.equal(UNIX_TIMESTAMP.validate('hihi'), false)
+
+		assert.equal(UNIX_TIMESTAMP.inputMapper('2020-01-01'), 1577836800)
+		assert.equal(UNIX_TIMESTAMP.inputMapper('2020-01-01 05:00'), 1577826000)
+		assert.equal(UNIX_TIMESTAMP.inputMapper(1592972101), 1592972101)
 	})
 })
 
