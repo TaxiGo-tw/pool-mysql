@@ -233,6 +233,23 @@ class UNIX_TIMESTAMP {
 	}
 }
 
+class DateTime {
+	static validate(value) {
+		return new Date(value).toString() !== 'Invalid Date'
+	}
+
+	static inputMapper(value) {
+		switch (typeof value) {
+			case 'string':
+				return new Date(value).toISOString().slice(0, 19).replace('T', ' ')
+			case 'number':
+				return new Date(value * 1000).toISOString().slice(0, 19).replace('T', ' ')
+			default:
+				throwError(`invalid date input ${value}`)
+		}
+	}
+}
+
 module.exports = {
 	Base, // for extends
 	PK,
@@ -245,5 +262,6 @@ module.exports = {
 	NumberString,
 	Email,
 	URL,
-	UNIX_TIMESTAMP
+	UNIX_TIMESTAMP,
+	DateTime
 }
