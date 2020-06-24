@@ -123,6 +123,7 @@ describe('test Validations', async () => {
 		assert.equal(UNIX_TIMESTAMP.validate('hihi'), false)
 
 		assert.equal(UNIX_TIMESTAMP.inputMapper('2020-01-01'), 1577836800)
+		assert.equal(UNIX_TIMESTAMP.inputMapper('2020-01-01 GMT+08:00'), 1577808000)
 		assert.equal(UNIX_TIMESTAMP.inputMapper('2020-01-01 05:00'), 1577826000)
 		assert.equal(UNIX_TIMESTAMP.inputMapper(1592972101), 1592972101)
 	})
