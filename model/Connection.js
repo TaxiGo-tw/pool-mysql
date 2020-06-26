@@ -51,12 +51,8 @@ module.exports = class Connection {
 			})
 		}
 
-		try {
-			await create(this.reader)
-			await create(this.writer)
-		} catch (error) {
-			throw error
-		}
+		await create(this.reader)
+		await create(this.writer)
 
 		return this
 	}
@@ -77,11 +73,11 @@ module.exports = class Connection {
 	}
 
 	async awaitCommit() {
-		return new Promise(async (resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			try {
 				this.commit((err) => {
 					if (err) {
-						throw err
+						return reject(err)
 					}
 					resolve()
 				})
@@ -177,59 +173,76 @@ module.exports = class Connection {
 	}
 
 	async q(sql, values, { key, EX, isJSON = true, cachedToResult, shouldRefreshInCache /*= (someThing) => { return true }*/, map, queryToResult, queryToCache, redisPrint } = {}) {
+		const onErr = this._onErr
+		delete this._onErr
 
-		if (!EX) {
-			return await this._q(sql, values)
-		} else if (!this._pool.redisClient && EX) {
-			console.error('should assign redis client to this._pool.redisClient')
-			return await this._q(sql, values)
-		}
+		try {
+			if (!EX) {
+				return await this._q(sql, values)
+			} else if (!this._pool.redisClient && EX) {
+				console.error('should assign redis client to this._pool.redisClient')
+				return await this._q(sql, values)
+			}
 
-		const queryString = mysql.format((sql.sql || sql), values).split('\n').join(' ')
-		const cacheKey = key || queryString
+			const queryString = mysql.format((sql.sql || sql), values).split('\n').join(' ')
+			const cacheKey = key || queryString
 
-		let someThing = isJSON
-			? await this._pool.redisClient.getJSONAsync(cacheKey)
-			: await this._pool.redisClient.getAsync(cacheKey)
+			let someThing = isJSON
+				? await this._pool.redisClient.getJSONAsync(cacheKey)
+				: await this._pool.redisClient.getAsync(cacheKey)
 
-		//if cached
-		const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
-		if (someThing && keepCache) {
+			//if cached
+			const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
+			if (someThing && keepCache) {
+				if (redisPrint) {
+					console.log('Cached in redis: true')
+				}
+
+				if (someThing.isNull) {
+					return null
+				}
+
+				someThing = cachedToResult ? cachedToResult(someThing) : someThing
+				return someThing
+			}
+
+			const result = await this._q(sql, values)
+
 			if (redisPrint) {
-				console.log('Cached in redis: true')
+				console.log('Cached in redis: false ')
 			}
 
-			if (someThing.isNull) {
-				return null
+			let toCache = map
+				? map(result)
+				: queryToCache
+					? queryToCache(result)
+					: result
+
+			if (toCache === null) {
+				toCache = { isNull: true }
 			}
 
-			someThing = cachedToResult ? cachedToResult(someThing) : someThing
-			return someThing
+			isJSON
+				? await this._pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
+				: await this._pool.redisClient.setAsync(cacheKey, toCache, 'EX', EX)
+
+			return map
+				? map(result)
+				: queryToResult ? queryToResult(result) : result
+		} catch (error) {
+			switch (true) {
+				case typeof onErr == 'string':
+					// eslint-disable-next-line no-console
+					console.log('true error', error)
+					throw Error(onErr)
+				case typeof onErr == 'function':
+					// eslint-disable-next-line no-console
+					console.log('true error', error)
+					throw Error(onErr(error))
+				default:
+					throw error
+			}
 		}
-
-		const result = await this._q(sql, values)
-
-		if (redisPrint) {
-			console.log('Cached in redis: false ')
-		}
-
-		let toCache = map
-			? map(result)
-			: queryToCache
-				? queryToCache(result)
-				: result
-
-		if (toCache === null) {
-			toCache = { isNull: true }
-		}
-
-		isJSON
-			? await this._pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
-			: await this._pool.redisClient.setAsync(cacheKey, toCache, 'EX', EX)
-
-		return map
-			? map(result)
-			: queryToResult ? queryToResult(result) : result
 	}
 
 	commit(cb) {
@@ -246,7 +259,7 @@ module.exports = class Connection {
 		})
 	}
 
-	rollback() {
+	async rollback() {
 		return new Promise((resolve, reject) => {
 			const x = this.reader.rollback(() => {
 				const y = this.writer.rollback(() => {
@@ -334,6 +347,10 @@ module.exports = class Connection {
 		return this
 	}
 
+	onErr(callbackOrString) {
+		this._onErr = callbackOrString
+		return this
+	}
 
 	_mysqlConnection(option, role, connection) {
 		const mysqlConnection = mysql.createConnection(option)

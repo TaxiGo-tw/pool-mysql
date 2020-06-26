@@ -29,6 +29,8 @@ class Pool {
 		console.log('pool-mysql reader host: ', this.options.reader.host)
 
 		this._runSchedulers()
+
+		this.Schema = require('./Schema')
 	}
 
 	get event() {
@@ -39,7 +41,7 @@ class Pool {
 		let count = 0
 
 		Object.keys(this.connectionPool.using).map(key => {
-			count =+ Object.keys(this.connectionPool.using[key]).length
+			count = + Object.keys(this.connectionPool.using[key]).length
 		})
 
 		const amount = count + this.connectionPool.waiting.length
@@ -52,8 +54,8 @@ class Pool {
 		return amount
 	}
 
-	get Schema() {
-		return require('./Schema')
+	get Encryption() {
+		return require('./Encryption')
 	}
 
 	get logger() {
@@ -83,9 +85,9 @@ class Pool {
 		extendRedis(this._redisClient)
 	}
 
-	//TODO: { tag, limit = 0 } = {}
-	async createConnection({ tag_name = 'default', limit = this.options.connectionLimit } = {}) {
-		return new Promise(async (resolve, reject) => {
+	//TODO: { limitKey, limit = 0 } = {}
+	async createConnection() {
+		return new Promise((resolve, reject) => {
 			this.getConnection((err, connection) => {
 				if (err) {
 					return reject(err)
@@ -105,10 +107,10 @@ class Pool {
 			if (!this.connectionPool.using[tag.name]) {
 				this.connectionPool.using[tag.name] = {}
 			}
-			
+
 			//on connection limit, 去排隊
 			if (
-				this.numberOfConnections >= this.options.connectionLimit || 
+				this.numberOfConnections >= this.options.connectionLimit ||
 				Object.keys(this.connectionPool.using[tag.name]).length >= limit
 			) {
 				callback.requestTime = new Date()

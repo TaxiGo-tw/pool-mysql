@@ -9,18 +9,24 @@ module.exports = class trips extends Schema {
 		const Drivers = require('./Drivers')
 		this.driver_info = trip && trip.driver_info ? new DriverReviewStatus(trip.driver_info) : undefined
 		this.driver_info = trip && trip.driver_loc ? new Drivers(trip.driver_info) : undefined
-
 	}
 
 	get columns() {
 		return {
-			trip_id: Schema.Types.PK,
-			user_id: Number,
+			trip_id: {
+				type: Schema.Types.PK,
+			},
+			user_id: {
+				type: Schema.Types.Number
+			},
 			user: {
 				ref: require('./Users'),
 				column: 'user_id'
 			},
-			driver_id: Number,
+			driver_id: {
+				type: Schema.Types.Number,
+				required: true
+			},
 			driver_loc: {
 				ref: require('./Drivers'),
 				column: 'driver_id'
@@ -29,6 +35,12 @@ module.exports = class trips extends Schema {
 				ref: require('./DriverReviewStatus'),
 				column: 'driver_id'
 			},
+			start_latlng: {
+				type: Schema.Types.Point
+			},
+			end_latlng: {
+				type: Schema.Types.Point
+			}
 		}
 	}
 }

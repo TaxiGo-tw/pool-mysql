@@ -30,11 +30,9 @@ const newConnection = async (role = 'reader') => {
 
 		connection.connect((err) => {
 			if (err) {
-				logger(err)
 				return reject(err)
 			}
 
-			setConnection(connection)
 			resolve(connection)
 		})
 	})

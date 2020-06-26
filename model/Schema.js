@@ -1,8 +1,9 @@
-const pool = require('./Pool')
 const Types = require('./Types')
+const Encryption = require('./Encryption')
 const mysql = require('mysql')
+const throwError = require('./throwError')
 
-module.exports = class Base {
+module.exports = class Schema {
 	constructor(dict) {
 		if (dict) {
 			for (const key in dict) {
@@ -14,17 +15,21 @@ module.exports = class Base {
 		}
 	}
 
+	static get _pool() {
+		return require('./Pool')
+	}
+
 	static async native(outSideConnection, sql, values) {
 		if (!sql) {
-			throw 'sql command needed'
+			throwError('sql command needed')
 		}
 
-		const connection = outSideConnection || await pool.createConnection()
+		const connection = outSideConnection || await Schema._pool.createConnection()
 
 		try {
 			return await connection.q(sql, values)
 		} catch (error) {
-			throw error
+			throwError(error)
 		} finally {
 			if (!outSideConnection) {
 				connection.release()
@@ -36,15 +41,9 @@ module.exports = class Base {
 		const object = new this()
 		const columns = object.columns
 
-		const keys = []
-		for (const key in columns) {
-			const value = columns[key]
-			if (value && !(value instanceof Array) && !(typeof value == 'object')) {
-				keys.push(`${object.constructor.name}.${key}`)
-			}
-		}
-
-		return keys
+		return Object.keys(columns)
+			.filter(column => isRealColumn(columns[column]))
+			.map(column => `${object.constructor.name}.${column}`)
 	}
 
 	// EXPLAIN() {
@@ -75,7 +74,13 @@ module.exports = class Base {
 		} else {
 			const keys = this.columns
 				? Object.keys(this.columns)
-					.filter(column => !(this.columns[column] instanceof Array) && !(typeof this.columns[column] == 'object'))
+					.filter(column => {
+						if (this.columns[column].type) {
+							return true
+						}
+
+						return !(this.columns[column] instanceof Array) && !(typeof this.columns[column] == 'object')
+					})
 					.map(column => `${this.constructor.name}.${column}`)
 					.join(', ')
 				: '*'
@@ -190,6 +195,12 @@ module.exports = class Base {
 		return this
 	}
 
+	ON_ERR(callbackOrString) {
+		this._onErr = callbackOrString
+		return this
+	}
+
+
 	WRITER() {
 		this._forceWriter = true
 		return this
@@ -210,8 +221,14 @@ module.exports = class Base {
 		return this
 	}
 
-	EX(expireSecond, cacheKey) {
-		this._EX = { key: cacheKey, EX: expireSecond }
+	EX(expireSecond, { key, forceUpdate = false, shouldRefreshInCache } = {}) {
+		this._EX = {
+			key,
+			EX: expireSecond,
+			shouldRefreshInCache: forceUpdate ? () => { return forceUpdate } : shouldRefreshInCache,
+			redisPrint: this._print
+		}
+
 		return this
 	}
 
@@ -232,7 +249,6 @@ module.exports = class Base {
 			.map(q => q.value)
 			.reduce((q, b) => q.concat(b), [])
 
-
 		return {
 			query,
 			values,
@@ -243,7 +259,7 @@ module.exports = class Base {
 	}
 
 	async exec(outSideConnection = null) {
-		this._connection = outSideConnection || await pool.createConnection()
+		this._connection = outSideConnection || await Schema._pool.createConnection()
 		try {
 			let results
 
@@ -261,28 +277,45 @@ module.exports = class Base {
 				getFirst,
 				updated,
 				changedRows,
-				affectedRows
+				affectedRows,
+				onErr,
+				decryption
 			} = this._options()
 
 			const ex = this._EX || {}
 			ex.redisPrint = print
 			this._EX = {}
 
+			// eslint-disable-next-line no-unused-vars
+			let q = this._connection
 			if (print) {
-				results = await this._connection.print.q(query, values, ex)
-			} else {
-				results = await this._connection.q(query, values, ex)
+				q = q.print
 			}
 
+			if (onErr) {
+				q = q.onErr(onErr)
+			}
+
+			results = await q.q(query, values, ex)
+
+			decryption.forEach(column => {
+				results = results.map((result) => {
+					if (result[column]) {
+						result[column] = Encryption.decrypt(result[column])
+					}
+					return result
+				})
+			})
 
 			// check changedRows && affectedRows
 			const ch = updated ? results[1] : results
 			if (changedRows != undefined && changedRows != ch.changedRows) {
-				throw Error(`changedRows did set to ${changedRows}, but ${ch.changedRows}`)
+				throwError(`changedRows did set to ${changedRows}, but ${ch.changedRows}`, onErr)
 			} else if (affectedRows != undefined && affectedRows != ch.affectedRows) {
-				throw Error(`affectedRows did set to ${affectedRows}, but ${ch.affectedRows}`)
+				throwError(`affectedRows did set to ${affectedRows}, but ${ch.affectedRows}`, onErr)
 			}
 
+			//SELECT()
 			if (this._connection.isSelect(query.sql)) {
 				//populate
 				if (this._populadtes.length && results.length) {
@@ -294,8 +327,7 @@ module.exports = class Base {
 							const type = populateType[0]
 
 							const tColumn = Object.keys(type.columns).filter(c => type.columns[c].name == this.constructor.name)[0]
-
-							const PKColumn = Object.keys(this.columns).filter(column => this.columns[column] == Base.Types.PK)[0]
+							const PKColumn = Object.keys(this.columns).filter(column => isInherit(realType(this.columns[column]), Schema.Types.PK))[0]
 							const ids = results.map(result => result[PKColumn])
 							const populates = await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print || false).exec(this._connection)
 
@@ -332,14 +364,14 @@ module.exports = class Base {
 								continue
 							}
 
-							const PKColumn = Object.keys(refType.columns).filter(column => refType.columns[column] == Base.Types.PK)[0]
+							const PKColumn = Object.keys(refType.columns).filter(column => isInherit(realType(refType.columns[column]), Schema.Types.PK))[0]
+
 							const populates = await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).PRINT(print || false).exec(this._connection)
 
-							results = results.map(result => {
+							results.forEach(result => {
 								if (result[refColumn]) {
 									result[column] = populates.filter(populate => result[refColumn] == populate[PKColumn])[0] || result[refColumn]
 								}
-								return result
 							})
 						}
 					}
@@ -351,17 +383,13 @@ module.exports = class Base {
 				}
 
 				if (nested) {
-					results = results.map(result => {
-						const r = result[this.constructor.name]
-						for (const key in result) {
-							if (key == this.constructor.name) {
-								continue
-							}
-							r[key] = result[key]
-						}
-						return new this.constructor(r)
-					})
-				} else {
+					const mapped = results.map(nestedMapper.bind(this))
+					if (typeof mapped === 'object') {
+						results = new this.constructor(mapped)
+					} else {
+						results = mapped
+					}
+				} else if (results.length && typeof results[0] === 'object') {
 					results = results.map(result => new this.constructor(result))
 				}
 
@@ -375,38 +403,12 @@ module.exports = class Base {
 			}
 			//select with query
 			else if (updated) {
-				if (results[1].affectedRows == 0) {
-					return []
-				}
-
-				const updated = results.reverse()[0][0]
-				let updatedResults = []
-
-				for (const key in updated) {
-					const arr = updated[key].replace(/,$/, '').split(',')
-					for (let i = 0; i < arr.length; i++) {
-						if (!updatedResults[i]) {
-							updatedResults[i] = {}
-						}
-
-						updatedResults[i][key] = arr[i]
-					}
-				}
-
-				if (filter) {
-					updatedResults = updatedResults.filter(filter)
-				}
-
-				if (getFirst) {
-					return updatedResults[0]
-				}
-
-				return updatedResults
+				return updatedHandler({ results, filter, getFirst })
 			}
 
 			return results
 		} catch (error) {
-			throw error
+			throwError(error)
 		} finally {
 			if (!outSideConnection) {
 				this._connection.release()
@@ -434,21 +436,33 @@ module.exports = class Base {
 
 	//////////////////////////////Base.js
 	//UPDATE
-	static UPDATE() {
+	static UPDATE(table) {
 		const object = new this()
-		return object.UPDATE()
+		return object.UPDATE(table)
 	}
 
-	UPDATE() {
+	UPDATE(table = this.constructor.name) {
 		if (!this._q) {
 			this._q = []
 		}
 
-		this._q.push({ type: 'UPDATE', command: this.constructor.name })
+		this._q.push({ type: 'UPDATE', command: table })
 		return this
 	}
 
-	SET(whereCaluse, whereCaluse2, { passUndefined = false } = {}) {
+	SET(whereCaluse, whereCaluse2, { passUndefined = false, encryption = [] } = {}) {
+
+		if (typeof whereCaluse === 'object') {
+			validate.bind(this)(whereCaluse)
+
+			for (const key of Object.keys(whereCaluse)) {
+				if (this.columns && this.columns[key] && this.columns[key].type && this.columns[key].type.inputMapper) {
+					const { inputMapper } = this.columns[key].type
+					whereCaluse[key] = inputMapper(whereCaluse[key])
+				}
+			}
+		}
+
 		function passUndefinedIfNeeded(passUndefined, value) {
 			if (!passUndefined || !(value instanceof Object)) {
 				return value
@@ -463,13 +477,31 @@ module.exports = class Base {
 			return result
 		}
 
+		function encryptIfNeeded(encryption, value) {
+			if (!(value instanceof Object) || !encryption.length) {
+				return value
+			}
+
+			const result = JSON.parse(JSON.stringify(value))
+			encryption.forEach(column => {
+				Object.keys(result).forEach((key) => {
+					if (key === column) {
+						result[key] = Encryption.encrypt(result[key])
+					}
+				})
+			})
+			return result
+		}
+
 		if (whereCaluse instanceof Object) {
-			const value = passUndefinedIfNeeded(passUndefined, whereCaluse)
+			let value = passUndefinedIfNeeded(passUndefined, whereCaluse)
+			value = encryptIfNeeded(encryption, whereCaluse)
 			this._q.push({ type: 'SET', command: '?', value })
 			return this
 		}
 
-		const value = passUndefinedIfNeeded(passUndefined, whereCaluse2)
+		let value = passUndefinedIfNeeded(passUndefined, whereCaluse2)
+		value = encryptIfNeeded(encryption, whereCaluse2)
 		return addQuery.bind(this)('SET', whereCaluse, value, false)
 	}
 
@@ -482,7 +514,7 @@ module.exports = class Base {
 			this._q.push({ type: 'VALUES', command })
 			return this
 		} else {
-			throw Error(`${this.constructor.name} values is not an array`)
+			throwError(`${this.constructor.name} values is not an array`)
 		}
 	}
 
@@ -503,24 +535,18 @@ module.exports = class Base {
 
 	static FIND(...whereCaluse) {
 		const object = new this()
-		return object.SELECT().FROM().WHERE(...arguments)
+		return object.SELECT().FROM().WHERE(...whereCaluse)
 	}
 
 	static FIND_PK(pk) {
 		if (!this.columns) {
-			throw Error(`${this.constructor.name} columns not defined`)
+			throwError(`${this.constructor.name} columns not defined`)
 		}
 
-		let find
-		for (const key in this.columns) {
-			const value = this.columns[key]
-			if (value == Base.Types.PK) {
-				find = key
-			}
-		}
+		const find = this._pk
 
 		if (!find) {
-			throw Error(`${this.constructor.name}.PK columns not defined`)
+			throwError(`${this.constructor.name}.PK columns not defined`)
 		}
 
 		return this.SELECT().FROM().WHERE(`${find} = ?`, pk).FIRST()
@@ -543,21 +569,26 @@ module.exports = class Base {
 		await this.UPDATE().SET(value).WHERE(where).exec()
 	}
 
+	static get _pk() {
+		const x = new this()
+		return x._pk
+	}
+
 	get _pk() {
 		if (!this.columns) {
-			throw Error(`${this.constructor.name} columns not defined`)
+			throwError(`${this.constructor.name} columns not defined`)
 		}
 
 		let pk
 		for (const key in this.columns) {
-			const value = this.columns[key]
-			if (value == Base.Types.PK) {
+			const value = realType(this.columns[key])
+			if (isInherit(value, Schema.Types.PK)) {
 				pk = key
 			}
 		}
 
 		if (!pk) {
-			throw Error(`${this.constructor.name}.PK columns not defined`)
+			throwError(`${this.constructor.name}.PK columns not defined`)
 		}
 
 		return pk
@@ -573,6 +604,11 @@ module.exports = class Base {
 		return this
 	}
 
+	DECRYPT(...decryption) {
+		this._decryption = decryption
+		return this
+	}
+
 	UPDATED(...variables) {
 		this._updated = true
 
@@ -580,7 +616,9 @@ module.exports = class Base {
 
 		for (const i in variables) {
 			const variable = variables[i]
-			obj = obj.AND(`SELECT @${variable} := CONCAT_WS(',', ${variable}, @${variable})`)
+
+			// updated字串 + 1就會過喔 (不知道為啥)
+			obj = obj.AND(`(SELECT @${variable} := CONCAT_WS(',', IF(${variable} IS NULL, "{{NULL}}",${variable}), @${variable})) + 1`)
 		}
 
 		const preParams = variables.map(r => `@${r} := ''`).join(',')
@@ -634,7 +672,48 @@ module.exports = class Base {
 		options.affectedRows = this._affectedRows
 		delete this._affectedRows
 
+		options.onErr = this._onErr
+		delete this._onErr
+
+		options.decryption = this._decryption || []
+		delete this._decryption
+
 		return options
+	}
+
+	validate(isInsert) {
+		const columns = this.columns
+
+		//columns not defined
+		if (!columns) {
+			return true
+		}
+
+		for (const [key, option] of Object.entries(columns)) {
+			// pass if not defined
+			if (typeof option !== 'object') {
+				continue
+			}
+
+			const value = this[key]
+
+			//detect if required
+			validateRequired.bind(this)({ key, value, option, isInsert })
+
+			//throw if invalid
+			const { type } = option
+			if (type) {
+				const typeValidator = type.validate
+				if (value !== undefined && value !== null && typeValidator && !typeValidator(value)) {
+					throwError(`${this.constructor.name}.${key} must be type: '${type.name}', not '${typeof value}' ${JSON.stringify(this)}`)
+				}
+			}
+
+			//detect length
+			validateLength.bind(this)({ key, value, option })
+		}
+
+		return true
 	}
 }
 
@@ -656,4 +735,120 @@ function addQuery(reservedWord, whereCaluse, whereCaluse2, inBrackets = true) {
 	}
 
 	return this
+}
+
+////////////////////////////////////////////////////////////
+
+function validate(params) {
+	const object = new this.constructor(params)
+	switch (this._q[0].type) {
+		case 'INSERT':
+			object.validate(true)
+			break
+		case 'UPDATE':
+			object.validate()
+			break
+	}
+}
+
+function isRealColumn(column) {
+	const type = realType(column)
+
+	return type
+		&& (type instanceof Array === false)
+		&& typeof type !== 'object'
+}
+
+function realType(type) {
+	return type.type || type
+}
+
+
+// insert 時 required 都要有值
+// update 時 只看required不能是null
+function validateRequired({ key, value, option, isInsert }) {
+	const { required } = option
+	if (!required) {
+		return
+	}
+
+	if (isInsert && (value === undefined || value === null)) {
+		throwError(`${key} is required`)
+	} else if (!isInsert && value === null) {
+		throwError(`${key} is required`)
+	}
+}
+
+function validateLength({ key, value, option }) {
+	if (option instanceof Array || !option.length) {
+		return
+	}
+
+	if (value === undefined || value === null) {
+		return
+	}
+
+	const { length } = option
+
+	//validate value length
+	//ex: length: 3
+	if (typeof length === 'number' && value.length != length) {
+		throwError(`${this.constructor.name}.${key}.length should be ${length}, now is ${value.length}`)
+	}
+	//ex: length: { min:3 , max: 5 }
+	else if (typeof length === 'object' && (value.length < length.min || value.length > length.max)) {
+		throwError(`${this.constructor.name}.${key}.length should between ${length.min} and ${length.max}, now is ${value.length}`)
+	}
+}
+
+function isInherit(type, pk) {
+	return type == pk
+		|| type.prototype instanceof pk
+}
+
+function nestedMapper(result) {
+	const r = result[this.constructor.name]
+	for (const key in result) {
+		if (key == this.constructor.name) {
+			continue
+		}
+		r[key] = result[key]
+	}
+	return new this.constructor(r)
+}
+
+function updatedHandler({ results, filter, getFirst }) {
+	if (results[1].affectedRows == 0) {
+		return []
+	}
+
+	const updated = results.reverse()[0][0]
+	let updatedResults = []
+
+	for (const key in updated) {
+		const arr = typeof updated[key] === 'string'
+			? updated[key].replace(/,$/, '').split(',')
+			: [updated[key]]
+		for (let i = 0; i < arr.length; i++) {
+			if (!updatedResults[i]) {
+				updatedResults[i] = {}
+			}
+
+			if (arr[i] === '{{NULL}}') {
+				updatedResults[i][key] = undefined
+			} else {
+				updatedResults[i][key] = arr[i]
+			}
+		}
+	}
+
+	if (filter) {
+		updatedResults = updatedResults.filter(filter)
+	}
+
+	if (getFirst) {
+		return updatedResults[0]
+	}
+
+	return updatedResults
 }
