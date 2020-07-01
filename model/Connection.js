@@ -186,7 +186,7 @@ module.exports = class Connection {
 		})
 	}
 
-	async q(sql, values, { key, EX, isJSON = true, cachedToResult, shouldRefreshInCache /*= (someThing) => { return true }*/, map, queryToResult, queryToCache, redisPrint } = {}) {
+	async q(sql, values, { key, EX, shouldRefreshInCache, redisPrint } = {}) {
 		const onErr = this._onErr
 		delete this._onErr
 
@@ -201,9 +201,7 @@ module.exports = class Connection {
 		const cacheKey = key || queryString
 
 		try {
-			let someThing = isJSON
-				? await this._pool.redisClient.getJSONAsync(cacheKey)
-				: await this._pool.redisClient.getAsync(cacheKey)
+			const someThing = await this._pool.redisClient.getJSONAsync(cacheKey)
 
 			//if cached
 			const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
@@ -216,15 +214,11 @@ module.exports = class Connection {
 					return null
 				}
 
-				someThing = cachedToResult ? cachedToResult(someThing) : someThing
 				return someThing
 			}
 
 			if (quering[cacheKey]) {
-				const result = await waiting(cacheKey)
-				return map
-					? map(result)
-					: queryToResult ? queryToResult(result) : result
+				return await waiting(cacheKey)
 			} else {
 				quering[cacheKey] = true
 			}
@@ -235,28 +229,20 @@ module.exports = class Connection {
 				console.log('Cached in redis: false ')
 			}
 
-			let toCache = map
-				? map(result)
-				: queryToCache
-					? queryToCache(result)
-					: result
+			let toCache = result
 
 			if (toCache === null) {
 				toCache = { isNull: true }
 			}
 
-			isJSON
-				? await this._pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
-				: await this._pool.redisClient.setAsync(cacheKey, toCache, 'EX', EX)
+			await this._pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
 
 			for (const waitingQueries of queries[cacheKey] || []) {
 				waitingQueries(undefined, result)
 			}
 			quering[cacheKey] = false
 
-			return map
-				? map(result)
-				: queryToResult ? queryToResult(result) : result
+			return result
 		} catch (error) {
 			for (const waitingQueries of queries[cacheKey] || []) {
 				waitingQueries(error, undefined)
