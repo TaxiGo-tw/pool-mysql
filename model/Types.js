@@ -158,7 +158,11 @@ class JSONString extends Str {
 				return false
 			}
 
-			JSON.parse(value)
+			const parsed = JSON.parse(value)
+			if (typeof parsed !== 'object') {
+				throw 'fail'
+			}
+
 			return true
 		} catch (e) {
 			return false

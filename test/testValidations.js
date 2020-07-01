@@ -35,6 +35,8 @@ describe('test Validations', async () => {
 		assert.equal(JSONString.validate('{\"hi\":1}'), true)
 		assert.equal(JSONString.validate('{hi:1}'), false)
 		assert.equal(JSONString.validate(''), false)
+		assert.equal(JSONString.validate("123"), false)
+		assert.equal(JSONString.validate(123), false)
 		assert.equal(JSONString.validate([]), true)
 		assert.equal(JSONString.validate([{ a: 1 }]), true)
 
