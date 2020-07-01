@@ -1,28 +1,27 @@
 
-const quering = {}
-const queries = {}
+const isQuering = {}
+const waitingCallbacks = {}
 
 module.exports = class Cache {
 	static isQuerying(key) {
-		return quering[key]
+		return isQuering[key]
 	}
 
 	static start(key) {
-		quering[key] = true
+		isQuering[key] = true
 	}
 
 	static end(key) {
-		quering[key] = false
+		isQuering[key] = false
 	}
 
-
 	static async waiting(key) {
-		if (!queries[key]) {
-			queries[key] = []
+		if (!waitingCallbacks[key]) {
+			waitingCallbacks[key] = []
 		}
 
 		return new Promise((reslove, reject) => {
-			queries[key].push((err, results) => {
+			waitingCallbacks[key].push((err, results) => {
 				if (err) {
 					return reject(err)
 				}
@@ -32,7 +31,7 @@ module.exports = class Cache {
 	}
 
 	static pop(key, err, result) {
-		const arr = queries[key] || []
+		const arr = waitingCallbacks[key] || []
 		while (arr.length) {
 			const waitingQueries = arr.shift()
 			waitingQueries(err, result)
