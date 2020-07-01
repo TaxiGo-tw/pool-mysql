@@ -299,11 +299,10 @@ module.exports = class Schema {
 			results = await q.q(query, values, ex)
 
 			decryption.forEach(column => {
-				results = results.map((result) => {
+				results.forEach((result) => {
 					if (result[column]) {
 						result[column] = Encryption.decrypt(result[column])
 					}
-					return result
 				})
 			})
 

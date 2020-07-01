@@ -6,24 +6,7 @@ const mysql = require('mysql')
 
 const Event = require('./Event')
 
-
-const quering = {}
-const queries = {}
-
-const waiting = async (cacheKey) => {
-	if (!queries[cacheKey]) {
-		queries[cacheKey] = []
-	}
-
-	return new Promise((reslove, reject) => {
-		queries[cacheKey].push((err, results) => {
-			if (err) {
-				return reject(err)
-			}
-			reslove(results)
-		})
-	})
-}
+const Cache = require('./Cache')
 
 module.exports = class Connection {
 	constructor(pool) {
@@ -217,10 +200,10 @@ module.exports = class Connection {
 				return someThing
 			}
 
-			if (quering[cacheKey]) {
-				return await waiting(cacheKey)
+			if (Cache.quering[cacheKey]) {
+				return await Cache.waiting(cacheKey)
 			} else {
-				quering[cacheKey] = true
+				Cache.quering[cacheKey] = true
 			}
 
 			const result = await this._q(sql, values)
@@ -237,17 +220,10 @@ module.exports = class Connection {
 
 			await this._pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
 
-			for (const waitingQueries of queries[cacheKey] || []) {
-				waitingQueries(undefined, result)
-			}
-			quering[cacheKey] = false
-
+			Cache.pop(cacheKey, undefined, result)
 			return result
 		} catch (error) {
-			for (const waitingQueries of queries[cacheKey] || []) {
-				waitingQueries(error, undefined)
-			}
-			quering[cacheKey] = false
+			Cache.pop(cacheKey, error, undefined)
 
 			switch (true) {
 				case typeof onErr == 'string':
