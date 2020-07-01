@@ -154,8 +154,8 @@ class JSONString extends Str {
 				return true
 			}
 
-			if (!value) {
-				return false
+			if (value === undefined || value === null) {
+				return true
 			}
 
 			const parsed = JSON.parse(value)

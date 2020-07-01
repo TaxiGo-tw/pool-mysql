@@ -39,6 +39,8 @@ describe('test Validations', async () => {
 		assert.equal(JSONString.validate(123), false)
 		assert.equal(JSONString.validate([]), true)
 		assert.equal(JSONString.validate([{ a: 1 }]), true)
+		assert.equal(JSONString.validate(), true)
+		assert.equal(JSONString.validate(null), true)
 
 		assert.equal(JSONString.inputMapper({}), '{}')
 		assert.equal(JSONString.inputMapper({ a: 1 }), '{"a":1}')
