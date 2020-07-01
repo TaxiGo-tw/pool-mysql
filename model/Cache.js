@@ -33,8 +33,8 @@ module.exports = class Cache {
 	static pop(key, err, result) {
 		const arr = waitingCallbacks[key] || []
 		while (arr.length) {
-			const waitingQueries = arr.shift()
-			waitingQueries(err, result)
+			const callback = arr.shift()
+			callback(err, result)
 		}
 
 		Cache.end(key)
