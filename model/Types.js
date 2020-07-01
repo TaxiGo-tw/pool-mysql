@@ -160,7 +160,7 @@ class JSONString extends Str {
 
 			const parsed = JSON.parse(value)
 			if (typeof parsed !== 'object') {
-				throw 'fail'
+				return false
 			}
 
 			return true
