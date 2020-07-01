@@ -2,33 +2,42 @@
 const quering = {}
 const queries = {}
 
-const waiting = async (cacheKey) => {
-	if (!queries[cacheKey]) {
-		queries[cacheKey] = []
+module.exports = class Cache {
+	static isQuerying(key) {
+		return quering[key]
 	}
 
-	return new Promise((reslove, reject) => {
-		queries[cacheKey].push((err, results) => {
-			if (err) {
-				return reject(err)
-			}
-			reslove(results)
+	static start(key) {
+		quering[key] = true
+	}
+
+	static end(key) {
+		quering[key] = false
+	}
+
+
+	static async waiting(key) {
+		if (!queries[key]) {
+			queries[key] = []
+		}
+
+		return new Promise((reslove, reject) => {
+			queries[key].push((err, results) => {
+				if (err) {
+					return reject(err)
+				}
+				reslove(results)
+			})
 		})
-	})
-}
-
-const pop = (key, err, result) => {
-	const arr = queries[key] || []
-	while (arr.length) {
-		const waitingQueries = arr.shift()
-		waitingQueries(err, result)
 	}
-	quering[key] = false
-}
 
-module.exports = {
-	quering,
-	queries,
-	waiting,
-	pop
+	static pop(key, err, result) {
+		const arr = queries[key] || []
+		while (arr.length) {
+			const waitingQueries = arr.shift()
+			waitingQueries(err, result)
+		}
+
+		Cache.end(key)
+	}
 }

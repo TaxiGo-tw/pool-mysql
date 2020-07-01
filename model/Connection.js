@@ -200,10 +200,10 @@ module.exports = class Connection {
 				return someThing
 			}
 
-			if (Cache.quering[cacheKey]) {
+			if (Cache.isQuerying(cacheKey)) {
 				return await Cache.waiting(cacheKey)
 			} else {
-				Cache.quering[cacheKey] = true
+				Cache.start(cacheKey)
 			}
 
 			const result = await this._q(sql, values)
