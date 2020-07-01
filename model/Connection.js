@@ -201,15 +201,6 @@ module.exports = class Connection {
 		const cacheKey = key || queryString
 
 		try {
-			if (quering[cacheKey].length) {
-				const result = await waiting(cacheKey)
-				return map
-					? map(result)
-					: queryToResult ? queryToResult(result) : result
-			} else {
-				quering[cacheKey] = true
-			}
-
 			let someThing = isJSON
 				? await this._pool.redisClient.getJSONAsync(cacheKey)
 				: await this._pool.redisClient.getAsync(cacheKey)
@@ -227,6 +218,15 @@ module.exports = class Connection {
 
 				someThing = cachedToResult ? cachedToResult(someThing) : someThing
 				return someThing
+			}
+
+			if (quering[cacheKey]) {
+				const result = await waiting(cacheKey)
+				return map
+					? map(result)
+					: queryToResult ? queryToResult(result) : result
+			} else {
+				quering[cacheKey] = true
 			}
 
 			const result = await this._q(sql, values)
@@ -249,7 +249,7 @@ module.exports = class Connection {
 				? await this._pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
 				: await this._pool.redisClient.setAsync(cacheKey, toCache, 'EX', EX)
 
-			for (const waitingQueries of queries[cacheKey]) {
+			for (const waitingQueries of queries[cacheKey] || []) {
 				waitingQueries(undefined, result)
 			}
 			quering[cacheKey] = false
@@ -258,7 +258,7 @@ module.exports = class Connection {
 				? map(result)
 				: queryToResult ? queryToResult(result) : result
 		} catch (error) {
-			for (const waitingQueries of queries[cacheKey]) {
+			for (const waitingQueries of queries[cacheKey] || []) {
 				waitingQueries(error, undefined)
 			}
 			quering[cacheKey] = false
