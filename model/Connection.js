@@ -6,6 +6,25 @@ const mysql = require('mysql')
 
 const Event = require('./Event')
 
+
+const quering = {}
+const queries = {}
+
+const waiting = async (cacheKey) => {
+	if (!queries[cacheKey]) {
+		queries[cacheKey] = []
+	}
+
+	return new Promise((reslove, reject) => {
+		queries[cacheKey].push((err, results) => {
+			if (err) {
+				return reject(err)
+			}
+			reslove(results)
+		})
+	})
+}
+
 module.exports = class Connection {
 	constructor(pool) {
 		this._pool = pool
@@ -171,16 +190,25 @@ module.exports = class Connection {
 		const onErr = this._onErr
 		delete this._onErr
 
-		try {
-			if (!EX) {
-				return await this._q(sql, values)
-			} else if (!this._pool.redisClient && EX) {
-				console.error('should assign redis client to this._pool.redisClient')
-				return await this._q(sql, values)
-			}
+		if (!EX) {
+			return await this._q(sql, values)
+		} else if (!this._pool.redisClient && EX) {
+			console.error('should assign redis client to this._pool.redisClient')
+			return await this._q(sql, values)
+		}
 
-			const queryString = mysql.format((sql.sql || sql), values).split('\n').join(' ')
-			const cacheKey = key || queryString
+		const queryString = mysql.format((sql.sql || sql), values).split('\n').join(' ')
+		const cacheKey = key || queryString
+
+		try {
+			if (quering[cacheKey].length) {
+				const result = await waiting(cacheKey)
+				return map
+					? map(result)
+					: queryToResult ? queryToResult(result) : result
+			} else {
+				quering[cacheKey] = true
+			}
 
 			let someThing = isJSON
 				? await this._pool.redisClient.getJSONAsync(cacheKey)
@@ -221,10 +249,20 @@ module.exports = class Connection {
 				? await this._pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
 				: await this._pool.redisClient.setAsync(cacheKey, toCache, 'EX', EX)
 
+			for (const waitingQueries of queries[cacheKey]) {
+				waitingQueries(undefined, result)
+			}
+			quering[cacheKey] = false
+
 			return map
 				? map(result)
 				: queryToResult ? queryToResult(result) : result
 		} catch (error) {
+			for (const waitingQueries of queries[cacheKey]) {
+				waitingQueries(error, undefined)
+			}
+			quering[cacheKey] = false
+
 			switch (true) {
 				case typeof onErr == 'string':
 					// eslint-disable-next-line no-console
