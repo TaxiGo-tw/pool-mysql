@@ -190,7 +190,7 @@ module.exports = class Connection {
 			const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
 			if (someThing && keepCache) {
 				if (redisPrint) {
-					this._pool.logger('Cached in redis: true')
+					this._pool.logger(undefined, 'Cached in redis: true')
 				}
 
 				if (someThing.isNull) {
@@ -209,7 +209,7 @@ module.exports = class Connection {
 			const result = await this._q(sql, values)
 
 			if (redisPrint) {
-				this._pool.logger('Cached in redis: false ')
+				this._pool.logger(undefined, 'Cached in redis: false ')
 			}
 
 			let toCache = result
@@ -228,11 +228,11 @@ module.exports = class Connection {
 			switch (true) {
 				case typeof onErr == 'string':
 					// eslint-disable-next-line no-console
-					this._pool.logger('true error', error)
+					this._pool.logger(error)
 					throw Error(onErr)
 				case typeof onErr == 'function':
 					// eslint-disable-next-line no-console
-					this._pool.logger('true error', error)
+					this._pool.logger(error)
 					throw Error(onErr(error))
 				default:
 					throw error
@@ -272,7 +272,7 @@ module.exports = class Connection {
 		this._pool.logger(null, `[${this.id}] RELEASE`)
 
 		if (this._status.isStartedStransaction && !this._status.isCommited) {
-			this._pool.logger('pool-mysql: Transaction started, should be Committed')
+			this._pool.logger(undefined, 'pool-mysql: Transaction started, should be Committed')
 		}
 		this._resetStatus()
 
@@ -352,6 +352,7 @@ module.exports = class Connection {
 		mysqlConnection.role = role
 
 		mysqlConnection.on('error', err => {
+			this._pool.logger(err, `connection error: ${(err && err.message) ? err.message : err}`)
 			//丟掉這個conneciton
 			connection.end()
 		})

@@ -23,8 +23,8 @@ class Pool {
 
 		this._connectionRequests = []
 
-		this.logger('pool-mysql writer host: ', this.options.writer.host)
-		this.logger('pool-mysql reader host: ', this.options.reader.host)
+		this.logger(undefined, `pool-mysql writer host: ${this.options.writer.host}`)
+		this.logger(undefined, `pool-mysql reader host: ${this.options.reader.host}`)
 
 		this._runSchedulers()
 
