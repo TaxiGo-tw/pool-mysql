@@ -97,7 +97,7 @@ module.exports = class Connection {
 		let sqlStatment = sql.sql || sql
 
 		if (!this.isUsing) {
-			console.error(`
+			this._pool.logger(`
 	pool-mysql: connection is not using, might released too early
 	Query: ${sqlStatment}
 			`)
@@ -176,7 +176,7 @@ module.exports = class Connection {
 		if (!EX) {
 			return await this._q(sql, values)
 		} else if (!this._pool.redisClient && EX) {
-			console.error('should assign redis client to this._pool.redisClient')
+			this._pool.logger('should assign redis client to this._pool.redisClient')
 			return await this._q(sql, values)
 		}
 
@@ -272,7 +272,7 @@ module.exports = class Connection {
 		this._pool.logger(null, `[${this.id}] RELEASE`)
 
 		if (this._status.isStartedStransaction && !this._status.isCommited) {
-			console.error('pool-mysql: Transaction started, should be Committed')
+			this._pool.logger('pool-mysql: Transaction started, should be Committed')
 		}
 		this._resetStatus()
 
