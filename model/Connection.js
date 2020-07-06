@@ -190,7 +190,7 @@ module.exports = class Connection {
 			const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
 			if (someThing && keepCache) {
 				if (redisPrint) {
-					console.log('Cached in redis: true')
+					this._pool.logger('Cached in redis: true')
 				}
 
 				if (someThing.isNull) {
@@ -209,7 +209,7 @@ module.exports = class Connection {
 			const result = await this._q(sql, values)
 
 			if (redisPrint) {
-				console.log('Cached in redis: false ')
+				this._pool.logger('Cached in redis: false ')
 			}
 
 			let toCache = result
@@ -228,11 +228,11 @@ module.exports = class Connection {
 			switch (true) {
 				case typeof onErr == 'string':
 					// eslint-disable-next-line no-console
-					console.log('true error', error)
+					this._pool.logger('true error', error)
 					throw Error(onErr)
 				case typeof onErr == 'function':
 					// eslint-disable-next-line no-console
-					console.log('true error', error)
+					this._pool.logger('true error', error)
 					throw Error(onErr(error))
 				default:
 					throw error
