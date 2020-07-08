@@ -141,7 +141,14 @@ module.exports = class Connection {
 			const costTime = endTime - startTime
 			const isLongQuery = endTime - launchTme > QUERY_THRESHOLD_START && costTime > QUERY_THRESHOLD_MS
 			const printString = `${connection.logPrefix} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
-			this._pool.logger(print || isLongQuery, printString)
+
+			if (isLongQuery) {
+				this._pool.logger('Long Query', printString)
+			} else if (print) {
+				this._pool.logger('PRINT()', printString)
+			} else {
+				this._pool.logger(undefined, printString)
+			}
 
 			//emit
 			Event.emit('query', printString)
