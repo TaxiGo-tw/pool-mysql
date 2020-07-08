@@ -1,6 +1,6 @@
 {
 	"name": "pool-mysql",
-	"version": "1.5.15",
+	"version": "1.5.16",
 	"description": "",
 	"url": "https://github.com/vivalalova/pool-mysql",
 	"main": "index.js",
@@ -10,9 +10,6 @@
 	},
 	"author": "",
 	"license": "ISC",
-	"publishConfig": {
-		"registry": "https://npm.pkg.github.com/"
-	},
 	"dependencies": {
 		"mysql": "^2.16.0"
 	},
