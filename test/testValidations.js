@@ -130,6 +130,7 @@ describe('test Validations', async () => {
 		assert.equal(UNIX_TIMESTAMP.inputMapper('2020-01-01 GMT+08:00'), 1577808000)
 		assert.equal(UNIX_TIMESTAMP.inputMapper('2020-01-01 05:00'), 1577826000)
 		assert.equal(UNIX_TIMESTAMP.inputMapper(1592972101), 1592972101)
+		assert.equal(UNIX_TIMESTAMP.inputMapper('2020-01-01 08:32:50 GMT+08:00'), 1577838770)
 	})
 
 	it('Date Time', async () => {
@@ -142,6 +143,7 @@ describe('test Validations', async () => {
 		assert.equal(DateTime.inputMapper('2020-01-01 GMT+08:00'), '2019-12-31 16:00:00')
 		assert.equal(DateTime.inputMapper('2020-01-01 05:00'), '2019-12-31 21:00:00')
 		assert.equal(DateTime.inputMapper(1592972101), '2020-06-24 04:15:01')
+		assert.equal(DateTime.inputMapper('1970-01-01 08:32:50 GMT+08:00'), '1970-01-01 00:32:50')
 	})
 })
 

@@ -27,6 +27,9 @@ module.exports = class trips extends Schema {
 				type: Schema.Types.Number,
 				required: true
 			},
+			request_time: {
+				type: Schema.Types.UNIX_TIMESTAMP
+			},
 			driver_loc: {
 				ref: require('./Drivers'),
 				column: 'driver_id'
