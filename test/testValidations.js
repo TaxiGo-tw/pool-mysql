@@ -56,6 +56,7 @@ describe('test Validations', async () => {
 		assert.equal(SQLSelectOnlyString.validate('DELETE FROM t'), false)
 		assert.equal(SQLSelectOnlyString.validate(`INSERT INTO t (c1, c2, c3) VALUES('v1', 'v2', 'v3)`), false)
 		assert.equal(SQLSelectOnlyString.validate(`UPDATE t SET c1 = 'v1', c2 = 'v2`), false)
+		assert.equal(SQLSelectOnlyString.validate(`SELECT * FROM t1; SELECT * FROM t2`), false)
 	})
 
 	it('Email String', async () => {
