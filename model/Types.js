@@ -178,7 +178,7 @@ class JSONString extends Str {
 	}
 }
 
-class SQLString extends Str {
+class SQLSelectOnlyString extends Str {
 	static validate(string) {
 		try {
 			if (!string) {

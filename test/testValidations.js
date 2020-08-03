@@ -6,7 +6,7 @@ const assert = require('assert')
 const SqlString = require('mysql/lib/protocol/SqlString')
 
 
-const { Number, String, Email, JSONString, SQLString, NumberString, Point, Polygon, ENUM, UNIX_TIMESTAMP, DateTime } = require('../model/Schema').Types
+const { Number, String, Email, JSONString, SQLSelectOnlyString, NumberString, Point, Polygon, ENUM, UNIX_TIMESTAMP, DateTime } = require('../model/Schema').Types
 
 describe('test model Validations', async () => {
 	it('get pk ', async () => {
@@ -50,14 +50,14 @@ describe('test Validations', async () => {
 	})
 
 	it('SQL String', async () => {
-		assert.equal(SQLString.validate('SELECT * FROM t WHERE 1 = 1 LIMIT 100'), true)
-		assert.equal(SQLString.validate('select * from t where 1 = 1 limit 100'), true)
-		assert.equal(SQLString.validate('DROP DATABASE d'), false)
-		assert.equal(SQLString.validate('DROP TABLE t'), false)
-		assert.equal(SQLString.validate('ALTER TABLE t ADD c varchar(255)'), false)
-		assert.equal(SQLString.validate('DELETE FROM t'), false)
-		assert.equal(SQLString.validate(`INSERT INTO t (c1, c2, c3) VALUES('v1', 'v2', 'v3)`), false)
-		assert.equal(SQLString.validate(`UPDATE t SET c1 = 'v1', c2 = 'v2`), false)
+		assert.equal(SQLSelectOnlyString.validate('SELECT * FROM t WHERE 1 = 1 LIMIT 100'), true)
+		assert.equal(SQLSelectOnlyString.validate('select * from t where 1 = 1 limit 100'), true)
+		assert.equal(SQLSelectOnlyString.validate('DROP DATABASE d'), false)
+		assert.equal(SQLSelectOnlyString.validate('DROP TABLE t'), false)
+		assert.equal(SQLSelectOnlyString.validate('ALTER TABLE t ADD c varchar(255)'), false)
+		assert.equal(SQLSelectOnlyString.validate('DELETE FROM t'), false)
+		assert.equal(SQLSelectOnlyString.validate(`INSERT INTO t (c1, c2, c3) VALUES('v1', 'v2', 'v3)`), false)
+		assert.equal(SQLSelectOnlyString.validate(`UPDATE t SET c1 = 'v1', c2 = 'v2`), false)
 	})
 
 	it('Email String', async () => {
