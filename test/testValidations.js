@@ -3,8 +3,6 @@ const DriverReviewStatus = require('./model/DriverReviewStatus')
 const { should } = require('chai')  // Using Assert style
 should()  // Modifies `Object.prototype`
 const assert = require('assert')
-const SqlString = require('mysql/lib/protocol/SqlString')
-
 
 const { Number, String, Email, JSONString, SQLSelectOnlyString, NumberString, Point, Polygon, ENUM, UNIX_TIMESTAMP, DateTime } = require('../model/Schema').Types
 
