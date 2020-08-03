@@ -124,7 +124,7 @@ module.exports = class Connection {
 		}
 
 		this.querying = query.sql
-		this.lastestQuery = query.sql
+		this.latestQuery = query.sql
 
 		Event.emit('will_query', query.sql)
 
