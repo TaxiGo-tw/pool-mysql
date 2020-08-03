@@ -47,7 +47,7 @@ describe('test Validations', async () => {
 		assert.equal(JSONString.inputMapper([{ a: 1 }]), '[{"a":1}]')
 	})
 
-	it('SQL String', async () => {
+	it('SQL Select Only String', async () => {
 		assert.equal(SQLSelectOnlyString.validate('SELECT * FROM t WHERE 1 = 1 LIMIT 100'), true)
 		assert.equal(SQLSelectOnlyString.validate('select * from t where 1 = 1 limit 100'), true)
 		assert.equal(SQLSelectOnlyString.validate('DROP DATABASE d'), false)
