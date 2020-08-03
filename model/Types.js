@@ -178,6 +178,23 @@ class JSONString extends Str {
 	}
 }
 
+class SQLString extends Str {
+	static validate(string) {
+		try {
+			if (!string) {
+				return false
+			}
+			if (typeof string !== 'string') {
+				return false
+			}
+			const regex = /^(?=.*SELECT.*FROM)(?!.*(?:CREATE|DROP|UPDATE|INSERT|ALTER|DELETE|ATTACH|DETACH)).*$/i
+			return (string.match(regex) == string)
+		} catch (e) {
+			return false
+		}
+	}
+}
+
 class Email extends String {
 	static validate(string) {
 		if (!string) {
@@ -263,6 +280,7 @@ module.exports = {
 	Number: Num,
 	String: Str,
 	JSONString,
+	SQLString,
 	NumberString,
 	Email,
 	URL,
