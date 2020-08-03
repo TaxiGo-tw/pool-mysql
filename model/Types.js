@@ -280,7 +280,7 @@ module.exports = {
 	Number: Num,
 	String: Str,
 	JSONString,
-	SQLString,
+	SQLSelectOnlyString,
 	NumberString,
 	Email,
 	URL,
