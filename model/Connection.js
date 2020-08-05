@@ -93,7 +93,6 @@ module.exports = class Connection {
 			cb = bb
 		}
 
-
 		let sqlStatment = sql.sql || sql
 
 		if (!this.isUsing) {
@@ -101,6 +100,10 @@ module.exports = class Connection {
 	pool-mysql: connection is not using, might released too early
 	Query: ${sqlStatment}
 			`)
+		}
+
+		if (this._pool.mock && isNaN(this._pool._mockCounter)) {
+			return cb(null, this._pool.mock(sqlStatment, ++this._pool._mockCounter))
 		}
 
 		const connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
