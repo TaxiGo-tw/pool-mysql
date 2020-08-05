@@ -108,6 +108,16 @@ class Pool {
 				this.connectionPool.using[tag.name] = {}
 			}
 
+			//reuse
+			let connection = this.connectionPool.waiting.shift()
+			if (connection) {
+				connection.tag = tag
+				this.connectionPool.using[tag.name][connection.id] = connection
+				connection.gotAt = new Date()
+				Event.emit('get', connection)
+				return callback(undefined, connection)
+			}
+
 			//on connection limit, 去排隊
 			if (
 				this.numberOfConnections >= this.options.connectionLimit ||
@@ -120,15 +130,6 @@ class Pool {
 				return
 			}
 
-			//reuse
-			let connection = this.connectionPool.waiting.shift()
-			if (connection) {
-				connection.tag = tag
-				this.connectionPool.using[tag.name][connection.id] = connection
-				connection.gotAt = new Date()
-				Event.emit('get', connection)
-				return callback(undefined, connection)
-			}
 
 			//create new one
 			this.connectionID++
