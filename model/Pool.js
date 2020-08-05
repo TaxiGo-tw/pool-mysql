@@ -35,10 +35,6 @@ class Pool {
 		return Event
 	}
 
-	static mock() {
-		this.mock = true
-	}
-
 	get numberOfConnections() {
 		const amount = Object.keys(this.connectionPool.using).length + this.connectionPool.waiting.length
 
