@@ -6,6 +6,8 @@ const mysql = require('mysql')
 
 const Event = require('./Event')
 
+const Cache = require('./Cache')
+
 module.exports = class Connection {
 	constructor(pool) {
 		this._pool = pool
@@ -100,7 +102,7 @@ module.exports = class Connection {
 		let sqlStatment = sql.sql || sql
 
 		if (!this.isUsing) {
-			console.error(`
+			this._pool.logger(`
 	pool-mysql: connection is not using, might released too early
 	Query: ${sqlStatment}
 			`)
@@ -127,6 +129,7 @@ module.exports = class Connection {
 		}
 
 		this.querying = query.sql
+		this.latestQuery = query.sql
 
 		Event.emit('will_query', query.sql)
 
@@ -144,7 +147,14 @@ module.exports = class Connection {
 			const costTime = endTime - startTime
 			const isLongQuery = endTime - launchTme > QUERY_THRESHOLD_START && costTime > QUERY_THRESHOLD_MS
 			const printString = `${connection.logPrefix} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
-			this._pool.logger(print || isLongQuery, printString)
+
+			if (isLongQuery) {
+				this._pool.logger('Long Query', printString)
+			} else if (print) {
+				this._pool.logger('PRINT()', printString)
+			} else {
+				this._pool.logger(undefined, printString)
+			}
 
 			//emit
 			Event.emit('query', printString)
@@ -172,72 +182,70 @@ module.exports = class Connection {
 		})
 	}
 
-	async q(sql, values, { key, EX, isJSON = true, cachedToResult, shouldRefreshInCache /*= (someThing) => { return true }*/, map, queryToResult, queryToCache, redisPrint } = {}) {
+	async q(sql, values, { key, EX, shouldRefreshInCache, redisPrint } = {}) {
 		const onErr = this._onErr
 		delete this._onErr
 
+		if (!EX) {
+			return await this._q(sql, values)
+		} else if (!this._pool.redisClient && EX) {
+			this._pool.logger('should assign redis client to this._pool.redisClient')
+			return await this._q(sql, values)
+		}
+
+		const queryString = mysql.format((sql.sql || sql), values).split('\n').join(' ')
+		const cacheKey = key || queryString
+
 		try {
-			if (!EX) {
-				return await this._q(sql, values)
-			} else if (!this._pool.redisClient && EX) {
-				console.error('should assign redis client to this._pool.redisClient')
-				return await this._q(sql, values)
-			}
-
-			const queryString = mysql.format((sql.sql || sql), values).split('\n').join(' ')
-			const cacheKey = key || queryString
-
-			let someThing = isJSON
-				? await this._pool.redisClient.getJSONAsync(cacheKey)
-				: await this._pool.redisClient.getAsync(cacheKey)
+			const someThing = await this._pool.redisClient.getJSONAsync(cacheKey)
 
 			//if cached
 			const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
 			if (someThing && keepCache) {
 				if (redisPrint) {
-					console.log('Cached in redis: true')
+					this._pool.logger(undefined, 'Cached in redis: true')
 				}
 
 				if (someThing.isNull) {
 					return null
 				}
 
-				someThing = cachedToResult ? cachedToResult(someThing) : someThing
 				return someThing
+			}
+
+			if (Cache.isQuerying(cacheKey)) {
+				return await Cache.waiting(cacheKey)
+			} else {
+				Cache.start(cacheKey)
 			}
 
 			const result = await this._q(sql, values)
 
 			if (redisPrint) {
-				console.log('Cached in redis: false ')
+				this._pool.logger(undefined, 'Cached in redis: false ')
 			}
 
-			let toCache = map
-				? map(result)
-				: queryToCache
-					? queryToCache(result)
-					: result
+			let toCache = result
 
 			if (toCache === null) {
 				toCache = { isNull: true }
 			}
 
-			isJSON
-				? await this._pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
-				: await this._pool.redisClient.setAsync(cacheKey, toCache, 'EX', EX)
+			await this._pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
 
-			return map
-				? map(result)
-				: queryToResult ? queryToResult(result) : result
+			Cache.pop(cacheKey, undefined, result)
+			return result
 		} catch (error) {
+			Cache.pop(cacheKey, error, undefined)
+
 			switch (true) {
 				case typeof onErr == 'string':
 					// eslint-disable-next-line no-console
-					console.log('true error', error)
+					this._pool.logger(error)
 					throw Error(onErr)
 				case typeof onErr == 'function':
 					// eslint-disable-next-line no-console
-					console.log('true error', error)
+					this._pool.logger(error)
 					throw Error(onErr(error))
 				default:
 					throw error
@@ -277,7 +285,7 @@ module.exports = class Connection {
 		this._pool.logger(null, `[${this.id}] RELEASE`)
 
 		if (this._status.isStartedStransaction && !this._status.isCommited) {
-			console.error('pool-mysql: Transaction started, should be Committed')
+			this._pool.logger(undefined, 'pool-mysql: Transaction started, should be Committed')
 		}
 		this._resetStatus()
 
@@ -357,6 +365,7 @@ module.exports = class Connection {
 		mysqlConnection.role = role
 
 		mysqlConnection.on('error', err => {
+			this._pool.logger(err, `connection error: ${(err && err.message) ? err.message : err}`)
 			//丟掉這個conneciton
 			connection.end()
 		})

@@ -154,11 +154,15 @@ class JSONString extends Str {
 				return true
 			}
 
-			if (!value) {
+			if (value === undefined || value === null) {
+				return true
+			}
+
+			const parsed = JSON.parse(value)
+			if (typeof parsed !== 'object') {
 				return false
 			}
 
-			JSON.parse(value)
 			return true
 		} catch (e) {
 			return false
@@ -171,6 +175,23 @@ class JSONString extends Str {
 		}
 
 		return value
+	}
+}
+
+class SQLSelectOnlyString extends Str {
+	static validate(string) {
+		try {
+			if (!string) {
+				return false
+			}
+			if (typeof string !== 'string') {
+				return false
+			}
+			const regex = /^(?=.*SELECT.*FROM)(?!.*(?:CREATE|DROP|UPDATE|INSERT|ALTER|DELETE|ATTACH|DETACH|;)).*$/i
+			return (string.match(regex) == string)
+		} catch (e) {
+			return false
+		}
 	}
 }
 
@@ -259,6 +280,7 @@ module.exports = {
 	Number: Num,
 	String: Str,
 	JSONString,
+	SQLSelectOnlyString,
 	NumberString,
 	Email,
 	URL,

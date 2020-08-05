@@ -605,13 +605,13 @@ describe('test update multi table', () => {
 	it('1', () => {
 
 		const query = Trips.UPDATE('trips, user_info')
-			.SET({ user_id: 3925 })
+			.SET({ user_id: 3925, request_time: '2020-01-01 08:32:50 GMT+08:00' })
 			.WHERE({ uid: 3925 })
 			.AND('trips.user_id = user_info.uid')
 
 		assert.equal(
 			query.FORMATTED().formatted,
-			'UPDATE trips, user_info SET `user_id` = 3925 WHERE (`uid` = 3925) AND (trips.user_id = user_info.uid)', 'fail format'
+			'UPDATE trips, user_info SET `user_id` = 3925, `request_time` = 1577838770 WHERE (`uid` = 3925) AND (trips.user_id = user_info.uid)', 'fail format'
 		)
 	})
 })

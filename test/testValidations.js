@@ -4,8 +4,7 @@ const { should } = require('chai')  // Using Assert style
 should()  // Modifies `Object.prototype`
 const assert = require('assert')
 
-
-const { Number, String, Email, JSONString, NumberString, Point, Polygon, ENUM, UNIX_TIMESTAMP, DateTime } = require('../model/Schema').Types
+const { Number, String, Email, JSONString, SQLSelectOnlyString, NumberString, Point, Polygon, ENUM, UNIX_TIMESTAMP, DateTime } = require('../model/Schema').Types
 
 describe('test model Validations', async () => {
 	it('get pk ', async () => {
@@ -35,13 +34,29 @@ describe('test Validations', async () => {
 		assert.equal(JSONString.validate('{\"hi\":1}'), true)
 		assert.equal(JSONString.validate('{hi:1}'), false)
 		assert.equal(JSONString.validate(''), false)
+		assert.equal(JSONString.validate("123"), false)
+		assert.equal(JSONString.validate(123), false)
 		assert.equal(JSONString.validate([]), true)
 		assert.equal(JSONString.validate([{ a: 1 }]), true)
+		assert.equal(JSONString.validate(), true)
+		assert.equal(JSONString.validate(null), true)
 
 		assert.equal(JSONString.inputMapper({}), '{}')
 		assert.equal(JSONString.inputMapper({ a: 1 }), '{"a":1}')
 		assert.equal(JSONString.inputMapper([]), '[]')
 		assert.equal(JSONString.inputMapper([{ a: 1 }]), '[{"a":1}]')
+	})
+
+	it('SQL Select Only String', async () => {
+		assert.equal(SQLSelectOnlyString.validate('SELECT * FROM t WHERE 1 = 1 LIMIT 100'), true)
+		assert.equal(SQLSelectOnlyString.validate('select * from t where 1 = 1 limit 100'), true)
+		assert.equal(SQLSelectOnlyString.validate('DROP DATABASE d'), false)
+		assert.equal(SQLSelectOnlyString.validate('DROP TABLE t'), false)
+		assert.equal(SQLSelectOnlyString.validate('ALTER TABLE t ADD c varchar(255)'), false)
+		assert.equal(SQLSelectOnlyString.validate('DELETE FROM t'), false)
+		assert.equal(SQLSelectOnlyString.validate(`INSERT INTO t (c1, c2, c3) VALUES('v1', 'v2', 'v3)`), false)
+		assert.equal(SQLSelectOnlyString.validate(`UPDATE t SET c1 = 'v1', c2 = 'v2`), false)
+		assert.equal(SQLSelectOnlyString.validate(`SELECT * FROM t1; SELECT * FROM t2`), false)
 	})
 
 	it('Email String', async () => {
@@ -124,8 +139,9 @@ describe('test Validations', async () => {
 
 		assert.equal(UNIX_TIMESTAMP.inputMapper('2020-01-01'), 1577836800)
 		assert.equal(UNIX_TIMESTAMP.inputMapper('2020-01-01 GMT+08:00'), 1577808000)
-		assert.equal(UNIX_TIMESTAMP.inputMapper('2020-01-01 05:00'), 1577826000)
+		assert.equal(UNIX_TIMESTAMP.inputMapper('2020-01-01 05:00'), 1577854800)
 		assert.equal(UNIX_TIMESTAMP.inputMapper(1592972101), 1592972101)
+		assert.equal(UNIX_TIMESTAMP.inputMapper('2020-01-01 08:32:50 GMT+08:00'), 1577838770)
 	})
 
 	it('Date Time', async () => {
@@ -136,8 +152,9 @@ describe('test Validations', async () => {
 
 		assert.equal(DateTime.inputMapper('2020-01-01'), '2020-01-01 00:00:00')
 		assert.equal(DateTime.inputMapper('2020-01-01 GMT+08:00'), '2019-12-31 16:00:00')
-		assert.equal(DateTime.inputMapper('2020-01-01 05:00'), '2019-12-31 21:00:00')
+		assert.equal(DateTime.inputMapper('2020-01-01 05:00'), '2020-01-01 05:00:00')
 		assert.equal(DateTime.inputMapper(1592972101), '2020-06-24 04:15:01')
+		assert.equal(DateTime.inputMapper('1970-01-01 08:32:50 GMT+08:00'), '1970-01-01 00:32:50')
 	})
 })
 
