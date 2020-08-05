@@ -283,7 +283,7 @@ module.exports = class Schema {
 			} = this._options()
 
 			if (Schema._pool.mock) {
-				return Schema._pool.mock(formatted.sql)
+				return Schema._pool.mock(formatted)
 			}
 			const ex = this._EX || {}
 			ex.redisPrint = print
