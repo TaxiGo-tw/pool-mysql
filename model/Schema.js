@@ -258,11 +258,6 @@ module.exports = class Schema {
 		}
 	}
 
-	MOCK() {
-		this._mock = true
-		return this
-	}
-
 	async exec(outSideConnection = null) {
 		this._connection = outSideConnection || await Schema._pool.createConnection()
 		try {
@@ -284,11 +279,11 @@ module.exports = class Schema {
 				changedRows,
 				affectedRows,
 				onErr,
-				decryption,
-				mock
+				decryption
 			} = this._options()
-			if (mock) {
-				return formatted
+
+			if (this._pool.mock) {
+				return formatted.sql
 			}
 			const ex = this._EX || {}
 			ex.redisPrint = print
@@ -684,9 +679,6 @@ module.exports = class Schema {
 
 		options.decryption = this._decryption || []
 		delete this._decryption
-
-		options.mock = this._mock
-		delete this._mock
 
 		return options
 	}
