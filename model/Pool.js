@@ -123,7 +123,7 @@ class Pool {
 			//reuse
 			let connection = this.connectionPool.waiting.shift()
 			if (connection) {
-				this.connection.tag = tag
+				connection.tag = tag
 				this.connectionPool.using[tag.name][connection.id] = connection
 				connection.gotAt = new Date()
 				Event.emit('get', connection)
