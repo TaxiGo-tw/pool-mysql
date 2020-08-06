@@ -282,9 +282,6 @@ module.exports = class Schema {
 				decryption
 			} = this._options()
 
-			if (Schema._pool.mock) {
-				return Schema._pool.mock(formatted)
-			}
 			const ex = this._EX || {}
 			ex.redisPrint = print
 			this._EX = {}

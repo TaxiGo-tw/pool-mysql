@@ -77,6 +77,15 @@ class Pool {
 		extendRedis(this._redisClient)
 	}
 
+	get mock() {
+		return this._mock
+	}
+
+	set mock(callback) {
+		this._mockCounter = 0
+		this._mock = callback
+	}
+
 	//TODO: { limitKey, limit = 0 } = {}
 	async createConnection() {
 		return new Promise((resolve, reject) => {
