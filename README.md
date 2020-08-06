@@ -300,6 +300,14 @@ module.exports = class driver_review_status extends Scheme {
 }
 ```
 
+### Mock response
+
+* [Usage](https://github.com/TaxiGo-tw/pool-mysql/blob/master/test/testConnection.js)
+
+* every query return response from mock() and increase index
+
+* assign mock() to pool will reset index to 0
+
 
 ### Log level
 
