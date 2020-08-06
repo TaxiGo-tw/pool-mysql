@@ -302,7 +302,7 @@ module.exports = class driver_review_status extends Scheme {
 
 ### Mock response
 
-[here](https://github.com/TaxiGo-tw/pool-mysql/blob/master/test/testConnection.js)
+* [Usage](https://github.com/TaxiGo-tw/pool-mysql/blob/master/test/testConnection.js)
 
 * every query return response from mock() and increase index
 
