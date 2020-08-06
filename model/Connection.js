@@ -102,7 +102,7 @@ module.exports = class Connection {
 			`)
 		}
 
-		//is pool.mock available
+		// is pool.mock available
 		if (this._pool.mock && !isNaN(this._pool._mockCounter)) {
 			return cb(null, this._pool.mock(this._pool._mockCounter++, sqlStatment))
 		}

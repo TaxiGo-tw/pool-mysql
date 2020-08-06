@@ -282,6 +282,13 @@ module.exports = class Schema {
 				decryption
 			} = this._options()
 
+			if (Schema._pool.mock && !isNaN(Schema._pool._mockCounter)) {
+				if (print) {
+					Schema._pool.logger('all', `${formatted}`)
+				}
+				return Schema._pool.mock(Schema._pool._mockCounter++, formatted)
+			}
+
 			const ex = this._EX || {}
 			ex.redisPrint = print
 			this._EX = {}
