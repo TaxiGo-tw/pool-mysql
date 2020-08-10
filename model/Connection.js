@@ -181,7 +181,7 @@ module.exports = class Connection {
 		})
 	}
 
-	async q(sql, values, { key, EX, shouldRefreshInCache, redisPrint, combine }) {
+	async q(sql, values, { key, EX, shouldRefreshInCache, redisPrint, combine } = {}) {
 		const onErr = this._onErr
 		delete this._onErr
 
