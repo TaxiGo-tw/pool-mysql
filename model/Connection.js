@@ -190,16 +190,21 @@ module.exports = class Connection {
 		const queryKey = key || queryString
 
 		try {
-			if (!EX && !combine) { //一般查詢, 不需要redis cache
+			if (!EX) {
+				if (combine && Combine.isQuerying(queryKey)) {
+					return await Combine.subscribe(queryKey)
+				} else if (combine) {
+					Combine.bind(queryKey)
+					const result = await this._q(sql, values)
+					Combine.publish(queryKey, undefined, result)
+					return
+				}
+
+				//一般查詢, 不需要redis cache
 				return await this._q(sql, values)
-			} else if (!EX && combine && Combine.isQuerying(queryKey)) {
-				return await Combine.subscribe(queryKey)
-			} else if (!EX && combine) {
-				Combine.bind(queryKey)
-				const result = await this._q(sql, values)
-				Combine.publish(queryKey, undefined, result)
-				return result
-			} else if (EX && !this._pool.redisClient) {
+			}
+
+			if (EX && !this._pool.redisClient) {
 				this._pool.logger('should assign redis client to this._pool.redisClient')
 				return await this._q(sql, values)
 			}
