@@ -197,7 +197,7 @@ module.exports = class Connection {
 					Combine.bind(queryKey)
 					const result = await this._q(sql, values)
 					Combine.publish(queryKey, undefined, result)
-					return
+					return result
 				}
 
 				//一般查詢, 不需要redis cache
