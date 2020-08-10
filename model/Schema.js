@@ -290,7 +290,7 @@ module.exports = class Schema {
 				return Schema._pool.mock(Schema._pool._mockCounter++, formatted)
 			}
 
-			const ex = this._EX || {}
+			const ex = this._EX || { combine }
 			ex.redisPrint = print
 			this._EX = {}
 
