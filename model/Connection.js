@@ -6,7 +6,7 @@ const mysql = require('mysql')
 
 const Event = require('./Event')
 
-const Cache = require('./Cache')
+const Combine = require('./Combine')
 
 module.exports = class Connection {
 	constructor(pool) {
@@ -181,22 +181,30 @@ module.exports = class Connection {
 		})
 	}
 
-	async q(sql, values, { key, EX, shouldRefreshInCache, redisPrint } = {}) {
+	async q(sql, values, { key, EX, shouldRefreshInCache, redisPrint, combine } = {}) {
 		const onErr = this._onErr
 		delete this._onErr
 
-		if (!EX) {
-			return await this._q(sql, values)
-		} else if (!this._pool.redisClient && EX) {
-			this._pool.logger('should assign redis client to this._pool.redisClient')
-			return await this._q(sql, values)
-		}
 
 		const queryString = mysql.format((sql.sql || sql), values).split('\n').join(' ')
-		const cacheKey = key || queryString
+		const queryKey = key || queryString
 
 		try {
-			const someThing = await this._pool.redisClient.getJSONAsync(cacheKey)
+			if (!EX && !combine) { //一般查詢, 不需要redis cache
+				return await this._q(sql, values)
+			} else if (!EX && combine && Combine.isQuerying(queryKey)) {
+				return await Combine.subscribe(queryKey)
+			} else if (!EX && combine) {
+				Combine.bind(queryKey)
+				const result = await this._q(sql, values)
+				Combine.publish(queryKey, undefined, result)
+				return result
+			} else if (EX && !this._pool.redisClient) {
+				this._pool.logger('should assign redis client to this._pool.redisClient')
+				return await this._q(sql, values)
+			}
+
+			const someThing = await this._pool.redisClient.getJSONAsync(queryKey)
 
 			//if cached
 			const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
@@ -212,10 +220,11 @@ module.exports = class Connection {
 				return someThing
 			}
 
-			if (Cache.isQuerying(cacheKey)) {
-				return await Cache.waiting(cacheKey)
+			// always combine
+			if (Combine.isQuerying(queryKey)) {
+				return await Combine.subscribe(queryKey)
 			} else {
-				Cache.start(cacheKey)
+				Combine.bind(queryKey)
 			}
 
 			const result = await this._q(sql, values)
@@ -230,12 +239,12 @@ module.exports = class Connection {
 				toCache = { isNull: true }
 			}
 
-			await this._pool.redisClient.setJSONAsync(cacheKey, toCache, 'EX', EX)
+			await this._pool.redisClient.setJSONAsync(queryKey, toCache, 'EX', EX)
 
-			Cache.pop(cacheKey, undefined, result)
+			Combine.publish(queryKey, undefined, result)
 			return result
 		} catch (error) {
-			Cache.pop(cacheKey, error, undefined)
+			Combine.publish(queryKey, error, undefined)
 
 			switch (true) {
 				case typeof onErr == 'string':

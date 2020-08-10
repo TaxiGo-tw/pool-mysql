@@ -279,7 +279,8 @@ module.exports = class Schema {
 				changedRows,
 				affectedRows,
 				onErr,
-				decryption
+				decryption,
+				combine
 			} = this._options()
 
 			if (Schema._pool.mock && !isNaN(Schema._pool._mockCounter)) {
@@ -289,7 +290,7 @@ module.exports = class Schema {
 				return Schema._pool.mock(Schema._pool._mockCounter++, formatted)
 			}
 
-			const ex = this._EX || {}
+			const ex = this._EX || { combine }
 			ex.redisPrint = print
 			this._EX = {}
 
@@ -615,6 +616,11 @@ module.exports = class Schema {
 		return this
 	}
 
+	COMBINE() {
+		this._combine = true
+		return this
+	}
+
 	UPDATED(...variables) {
 		this._updated = true
 
@@ -683,6 +689,9 @@ module.exports = class Schema {
 
 		options.decryption = this._decryption || []
 		delete this._decryption
+
+		options.combine = this._combine || false
+		delete this._combine
 
 		return options
 	}

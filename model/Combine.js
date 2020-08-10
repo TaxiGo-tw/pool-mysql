@@ -2,41 +2,43 @@
 const isQuering = {}
 const waitingCallbacks = {}
 
-module.exports = class Cache {
+module.exports = class Combine {
 	static isQuerying(key) {
 		return isQuering[key]
 	}
 
-	static start(key) {
+	static bind(key) {
 		isQuering[key] = true
 	}
 
 	static end(key) {
-		isQuering[key] = false
+		delete isQuering[key]
 	}
 
-	static async waiting(key) {
+	static async subscribe(key) {
 		if (!waitingCallbacks[key]) {
 			waitingCallbacks[key] = []
 		}
 
-		return new Promise((reslove, reject) => {
-			waitingCallbacks[key].push((err, results) => {
+		return new Promise((resolve, reject) => {
+			const publisher = (err, results) => {
 				if (err) {
 					return reject(err)
 				}
-				reslove(results)
-			})
+				resolve(results)
+			}
+
+			waitingCallbacks[key].push(publisher)
 		})
 	}
 
-	static pop(key, err, result) {
+	static publish(key, err, result) {
 		const arr = waitingCallbacks[key] || []
 		while (arr.length) {
 			const callback = arr.shift()
 			callback(err, result)
 		}
 
-		Cache.end(key)
+		Combine.end(key)
 	}
 }
