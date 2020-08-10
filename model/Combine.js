@@ -12,7 +12,7 @@ module.exports = class Combine {
 	}
 
 	static end(key) {
-		isQuering[key] = false
+		delete isQuering[key]
 	}
 
 	static async waitPublish(key) {
