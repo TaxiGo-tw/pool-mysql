@@ -190,10 +190,9 @@ module.exports = class Connection {
 		const queryKey = key || queryString
 
 		try {
-			if (!EX) { //一般查詢, 不需要redis cache
-				if (!combine) {
-					return await this._q(sql, values)
-				}
+			if (!EX && !combine) { //一般查詢, 不需要redis cache
+				return await this._q(sql, values)
+			} else if (combine) {
 				//atomic
 				if (Combine.isQuerying(queryKey)) {
 					return await Combine.waitPublish(queryKey)
