@@ -15,7 +15,7 @@ module.exports = class Combine {
 		delete isQuering[key]
 	}
 
-	static async waitPublish(key) {
+	static async subscribe(key) {
 		if (!waitingCallbacks[key]) {
 			waitingCallbacks[key] = []
 		}

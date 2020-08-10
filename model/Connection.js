@@ -193,7 +193,7 @@ module.exports = class Connection {
 			if (!EX && !combine) { //一般查詢, 不需要redis cache
 				return await this._q(sql, values)
 			} else if (!EX && combine && Combine.isQuerying(queryKey)) {
-				return await Combine.waitPublish(queryKey)
+				return await Combine.subscribe(queryKey)
 			} else if (!EX && combine) {
 				Combine.bind(queryKey)
 				const result = await this._q(sql, values)
@@ -222,7 +222,7 @@ module.exports = class Connection {
 
 			// always combine
 			if (Combine.isQuerying(queryKey)) {
-				return await Combine.waitPublish(queryKey)
+				return await Combine.subscribe(queryKey)
 			} else {
 				Combine.bind(queryKey)
 			}
