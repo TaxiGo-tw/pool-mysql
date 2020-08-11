@@ -202,6 +202,18 @@ await Trips.UPDATE('user_info')
     .exec()
 ```
 
+### Combine queries
+
+mass queries in the same time, combined queries will query once only (scope in instance)
+
+```js
+	Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
+	Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
+	Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
+	Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
+	//....
+```
+
 ### Auto Free Connections
 
 Every 300 seconds free half reader&writer connections
