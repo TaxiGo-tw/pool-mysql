@@ -141,8 +141,10 @@ const results = await Block
         .UPDATE()
         .SET('id = id')
         .WHERE({ blocked: 3925 })
-        .UPDATED('id', 'blocker')
-        .CHANGED_ROW(1)  //throw if changedRows !== 1
+				.UPDATED('id', 'blocker')
+				.AFFECTED_ROWS(1) //throw if affectedRows !== 1
+				.CHANGED_ROWS(1)  //throw if changedRows !== 1
+				.ON_ERR('error message') // custom error message, can be string or callback
         .exec()
 
 for (const result of results) {
