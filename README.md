@@ -40,7 +40,7 @@ SQL_TABLE={{table name}}
 Require `pool-mysql`
 
 ```js
-const pool = reqiure('pool-mysql')
+const pool = require('pool-mysql')
 
 pool.query(sql, value, (err, data) => {
 
@@ -191,7 +191,7 @@ await Trips.UPDATE('user_info')
     .SET({ user_id: 31 })
     .WHERE({ uid: 31 })
     .CHANGED_ROWS(1)
-       .ON_ERR(errMessage) // string
+		.ON_ERR(errMessage) // string
     .exec()
 // or callback
 await Trips.UPDATE('user_info')
