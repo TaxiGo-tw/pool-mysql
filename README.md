@@ -211,7 +211,7 @@ mass queries in the same time, combined queries will query once only (scope in i
 	Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
 	Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
 	Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
-	//....
+	// the second ... latest query will wait result from first one
 ```
 
 ### Auto Free Connections
