@@ -258,6 +258,18 @@ module.exports = class Schema {
 		}
 	}
 
+	shouldMock() {
+		return Schema._pool.mock && !isNaN(Schema._pool._mockCounter)
+	}
+
+	mocked(formatted) {
+		if (print) {
+			Schema._pool.logger('all', `${formatted}`)
+		}
+
+		return Schema._pool.mock(Schema._pool._mockCounter++, formatted)
+	}
+
 	async exec(outSideConnection = null) {
 		this._connection = outSideConnection || await Schema._pool.createConnection()
 		try {
@@ -280,31 +292,24 @@ module.exports = class Schema {
 				affectedRows,
 				onErr,
 				decryption,
-				combine
+				ex
 			} = this._options()
 
-			if (Schema._pool.mock && !isNaN(Schema._pool._mockCounter)) {
-				if (print) {
-					Schema._pool.logger('all', `${formatted}`)
-				}
-				return Schema._pool.mock(Schema._pool._mockCounter++, formatted)
+			if (this.shouldMock()) {
+				return this.mocked(formatted)
 			}
 
-			const ex = this._EX || { combine }
-			ex.redisPrint = print
-			this._EX = {}
-
 			// eslint-disable-next-line no-unused-vars
-			let q = this._connection
+			let conn = this._connection
 			if (print) {
-				q = q.print
+				conn = conn.print
 			}
 
 			if (onErr) {
-				q = q.onErr(onErr)
+				conn = conn.onErr(onErr)
 			}
 
-			results = await q.q(query, values, ex)
+			results = await conn.q(query, values, ex)
 
 			decryption.forEach(column => {
 				results.forEach((result) => {
@@ -690,8 +695,12 @@ module.exports = class Schema {
 		options.decryption = this._decryption || []
 		delete this._decryption
 
-		options.combine = this._combine || false
+		const combine = this._combine || false
 		delete this._combine
+
+		options.ex = this._EX || { combine }
+		options.ex.redisPrint = options.print
+		this._EX = {}
 
 		return options
 	}
