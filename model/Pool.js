@@ -40,9 +40,9 @@ class Pool {
 	get numberOfConnections() {
 		let count = 0
 
-		Object.keys(this.connectionPool.using).map(key => {
-			count = + Object.keys(this.connectionPool.using[key]).length
-		})
+		Object.keys(this.connectionPool.using).reduce((count, key) => {
+			return count + Object.keys(this.connectionPool.using[key]).length
+		}, 0)
 
 		const amount = count + this.connectionPool.waiting.length
 
@@ -94,7 +94,7 @@ class Pool {
 		this._mock = callback
 	}
 
-	//TODO: { limitKey, limit = 0 } = {}
+	//TODO: { tag, limit = 0 } = {}
 	async createConnection({ tag_name = 'default', limit = this.options.connectionLimit } = {}) {
 		return new Promise(async (resolve, reject) => {
 			this.getConnection((err, connection) => {
@@ -102,11 +102,11 @@ class Pool {
 					return reject(err)
 				}
 				resolve(connection)
-			}, tag_name, limit)
+			}, { tag_name, limit })
 		})
 	}
 
-	getConnection(callback, tag_name = 'default', limit) {
+	getConnection(callback, { tag_name = 'default', limit }) {
 		try {
 			let tag = {
 				name: tag_name,
@@ -181,15 +181,18 @@ class Pool {
 
 	release() { }
 
-	async _recycle(connection) {
-		for (const callback of this._connectionRequests) {
-			if (Object.keys(this.connectionPool.using[callback.tag.name]).length < callback.tag.limit) {
-				Event.emit('recycle', connection)
-				this._connectionRequests.splice(this._connectionRequests.indexOf(callback), 1)
-				connection.gotAt = new Date()
-				connection.tag = callback.tag
-				return callback(null, connection)
-			}
+	_recycle(connection) {
+
+		const [callback] = this._connectionRequests.filter((callback) => {
+			return Object.keys(this.connectionPool.using[callback.tag.name]).length < callback.tag.limit
+		})
+
+		if (callback) {
+			Event.emit('recycle', connection)
+			connection.gotAt = new Date()
+			connection.tag = callback.tag
+			this.logger(undefined, `_recycle ${this.connectionID} ${JSON.stringify(this.connection.tag)}`)
+			return callback(null, connection)
 		}
 
 		delete this.connectionPool.using[connection.tag.name][connection.id]
