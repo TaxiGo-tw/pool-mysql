@@ -65,6 +65,17 @@ try {
 }
 ```
 
+##### Connection tag
+
+pool of connection pool
+
+limit max connection amount with same tag_name
+
+```js
+// if equal or more than 5 connections which tagged `foo`, wait for releasing
+const connection = await pool.createConnection({ tag_name: 'foo', limit: 5 })
+```
+
 ### Model setting
 
 ```js
