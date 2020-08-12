@@ -275,6 +275,7 @@ module.exports = class Schema {
 		try {
 			let results
 
+			///////////////////////////////////////////////////////////////////
 			this._connection.useWriter = this._forceWriter
 			this._forceWriter = false
 
@@ -294,10 +295,11 @@ module.exports = class Schema {
 				decryption,
 				ex
 			} = this._options()
-
+			///////////////////////////////////////////////////////////////////
 			if (this.shouldMock()) {
 				return this.mocked(formatted)
 			}
+			///////////////////////////////////////////////////////////////////
 
 			// eslint-disable-next-line no-unused-vars
 			let conn = this._connection
