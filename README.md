@@ -337,3 +337,9 @@ default to `error`
 pool.logger = 'error'
 // [3] Reader 1ms:  SELECT * FROM table
 ```
+
+##### Custom Logger
+
+```
+pool._logger = (err, toPrint) => { }
+```
