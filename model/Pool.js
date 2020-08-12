@@ -38,13 +38,12 @@ class Pool {
 	}
 
 	get numberOfConnections() {
-		let count = 0
 
-		const amount = Object.keys(this.connectionPool.using).reduce((count, key) => {
-			return count + Object.keys(this.connectionPool.using[key]).length
-		}, this.connectionPool.waiting.length)
+		const usingCount = Object.keys(this.connectionPool.using).reduce((count, key) => count + Object.keys(this.connectionPool.using[key]).length, 0)
 
-		if (amount != this._numberOfConnections) {
+		const waitingCount = this.connectionPool.waiting.length
+
+		if (usingCount + waitingCount != this._numberOfConnections) {
 			Event.emit('amount', amount)
 			this._numberOfConnections = amount
 		}
