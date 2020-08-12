@@ -12,7 +12,9 @@ class Pool {
 		this.options = options || defaultOptions
 
 		this.connectionPool = {
-			using: {},
+			using: {
+				default: {}
+			},
 			waiting: []
 		}
 
@@ -36,9 +38,12 @@ class Pool {
 	}
 
 	get numberOfConnections() {
-		const amount = Object.keys(this.connectionPool.using).length + this.connectionPool.waiting.length
 
-		if (amount != this._numberOfConnections) {
+		const usingCount = Object.keys(this.connectionPool.using).reduce((count, key) => count + Object.keys(this.connectionPool.using[key]).length, 0)
+
+		const waitingCount = this.connectionPool.waiting.length
+
+		if (usingCount + waitingCount != this._numberOfConnections) {
 			Event.emit('amount', amount)
 			this._numberOfConnections = amount
 		}
@@ -86,48 +91,65 @@ class Pool {
 		this._mock = callback
 	}
 
-	//TODO: { limitKey, limit = 0 } = {}
-	async createConnection() {
-		return new Promise((resolve, reject) => {
+	//TODO: { tag, limit = 0 } = {}
+	async createConnection({ tag_name = 'default', limit = this.options.connectionLimit } = {}) {
+		return new Promise(async (resolve, reject) => {
 			this.getConnection((err, connection) => {
 				if (err) {
 					return reject(err)
 				}
 				resolve(connection)
-			})
+			}, { tag_name, limit })
 		})
 	}
 
-	getConnection(callback) {
+	getConnection(callback, { tag_name = 'default', limit }) {
 		try {
+			let tag = {
+				name: tag_name,
+				limit: limit
+			}
+
+			if (!this.connectionPool.using[tag.name]) {
+				this.connectionPool.using[tag.name] = {}
+			}
+
 			//reuse
 			let connection = this.connectionPool.waiting.shift()
 			if (connection) {
-				this.connectionPool.using[connection.id] = connection
+				connection.tag = tag
+				this.connectionPool.using[tag.name][connection.id] = connection
 				connection.gotAt = new Date()
 				Event.emit('get', connection)
 				return callback(undefined, connection)
 			}
+
 			//on connection limit, 去排隊
-			else if (this.numberOfConnections >= this.options.connectionLimit) {
+			if (
+				this.numberOfConnections >= this.options.connectionLimit ||
+				Object.keys(this.connectionPool.using[tag.name]).length >= limit
+			) {
 				callback.requestTime = new Date()
+				callback.tag = tag
 				this._connectionRequests.push(callback)
 				Event.emit('request', this._connectionRequests.length)
 				return
 			}
 
+
 			//create new one
 			this.connectionID++
 			connection = new Connection(this)
-			this.connectionPool.using[connection.id] = connection
+			connection.tag = tag
+			this.connectionPool.using[tag.name][connection.id] = connection
 
 			connection.connect().then(() => {
 				Event.emit('create', connection)
 				this.numberOfConnections
 				callback(undefined, connection)
 			}).catch(err => {
-				delete this.connectionPool.using[connection.id]
-				delete connection.limitKey
+				delete this.connectionPool.using[tag.name][connection.id]
+				delete connection.tag
 
 				callback(err, undefined)
 			})
@@ -157,15 +179,21 @@ class Pool {
 	release() { }
 
 	_recycle(connection) {
-		const callback = this._connectionRequests.shift()
+
+		const [callback] = this._connectionRequests.filter((callback) => {
+			return Object.keys(this.connectionPool.using[callback.tag.name]).length < callback.tag.limit
+		})
+
 		if (callback) {
 			Event.emit('recycle', connection)
 			connection.gotAt = new Date()
+			connection.tag = callback.tag
+			this.logger(undefined, `_recycle ${this.connectionID} ${JSON.stringify(this.connection.tag)}`)
 			return callback(null, connection)
 		}
 
-		delete this.connectionPool.using[connection.id]
-		delete connection.limitKey
+		delete this.connectionPool.using[connection.tag.name][connection.id]
+		delete connection.tag
 
 		connection._resetStatus()
 		this.connectionPool.waiting.push(connection)
