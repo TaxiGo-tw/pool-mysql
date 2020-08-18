@@ -44,7 +44,7 @@ class Pool {
 		const waitingCount = this.connectionPool.waiting.length
 		const amount = usingCount + waitingCount
 
-		if (usingCount + waitingCount != this._numberOfConnections) {
+		if (amount != this._numberOfConnections) {
 			Event.emit('amount', amount)
 			this._numberOfConnections = amount
 		}
