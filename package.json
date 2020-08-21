@@ -11,7 +11,8 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
-		"mysql": "^2.16.0"
+		"mysql": "^2.16.0",
+		"randomstring": "^1.1.5"
 	},
 	"devDependencies": {
 		"bluebird": "^3.7.0",
