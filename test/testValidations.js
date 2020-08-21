@@ -231,14 +231,4 @@ describe('test SQL Select Only String Validations', async () => {
 
 		assert(obj.validate(true))
 	})
-
-	it('SQL model pass 2', async () => {
-		const obj = new NotificationsAudience({
-			id: 100,
-			audience: 'ALL_REGISTERED_USER_WITHOUT_CORPORATE_USERS',
-			sql_query: `SELECT uid, line_id as bot_id, email, phone_number, IFNULL(first_name, '') name FROM user_info WHERE line_id IS NOT NULL AND corporate_id IS NULL`
-		})
-
-		assert(obj.validate(true))
-	})
 })
