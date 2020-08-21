@@ -1,6 +1,5 @@
 const mysql = require('mysql')
 const throwError = require('./throwError')
-const { connectionID } = require('./Pool')
 
 class Base {
 	// eslint-disable-next-line no-unused-vars
