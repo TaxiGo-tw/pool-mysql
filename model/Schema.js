@@ -728,10 +728,18 @@ module.exports = class Schema {
 
 			//throw if invalid
 			const { type } = option
+
 			if (type) {
 				const typeValidator = type.validate
-				if (value !== undefined && value !== null && typeValidator && !typeValidator(value)) {
-					throwError(`${this.constructor.name}.${key} must be type: '${type.name}', not '${typeof value}' ${JSON.stringify(this)}`)
+				if (value !== undefined && value !== null && typeValidator) {
+					// eslint-disable-next-line promise/catch-or-return
+					Promise.resolve(typeValidator(value))
+						.then((data) => {
+							if (data === false) {
+								throw Error(`${this.constructor.name}.${key} must be type: '${type.name}', not '${typeof value}' ${JSON.stringify(this)}`)
+							}
+							return data
+						})
 				}
 			}
 

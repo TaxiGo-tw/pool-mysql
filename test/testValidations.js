@@ -1,4 +1,5 @@
 const DriverReviewStatus = require('./model/DriverReviewStatus')
+const NotificationsAudience = require('./model/NotificationsAudience')
 
 const { should } = require('chai')  // Using Assert style
 should()  // Modifies `Object.prototype`
@@ -48,15 +49,17 @@ describe('test Validations', async () => {
 	})
 
 	it('SQL Select Only String', async () => {
-		assert.equal(SQLSelectOnlyString.validate('SELECT * FROM t WHERE 1 = 1 LIMIT 100'), true)
-		assert.equal(SQLSelectOnlyString.validate('select * from t where 1 = 1 limit 100'), true)
-		assert.equal(SQLSelectOnlyString.validate('DROP DATABASE d'), false)
-		assert.equal(SQLSelectOnlyString.validate('DROP TABLE t'), false)
-		assert.equal(SQLSelectOnlyString.validate('ALTER TABLE t ADD c varchar(255)'), false)
-		assert.equal(SQLSelectOnlyString.validate('DELETE FROM t'), false)
-		assert.equal(SQLSelectOnlyString.validate(`INSERT INTO t (c1, c2, c3) VALUES('v1', 'v2', 'v3)`), false)
-		assert.equal(SQLSelectOnlyString.validate(`UPDATE t SET c1 = 'v1', c2 = 'v2`), false)
-		assert.equal(SQLSelectOnlyString.validate(`SELECT * FROM t1; SELECT * FROM t2`), false)
+		assert.equal(await SQLSelectOnlyString.validate('SELECT * FROM plant_trees WHERE 1 = 1 LIMIT 100'), true)
+		assert.equal(await SQLSelectOnlyString.validate('select * from plant_trees where 1 = 1 limit 100'), true)
+		assert.equal(await SQLSelectOnlyString.validate('DROP DATABASE d'), false)
+		assert.equal(await SQLSelectOnlyString.validate('DROP TABLE t'), false)
+		assert.equal(await SQLSelectOnlyString.validate('ALTER TABLE t ADD c varchar(255)'), false)
+		assert.equal(await SQLSelectOnlyString.validate('DELETE FROM t'), false)
+		assert.equal(await SQLSelectOnlyString.validate(`INSERT INTO t (c1, c2, c3) VALUES('v1', 'v2', 'v3)`), false)
+		assert.equal(await SQLSelectOnlyString.validate(`UPDATE t SET c1 = 'v1', c2 = 'v2`), false)
+		assert.equal(await SQLSelectOnlyString.validate(`SELECT * FROM plant_trees; SELECT * FROM plant_trees`), false)
+		assert.equal(await SQLSelectOnlyString.validate(`aa SELECT * FROM plant_trees`), false)
+
 	})
 
 	it('Email String', async () => {
@@ -194,16 +197,48 @@ describe('test JSON model Validations', async () => {
 		assert(obj.validate())
 
 		const obj2 = new DriverReviewStatus({ last_name: 123 })
-		assert.throws(() => { obj2.validate() }, { message: `driver_review_status.last_name must be type: 'Str', not 'number' {"last_name":123}` })
-		assert.throws(() => { obj2.validate(true) }, { message: `uid is required` })
+		await assert.rejects(() => { obj2.validate() }, { message: `driver_review_status.last_name must be type: 'Str', not 'number' {"last_name":123}` })
+		await assert.rejects(() => { obj2.validate(true) }, { message: `uid is required` })
 	})
 
 
 	it('JSON model', async () => {
 		const obj = new DriverReviewStatus({ uid: 123, first_name: 'lova', email: '123@gg.mail', car_brand: '' })
 
-		assert.throws(() => { obj.validate(true) }, {
+		await assert.rejects(() => { obj.validate(true) }, {
 			message: 'driver_review_status.first_name.length should be 5, now is 4'
 		})
+	})
+})
+
+describe('test SQL Select Only String Validations', async () => {
+	it('SQL model pass 1', async () => {
+		const obj = new NotificationsAudience({
+			id: 100,
+			audience: 'TESTER',
+			sql_query: `SELECT uid, line_id as bot_id, email, phone_number, IFNULL(first_name, '') name FROM user_info WHERE uid IN (101,1639)`
+		})
+
+		assert(obj.validate(true))
+	})
+
+	it('SQL model pass 2', async () => {
+		const obj = new NotificationsAudience({
+			id: 100,
+			audience: 'ALL_REGISTERED_USER_WITHOUT_CORPORATE_USERS',
+			sql_query: `SELECT uid, line_id as bot_id, email, phone_number, IFNULL(first_name, '') name FROM user_info WHERE line_id IS NOT NULL AND corporate_id IS NULL`
+		})
+
+		assert(obj.validate(true))
+	})
+
+	it('SQL model pass 2', async () => {
+		const obj = new NotificationsAudience({
+			id: 100,
+			audience: 'ALL_REGISTERED_USER_WITHOUT_CORPORATE_USERS',
+			sql_query: `SELECT uid, line_id as bot_id, email, phone_number, IFNULL(first_name, '') name FROM user_info WHERE line_id IS NOT NULL AND corporate_id IS NULL`
+		})
+
+		assert(obj.validate(true))
 	})
 })

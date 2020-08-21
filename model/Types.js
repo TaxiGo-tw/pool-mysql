@@ -1,5 +1,6 @@
 const mysql = require('mysql')
 const throwError = require('./throwError')
+const { connectionID } = require('./Pool')
 
 class Base {
 	// eslint-disable-next-line no-unused-vars
@@ -179,7 +180,9 @@ class JSONString extends Str {
 }
 
 class SQLSelectOnlyString extends Str {
-	static validate(string) {
+	static async validate(string) {
+		const pool = require('./Pool')
+		const connection = await pool.createConnection()
 		try {
 			if (!string) {
 				return false
@@ -187,10 +190,19 @@ class SQLSelectOnlyString extends Str {
 			if (typeof string !== 'string') {
 				return false
 			}
-			const regex = /^(?=.*SELECT.*FROM)(?!.*(?:CREATE|DROP|UPDATE|INSERT|ALTER|DELETE|ATTACH|DETACH|;)).*$/i
-			return (string.match(regex) == string)
+			const regex = /^(?=SELECT.*FROM)(?!.*(?:CREATE|DROP|UPDATE|INSERT|ALTER|DELETE|ATTACH|DETACH|;)).*$/i
+			if (string.match(regex) != string) {
+				return false
+			}
+			if (await connection.q(string)) {
+				return true
+			}
 		} catch (e) {
+			console.log(e)
 			return false
+		} finally {
+			await connection.rollback()
+			await connection.release()
 		}
 	}
 }
