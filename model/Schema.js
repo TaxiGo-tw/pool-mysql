@@ -270,6 +270,21 @@ module.exports = class Schema {
 		return Schema._pool.mock(Schema._pool._mockCounter++, formatted)
 	}
 
+	async rollback(outSideConnection = null) {
+		this._connection = outSideConnection || await Schema._pool.createConnection()
+		try {
+			await this._connection.awaitTransaction()
+			await this.exec(this._connection)
+		} catch (error) {
+			throwError(error)
+		} finally {
+			await this._connection.rollback()
+			if (!outSideConnection) {
+				this._connection.release()
+			}
+		}
+	}
+
 	async exec(outSideConnection = null) {
 		this._connection = outSideConnection || await Schema._pool.createConnection()
 		try {
