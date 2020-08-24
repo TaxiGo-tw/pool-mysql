@@ -124,7 +124,6 @@ module.exports = class Schema {
 	}
 
 	WHERE(whereCaluse, whereCaluse2) { return addQuery.bind(this)('WHERE', whereCaluse, whereCaluse2) }
-
 	AND(whereCaluse, whereCaluse2, { isExec = true } = {}) {
 		if (isExec) {
 			return addQuery.bind(this)('AND', whereCaluse, whereCaluse2)
@@ -271,9 +270,6 @@ module.exports = class Schema {
 	}
 
 	async exec(outSideConnection = null) {
-		if (this.to_be_validate) {
-			await this.to_be_validate
-		}
 		this._connection = outSideConnection || await Schema._pool.createConnection()
 		try {
 			let results
@@ -303,6 +299,10 @@ module.exports = class Schema {
 				return this.mocked(formatted)
 			}
 			///////////////////////////////////////////////////////////////////
+
+			if (this.to_be_validate) {
+				await this.to_be_validate()
+			}
 
 			// eslint-disable-next-line no-unused-vars
 			let conn = this._connection
@@ -470,7 +470,11 @@ module.exports = class Schema {
 	SET(whereCaluse, whereCaluse2, { passUndefined = false, encryption = [] } = {}) {
 
 		if (typeof whereCaluse === 'object') {
-			this.to_be_validate = validate.bind(this)(whereCaluse)
+			this.to_be_validate = (function (obj, whereCaluse) {
+				return async function () {
+					return await validate.bind(obj)(whereCaluse)
+				}
+			})(this, whereCaluse)
 			for (const key of Object.keys(whereCaluse)) {
 				if (this.columns && this.columns[key] && this.columns[key].type && this.columns[key].type.inputMapper) {
 					const { inputMapper } = this.columns[key].type
