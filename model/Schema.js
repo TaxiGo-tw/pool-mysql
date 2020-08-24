@@ -293,7 +293,8 @@ module.exports = class Schema {
 				affectedRows,
 				onErr,
 				decryption,
-				ex
+				ex,
+				to_be_validate
 			} = this._options()
 			///////////////////////////////////////////////////////////////////
 			if (this.shouldMock()) {
@@ -301,9 +302,8 @@ module.exports = class Schema {
 			}
 			///////////////////////////////////////////////////////////////////
 
-			if (this.to_be_validate) {
-				await this.to_be_validate()
-				delete this.to_be_validate
+			if (to_be_validate) {
+				await to_be_validate()
 			}
 
 			// eslint-disable-next-line no-unused-vars
@@ -711,6 +711,9 @@ module.exports = class Schema {
 		options.ex = this._EX || { combine }
 		options.ex.redisPrint = options.print
 		this._EX = {}
+
+		options.to_be_validate = this.to_be_validate
+		delete this.to_be_validate
 
 		return options
 	}
