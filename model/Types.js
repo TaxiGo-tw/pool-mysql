@@ -201,7 +201,6 @@ class SQLSelectOnlyString extends Str {
 			console.log(e)
 			return false
 		} finally {
-			await connection.rollback()
 			await connection.release()
 		}
 	}
