@@ -271,16 +271,16 @@ module.exports = class Schema {
 	}
 
 	async rollback(outSideConnection = null) {
-		this._connection = outSideConnection || await Schema._pool.createConnection()
+		const connection = outSideConnection || await Schema._pool.createConnection()
 		try {
-			await this._connection.awaitTransaction()
-			await this.exec(this._connection)
+			await connection.awaitTransaction()
+			return await this.exec(connection)
 		} catch (error) {
 			throwError(error)
 		} finally {
-			await this._connection.rollback()
+			await connection.rollback()
 			if (!outSideConnection) {
-				this._connection.release()
+				connection.release()
 			}
 		}
 	}
