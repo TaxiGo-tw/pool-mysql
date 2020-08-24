@@ -302,6 +302,7 @@ module.exports = class Schema {
 
 			if (this.to_be_validate) {
 				await this.to_be_validate()
+				delete this.to_be_validate
 			}
 
 			// eslint-disable-next-line no-unused-vars
