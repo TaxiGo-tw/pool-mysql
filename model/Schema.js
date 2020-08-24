@@ -124,6 +124,7 @@ module.exports = class Schema {
 	}
 
 	WHERE(whereCaluse, whereCaluse2) { return addQuery.bind(this)('WHERE', whereCaluse, whereCaluse2) }
+
 	AND(whereCaluse, whereCaluse2, { isExec = true } = {}) {
 		if (isExec) {
 			return addQuery.bind(this)('AND', whereCaluse, whereCaluse2)
