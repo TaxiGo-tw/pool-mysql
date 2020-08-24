@@ -680,12 +680,22 @@ describe('test map', () => {
 
 describe('test rollback', async () => {
 	it('1', async () => {
-		const query = Block
+		const notes = Math.random()
+		const rollback = await Block
 			.INSERT()
 			.INTO()
-			.SET({ blocker: 1353221, blocked: 203, notes: 'yoyo' })
-			.DUPLICATE({ notes: 'duplicate' })
-		await query.rollback()
+			.SET({ blocker: 1353221, blocked: 203, notes })
+			.DUPLICATE({ notes })
+			.rollback()
+
+		const expected = await Block
+			.SELECT()
+			.FROM()
+			.WHERE({ id: rollback.insertId })
+			.FIRST()
+			.exec()
+
+		expected.notes.should.not.be.equal(notes)
 	})
 })
 
