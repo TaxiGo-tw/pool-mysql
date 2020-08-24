@@ -678,6 +678,17 @@ describe('test map', () => {
 	})
 })
 
+describe('test rollback', async () => {
+	it('3', async () => {
+		const query = Block
+			.INSERT()
+			.INTO()
+			.SET({ blocker: 1353221, blocked: 203, notes: 'yoyo' })
+			.DUPLICATE({ notes: '444' })
+		await query.rollback()
+	})
+})
+
 
 after(function () {
 	console.log('after all tests')
