@@ -6,6 +6,7 @@ const assert = require('assert')
 const Trips = require('./model/Trips')
 const Users = require('./model/Users')
 const Block = require('./model/BlockPersonally')
+const NotificationsAudience = require('./model/NotificationsAudience')
 
 const pool = require('../index')
 const Redis = require('redis')
@@ -396,6 +397,7 @@ describe('test long query', async () => {
 })
 
 describe('test insert', async () => {
+
 	it('3', async () => {
 		const query = Block
 			.INSERT(true)
@@ -415,6 +417,43 @@ describe('test insert', async () => {
 
 		await query.exec()
 
+	})
+
+	it('5 SQL', async () => {
+		const randomstring = require('randomstring').generate({
+			length: 6,
+			charset: 'alphabetic'
+		})
+		const query = NotificationsAudience
+			.INSERT(true)
+			.INTO()
+			.SET({
+				audience: randomstring,
+				sql_query: `SELECT * FROM plant_trees`
+			})
+
+		await query.exec()
+	})
+
+	it('6 SQL fail', async () => {
+		const randomstring = require('randomstring').generate({
+			length: 6,
+			charset: 'alphabetic'
+		})
+		try {
+			const query = NotificationsAudience
+				.INSERT(true)
+				.INTO()
+				.SET({
+					audience: randomstring,
+					sql_query: `SELECT * FROM plant_trees WHERE wrong_column = 'gg'`
+				})
+
+			await query.exec()
+
+		} catch (error) {
+			assert.equal(error.message, `notifications_audience.sql_query must be type: 'SQLSelectOnlyString', not 'string' {"audience":"${randomstring}","sql_query":"SELECT * FROM plant_trees WHERE wrong_column = 'gg'"}`)
+		}
 	})
 })
 
