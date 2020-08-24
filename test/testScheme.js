@@ -420,10 +420,7 @@ describe('test insert', async () => {
 	})
 
 	it('5 SQL', async () => {
-		const randomstring = require('randomstring').generate({
-			length: 6,
-			charset: 'alphabetic'
-		})
+		const randomstring = Math.random().toString()
 		const query = NotificationsAudience
 			.INSERT(true)
 			.INTO()
@@ -436,10 +433,7 @@ describe('test insert', async () => {
 	})
 
 	it('6 SQL fail', async () => {
-		const randomstring = require('randomstring').generate({
-			length: 6,
-			charset: 'alphabetic'
-		})
+		const randomstring = Math.random().toString()
 		try {
 			const query = NotificationsAudience
 				.INSERT(true)
