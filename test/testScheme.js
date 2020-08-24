@@ -679,12 +679,12 @@ describe('test map', () => {
 })
 
 describe('test rollback', async () => {
-	it('3', async () => {
+	it('1', async () => {
 		const query = Block
 			.INSERT()
 			.INTO()
 			.SET({ blocker: 1353221, blocked: 203, notes: 'yoyo' })
-			.DUPLICATE({ notes: '444' })
+			.DUPLICATE({ notes: 'duplicate' })
 		await query.rollback()
 	})
 })
