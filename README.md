@@ -143,6 +143,22 @@ results.user.should.have.property('uid')
 assert(results instanceof Trips)
 ```
 
+### Insert
+
+```js
+// single
+await FOO.INSERT()
+	.INTO()
+	.VALUES(obj)
+	.exec(connection)
+
+// multiple
+await FOO.INSERT()
+	.INTO('table (`id`, `some_one_field`)')
+	.VALUES(array)
+	.exec(connection)
+```
+
 ### Updated
 
 return value after updated
