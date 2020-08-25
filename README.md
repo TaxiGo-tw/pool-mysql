@@ -148,15 +148,15 @@ assert(results instanceof Trips)
 ```js
 // single
 await FOO.INSERT()
-	.INTO()
-	.VALUES(obj)
-	.exec(connection)
+  .INTO()
+  .VALUES(obj)
+  .exec(connection)
 
 // multiple
 await FOO.INSERT()
-	.INTO('table (`id`, `some_one_field`)')
-	.VALUES(array)
-	.exec(connection)
+  .INTO('table (`id`, `some_one_field`)')
+  .VALUES(array)
+  .exec(connection)
 ```
 
 ### Updated
@@ -168,10 +168,10 @@ const results = await Block
         .UPDATE()
         .SET('id = id')
         .WHERE({ blocked: 3925 })
-				.UPDATED('id', 'blocker')
-				.AFFECTED_ROWS(1) //throw if affectedRows !== 1
-				.CHANGED_ROWS(1)  //throw if changedRows !== 1
-				.ON_ERR('error message') // custom error message, can be string or callback
+        .UPDATED('id', 'blocker')
+        .AFFECTED_ROWS(1) //throw if affectedRows !== 1
+        .CHANGED_ROWS(1)  //throw if changedRows !== 1
+        .ON_ERR('error message') // custom error message, can be string or callback
         .exec()
 
 for (const result of results) {
@@ -218,7 +218,7 @@ await Trips.UPDATE('user_info')
     .SET({ user_id: 31 })
     .WHERE({ uid: 31 })
     .CHANGED_ROWS(1)
-		.ON_ERR(errMessage) // string
+    .ON_ERR(errMessage) // string
     .exec()
 // or callback
 await Trips.UPDATE('user_info')
@@ -290,8 +290,8 @@ Triggered on UPDATE()..SET(object) and INSERT()...SET(object)
 * type: to limit type
 
 * required: default to false
-	* INSERT() checks all required
-	* UPDATE() checks SET()
+  * INSERT() checks all required
+  * UPDATE() checks SET()
 
 * length: limit something.length
 
@@ -299,45 +299,45 @@ Triggered on UPDATE()..SET(object) and INSERT()...SET(object)
 
 // Custom Validator
 class PlateNumber extends Scheme.Types.Base {
-	static validate(string) {
-		return string.match(/[0-9]+-[A-Z]+/)
-	}
+  static validate(string) {
+    return string.match(/[0-9]+-[A-Z]+/)
+  }
 }
 
 module.exports = class driver_review_status extends Scheme {
 
-	get columns() {
-		return {
-			'uid': {
-				type: Scheme.Types.PK,
-				required: true
-			},
-			'first_name': {
-				type: Scheme.Types.String,
-				required: true,
-			},
-			'last_name': String,
-			'car_brand': {
-				type: Scheme.Types.JSONString
-			},
-			'model': {
-				type: String
-			},
-			'phone_number': {
-				type: Scheme.Types.String,
-				required: true,
-				length: 10
-			},
-			'plate_number': {
-				type: PlateNumber,
-				length: { min: 6 , max: 9 }
-			},
-			'email': {
-				type: Scheme.Types.Email,
-				required: true
-			}
-		}
-	}
+  get columns() {
+    return {
+      'uid': {
+        type: Scheme.Types.PK,
+        required: true
+      },
+      'first_name': {
+        type: Scheme.Types.String,
+        required: true,
+      },
+      'last_name': String,
+      'car_brand': {
+        type: Scheme.Types.JSONString
+      },
+      'model': {
+        type: String
+      },
+      'phone_number': {
+        type: Scheme.Types.String,
+        required: true,
+        length: 10
+      },
+      'plate_number': {
+        type: PlateNumber,
+        length: { min: 6 , max: 9 }
+      },
+      'email': {
+        type: Scheme.Types.Email,
+        required: true
+      }
+    }
+  }
 }
 ```
 
