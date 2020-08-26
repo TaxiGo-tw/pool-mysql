@@ -680,9 +680,13 @@ describe('test map', () => {
 
 describe('test reduce', () => {
 	const reducer = (accumlator, currentValue) => {
+
 		if (typeof accumlator == 'object') {
 			accumlator = accumlator.amount
+		} else if (typeof accumlator == 'undefined') {
+			accumlator = 0
 		}
+
 		return parseInt(accumlator) + parseInt(currentValue.amount)
 	}
 
@@ -690,15 +694,27 @@ describe('test reduce', () => {
 		const result = await Trips
 			.SELECT(`amount`)
 			.FROM()
-			.WHERE({driver_id: 279555})
+			.WHERE({ driver_id: 279555 })
 			.AND(`amount > 0`)
-			.REDUCE(reducer, {})
+			.REDUCE(reducer)
 			.LIMIT(10)
 			.exec()
 
 		assert.equal(typeof result, 'number')
 	})
 
+	it('with initialValue', async () => {
+		const result = await Trips
+			.SELECT(`amount`)
+			.FROM()
+			.WHERE({ driver_id: 279555 })
+			.AND(`amount > 0`)
+			.REDUCE(reducer, 100)
+			.LIMIT(10)
+			.exec()
+
+		assert.equal(typeof result, 'number')
+	})
 })
 
 

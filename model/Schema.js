@@ -216,8 +216,9 @@ module.exports = class Schema {
 		return this
 	}
 
-	REDUCE(reduceCallback) {
+	REDUCE(reduceCallback, reduceInitiVal = undefined) {
 		this._reduceCallback = reduceCallback
+		this._reduceInitiVal = reduceInitiVal
 		return this
 	}
 
@@ -290,6 +291,7 @@ module.exports = class Schema {
 				formatted,
 				mapCallback,
 				reduceCallback,
+				reduceInitiVal,
 				nested,
 				print,
 				filter,
@@ -403,7 +405,7 @@ module.exports = class Schema {
 				}
 
 				if (reduceCallback) {
-					results = results.reduce(reduceCallback)
+					results = results.reduce(reduceCallback, reduceInitiVal)
 				}
 
 				if (nested) {
@@ -682,6 +684,9 @@ module.exports = class Schema {
 
 		options.reduceCallback = this._reduceCallback
 		delete this._reduceCallback
+
+		options.reduceInitiVal = this._reduceInitiVal
+		delete this._reduceInitiVal
 
 		options.nested = this._nested
 		this._nested = false
