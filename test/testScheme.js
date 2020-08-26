@@ -678,6 +678,29 @@ describe('test map', () => {
 	})
 })
 
+describe('test reduce', () => {
+	const reducer = (accumlator, currentValue) => {
+		if (typeof accumlator == 'object') {
+			accumlator = accumlator.amount
+		}
+		return parseInt(accumlator) + parseInt(currentValue.amount)
+	}
+
+	it('number', async () => {
+		const result = await Trips
+			.SELECT(`amount`)
+			.FROM()
+			.WHERE({driver_id: 279555})
+			.AND(`amount > 0`)
+			.REDUCE(reducer, {})
+			.LIMIT(10)
+			.exec()
+
+		assert.equal(typeof result, 'number')
+	})
+
+})
+
 
 after(function () {
 	console.log('after all tests')

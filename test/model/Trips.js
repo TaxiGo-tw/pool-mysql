@@ -43,6 +43,9 @@ module.exports = class trips extends Schema {
 			},
 			end_latlng: {
 				type: Schema.Types.Point
+			},
+			amount: {
+				type: Schema.Types.Number
 			}
 		}
 	}
