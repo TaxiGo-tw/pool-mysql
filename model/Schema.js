@@ -263,7 +263,7 @@ module.exports = class Schema {
 	}
 
 	mocked(formatted) {
-		if (print) {
+		if (this._print) {
 			Schema._pool.logger('all', `${formatted}`)
 		}
 
