@@ -215,24 +215,23 @@ describe('test POPULATE', async () => {
 			.exec()
 
 		result.should.have.property('trip_id')
-		// result.all_trips[0].should.have.property('user_id')
-		// result.all_trips[0].should.have.property('start_latlng')
 	})
 
 
-	it('POPULATE Nv1 FK', async () => {
-		const result = await Drivers
+	it('POPULATE 1vN FK', async () => {
+		const result = await Trips
 			.SELECT()
 			.FROM()
 			.WHERE({ driver_id: 3925 })
 			.ORDER_BY('trip_id', 'desc')
-			.POPULATE('trip_id')
+			.POPULATE('driver_loc_FK')
 			.FIRST()
+			.PRINT()
 			.exec()
 
+		console.log(result)
+
 		result.should.have.property('trip_id')
-		// result.all_trips[0].should.have.property('user_id')
-		// result.all_trips[0].should.have.property('start_latlng')
 	})
 })
 

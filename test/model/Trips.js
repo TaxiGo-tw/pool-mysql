@@ -39,10 +39,11 @@ module.exports = class trips extends Schema {
 			},
 
 			//visual column for populate
-			driver_loc_FK: {
-				ref: require('./Drivers'),
-				column: 'driver_id'
-			},
+			// driver_loc_FK: {
+			// 	ref: require('./Drivers'),
+			// 	column: 'driver_id'
+			// },
+			driver_loc_FK: [require('./Drivers')],
 			driver_loc: {
 				ref: require('./Drivers'),
 				column: 'driver_id'

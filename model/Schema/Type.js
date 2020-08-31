@@ -1,5 +1,5 @@
-function isInherit(type, pk) {
-	return type == pk || type.prototype instanceof pk
+function isInherit(type, type2) {
+	return type == type2 || type.prototype instanceof type2
 }
 
 function realType(type) {
