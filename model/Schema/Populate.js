@@ -1,4 +1,4 @@
-const { isInherit, realType } = require('../Helper')
+const { isInherit, realType } = require('./Type')
 
 module.exports.find = async function ({ results, populates, print, Schema }) {
 	if (populates instanceof Array) {

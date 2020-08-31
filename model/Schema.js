@@ -335,7 +335,7 @@ module.exports = class Schema {
 			if (this._connection.isSelect(query.sql)) {
 				//populate
 				if (populates.length && results.length) {
-					results = await Populate.find({ results, populates, print, Schema })
+					results = await Populate.find.bind(this)({ results, populates, print, Schema })
 				}
 
 				//for MAP()
