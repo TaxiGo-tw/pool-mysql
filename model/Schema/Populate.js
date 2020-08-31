@@ -1,16 +1,21 @@
 const { isInherit, realType } = require('./Type')
 
-module.exports.find = async function ({ results, populates, print, Schema }) {
+module.exports.find = async function ({ this: { connection, columns, constructor }, results, populates, print, Schema }) {
 	if (populates instanceof Array) {
 		for (const column of populates) {
-			const populateType = this.columns[column]
+			const populateType = columns[column]
 			if (populateType instanceof Array) {//coupons: [Coupons]
-				const type = populateType[0]
+				const [type] = populateType
 
-				const tColumn = Object.keys(type.columns).filter(c => type.columns[c].name == this.constructor.name)[0]
-				const PKColumn = Object.keys(this.columns).filter(column => isInherit(realType(this.columns[column]), Schema.Types.PK))[0]
+				const [tColumn] = Object.keys(type.columns)
+					.filter(c => (type.columns[c].ref || type.columns[c]).name == constructor.name)
+
+				const [PKColumn] = Object.keys(columns)
+					.filter(column => isInherit(realType(columns[column]), Schema.Types.PK))
+
+
 				const ids = results.map(result => result[PKColumn])
-				const populated = await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print || false).exec(this._connection)
+				const populated = await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print || false).exec(connection)
 
 				results.forEach(result => {
 					result[column] = populated.filter(p => p[tColumn] == result[PKColumn])
@@ -19,6 +24,8 @@ module.exports.find = async function ({ results, populates, print, Schema }) {
 				let ids
 				let refType = populateType
 				let refColumn = column
+
+				console.log(refType, refColumn)
 
 				if (results instanceof Array) {
 					if (typeof populateType == 'object') {
@@ -47,7 +54,7 @@ module.exports.find = async function ({ results, populates, print, Schema }) {
 
 				const PKColumn = Object.keys(refType.columns).filter(column => isInherit(realType(refType.columns[column]), Schema.Types.PK))[0]
 
-				const populated = await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).PRINT(print || false).exec(this._connection)
+				const populated = await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).PRINT(print || false).exec(connection)
 
 				results.forEach(result => {
 					if (result[refColumn]) {

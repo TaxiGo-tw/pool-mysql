@@ -6,6 +6,7 @@ const assert = require('assert')
 const Trips = require('./model/Trips')
 const Users = require('./model/Users')
 const Block = require('./model/BlockPersonally')
+const Drivers = require('./model/Drivers')
 
 const pool = require('../index')
 const Redis = require('redis')
@@ -169,8 +170,8 @@ describe('test POPULATE', async () => {
 
 	})
 
-	it('POPULATE 2', async () => {
-		const query = await Trips
+	it('POPULATE 1v1', async () => {
+		const result = await Trips
 			.SELECT()
 			.FROM()
 			.WHERE({ user_id: 3925 })
@@ -178,12 +179,29 @@ describe('test POPULATE', async () => {
 			.ORDER_BY('trip_id', 'desc')
 			.POPULATE('driver_loc', 'driver_info')
 			.FIRST()
+			.exec()
 
-		const result = await query.exec()
 		result.should.have.property('trip_id')
 		result.should.have.property('user_id')
 		result.driver_loc.should.have.property('location')
 		result.driver_info.should.have.property('first_name')
+	})
+
+
+	it('POPULATE 1vN', async () => {
+		const result = await Drivers
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			.ORDER_BY('trip_id', 'desc')
+			.POPULATE('all_trips')
+			.FIRST()
+			.PRINT()
+			.exec()
+
+		result.should.have.property('all_trips')
+		result.all_trips[0].should.have.property('user_id')
+		result.all_trips[0].should.have.property('start_latlng')
 	})
 })
 
