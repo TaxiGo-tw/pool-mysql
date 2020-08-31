@@ -544,12 +544,13 @@ describe('test UPDATED', async () => {
 })
 
 describe('test connection.query()', () => {
-	it('3', async (done) => {
-		const connection = await pool.createConnection()
-		connection.query('SELECT * FROM trips LIMIT 5', (e, r) => {
-			connection.release()
-			done()
-		})
+	it('3', (done) => {
+		pool.createConnection().then(connection => {
+			return connection.query('SELECT * FROM trips LIMIT 5', (e, r) => {
+				connection.release()
+				done()
+			})
+		}).catch(console.error)
 	})
 })
 
