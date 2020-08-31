@@ -106,7 +106,7 @@ class Pool {
 
 	getConnection(callback, { tag_name = 'default', limit = this.options.connectionLimit } = { tag_name: 'default', limit: this.options.connectionLimit }) {
 		try {
-			let tag = {
+			const tag = {
 				name: tag_name,
 				limit: limit
 			}
@@ -144,10 +144,10 @@ class Pool {
 			connection.tag = tag
 			this.connectionPool.using[tag.name][connection.id] = connection
 
-			connection.connect().then(() => {
+			connection.connect().then(value => {
 				Event.emit('create', connection)
 				this.numberOfConnections
-				callback(undefined, connection)
+				return callback(undefined, connection)
 			}).catch(err => {
 				delete this.connectionPool.using[tag.name][connection.id]
 				delete connection.tag
@@ -173,6 +173,7 @@ class Pool {
 			} else {
 				connection.query(sql, cb)
 			}
+			return
 		}).catch(c || b)
 		return {}
 	}

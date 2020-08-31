@@ -544,12 +544,11 @@ describe('test UPDATED', async () => {
 })
 
 describe('test connection.query()', () => {
-	it('3', (done) => {
-		pool.createConnection().then(connection => {
-			connection.query('SELECT * FROM trips LIMIT 5', (e, r) => {
-				connection.release()
-				done()
-			})
+	it('3', async (done) => {
+		const connection = await pool.createConnection()
+		connection.query('SELECT * FROM trips LIMIT 5', (e, r) => {
+			connection.release()
+			done()
 		})
 	})
 })
@@ -564,7 +563,8 @@ describe('test get connection', () => {
 
 	it('2', async () => {
 		for (let i = 0; i < 10000; i++) {
-			pool.createConnection().then(c => c.release())
+			const connection = await pool.createConnection()
+			connection.release()
 		}
 	})
 })

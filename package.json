@@ -5,6 +5,7 @@
 	"url": "https://github.com/vivalalova/pool-mysql",
 	"main": "index.js",
 	"scripts": {
+		"lint": "eslint ./**/*.js",
 		"test": "mocha --exit",
 		"t": "nodemon --exec 'mocha --exit -s 0'"
 	},

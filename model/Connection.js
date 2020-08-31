@@ -175,12 +175,12 @@ module.exports = class Connection {
 	}
 
 	_q(sql, values) {
-		return new Promise((reslove, reject) => {
+		return new Promise((resolve, reject) => {
 			this.query(sql, values, (err, res) => {
 				if (err) {
 					reject(err)
 				} else {
-					reslove(res)
+					resolve(res)
 				}
 			})
 		})
