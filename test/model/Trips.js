@@ -23,7 +23,6 @@ module.exports = class trips extends Schema {
 				ref: require('./Users'),
 				column: 'user_id'
 			},
-			// driver_id: require('./Drivers'),
 			driver_id: {
 				type: Schema.Types.Number,
 				ref: require('./Drivers'),

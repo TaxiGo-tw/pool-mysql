@@ -2,8 +2,8 @@ const { isInherit, realType } = require('./Type')
 
 module.exports.find = async function ({ this: { connection, columns, constructor }, results, populates, print, Schema }) {
 	if (populates instanceof Array) {
-		for (const column of populates) {
-			const populateType = columns[column]
+		for (const populateColumn of populates) {
+			const populateType = columns[populateColumn]
 			if (populateType instanceof Array) {//coupons: [Coupons]
 				const [type] = populateType
 
@@ -18,14 +18,12 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 				const populated = await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print || false).exec(connection)
 
 				results.forEach(result => {
-					result[column] = populated.filter(p => p[tColumn] == result[PKColumn])
+					result[populateColumn] = populated.filter(p => p[tColumn] == result[PKColumn])
 				})
 			} else {// coupon: Coupons
 				let ids
 				let refType = populateType
-				let refColumn = column
-
-				console.log(refType, refColumn)
+				let refColumn = populateColumn
 
 				if (results instanceof Array) {
 					if (typeof populateType == 'object') {
@@ -58,12 +56,14 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 
 				results.forEach(result => {
 					if (result[refColumn]) {
-						result[column] = populated.filter(populate => result[refColumn] == populate[PKColumn])[0] || result[refColumn]
+						const [value] = populated.filter(populate => result[refColumn] == populate[PKColumn])
+
+						result[populateColumn] = value || result[refColumn]
 					}
 				})
 			}
 		}
-	} else { //object nest
+	} else { //nest object
 
 	}
 
