@@ -16,11 +16,6 @@ pipeline {
 				sh 'npm run lint'
 				sh 'npm test'
 			}
-			post {
-				always {
-					junit "results.xml"
-				}
-			}
 		}
 
 		stage('Done') {
