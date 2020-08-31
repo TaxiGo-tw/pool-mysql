@@ -28,11 +28,5 @@
 		"jest": "^24.9.0",
 		"mocha": "^6.2.1",
 		"redis": "^2.8.0"
-	},
-	"husky": {
-		"hooks": {
-			"pre-commit": "npm run lint",
-			"pre-push": "npm run test"
-		}
 	}
 }
