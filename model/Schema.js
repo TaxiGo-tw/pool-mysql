@@ -293,13 +293,18 @@ module.exports = class Schema {
 				affectedRows,
 				onErr,
 				decryption,
-				ex
+				ex,
+				to_be_validate
 			} = this._options()
 			///////////////////////////////////////////////////////////////////
 			if (this.shouldMock()) {
 				return this.mocked(formatted)
 			}
 			///////////////////////////////////////////////////////////////////
+
+			if (to_be_validate) {
+				await to_be_validate()
+			}
 
 			// eslint-disable-next-line no-unused-vars
 			let conn = this._connection
@@ -467,8 +472,11 @@ module.exports = class Schema {
 	SET(whereCaluse, whereCaluse2, { passUndefined = false, encryption = [] } = {}) {
 
 		if (typeof whereCaluse === 'object') {
-			validate.bind(this)(whereCaluse)
-
+			this.to_be_validate = (function (obj, whereCaluse) {
+				return async function () {
+					return await validate.bind(obj)(whereCaluse)
+				}
+			})(this, whereCaluse)
 			for (const key of Object.keys(whereCaluse)) {
 				if (this.columns && this.columns[key] && this.columns[key].type && this.columns[key].type.inputMapper) {
 					const { inputMapper } = this.columns[key].type
@@ -704,10 +712,13 @@ module.exports = class Schema {
 		options.ex.redisPrint = options.print
 		this._EX = {}
 
+		options.to_be_validate = this.to_be_validate
+		delete this.to_be_validate
+
 		return options
 	}
 
-	validate(isInsert) {
+	async validate(isInsert) {
 		const columns = this.columns
 
 		//columns not defined
@@ -730,7 +741,7 @@ module.exports = class Schema {
 			const { type } = option
 			if (type) {
 				const typeValidator = type.validate
-				if (value !== undefined && value !== null && typeValidator && !typeValidator(value)) {
+				if (value !== undefined && value !== null && typeValidator && !await typeValidator(value)) {
 					throwError(`${this.constructor.name}.${key} must be type: '${type.name}', not '${typeof value}' ${JSON.stringify(this)}`)
 				}
 			}
@@ -765,14 +776,14 @@ function addQuery(reservedWord, whereCaluse, whereCaluse2, inBrackets = true) {
 
 ////////////////////////////////////////////////////////////
 
-function validate(params) {
+async function validate(params) {
 	const object = new this.constructor(params)
 	switch (this._q[0].type) {
 		case 'INSERT':
-			object.validate(true)
+			await object.validate(true)
 			break
 		case 'UPDATE':
-			object.validate()
+			await object.validate()
 			break
 	}
 }
