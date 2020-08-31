@@ -31,6 +31,18 @@ module.exports = class trips extends Schema {
 			request_time: {
 				type: Schema.Types.UNIX_TIMESTAMP
 			},
+			start_latlng: {
+				type: Schema.Types.Point
+			},
+			end_latlng: {
+				type: Schema.Types.Point
+			},
+
+			//visual column for populate
+			driver_loc_FK: {
+				ref: require('./Drivers'),
+				column: 'driver_id'
+			},
 			driver_loc: {
 				ref: require('./Drivers'),
 				column: 'driver_id'
@@ -39,12 +51,6 @@ module.exports = class trips extends Schema {
 				ref: require('./DriverReviewStatus'),
 				column: 'driver_id'
 			},
-			start_latlng: {
-				type: Schema.Types.Point
-			},
-			end_latlng: {
-				type: Schema.Types.Point
-			}
 		}
 	}
 }

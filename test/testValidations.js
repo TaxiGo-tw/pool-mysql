@@ -4,7 +4,7 @@ const { should } = require('chai')  // Using Assert style
 should()  // Modifies `Object.prototype`
 const assert = require('assert')
 
-const { Number, String, Email, JSONString, SQLSelectOnlyString, NumberString, Point, Polygon, ENUM, UNIX_TIMESTAMP, DateTime } = require('../model/Schema').Types
+const { Number, String, Email, JSONString, SQLSelectOnlyString, NumberString, Point, Polygon, ENUM, FK, UNIX_TIMESTAMP, DateTime } = require('../model/Schema').Types
 
 describe('test model Validations', async () => {
 	it('get pk ', async () => {
@@ -117,6 +117,25 @@ describe('test Validations', async () => {
 		assert.equal(Polygon.inputMapper('((120.6142697642792 24.11499926195014,120.6127945925903 24.11337369999999,120.6125585158691 24.10833031791588,120.6166891539673 24.10824218209207,120.6192361 24.1116606,120.6192801441803 24.11480335381689,120.6142697642792 24.11499926195014))').toSqlString(), 'POLYGON((120.6142697642792 24.11499926195014,120.6127945925903 24.11337369999999,120.6125585158691 24.10833031791588,120.6166891539673 24.10824218209207,120.6192361 24.1116606,120.6192801441803 24.11480335381689,120.6142697642792 24.11499926195014))')
 		assert.equal(Polygon.inputMapper('POLYGON((120.6142697642792 24.11499926195014,120.6127945925903 24.11337369999999,120.6125585158691 24.10833031791588,120.6166891539673 24.10824218209207,120.6192361 24.1116606,120.6192801441803 24.11480335381689,120.6142697642792 24.11499926195014))').toSqlString(), 'POLYGON((120.6142697642792 24.11499926195014,120.6127945925903 24.11337369999999,120.6125585158691 24.10833031791588,120.6166891539673 24.10824218209207,120.6192361 24.1116606,120.6192801441803 24.11480335381689,120.6142697642792 24.11499926195014))')
 		assert.equal(Polygon.inputMapper([[{ x: 25, y: 123 }, { x: 26, y: 124 }], [{ x: 20, y: 21 }, { x: 21, y: 22 }]]).toSqlString(), 'POLYGON((25 123,26 124),(20 21,21 22))')
+	})
+
+	it('FK', async () => {
+		const ClassA = FK(require('./model/Trips'), 'trip_id')
+		assert.equal(ClassA.validate(1), true)
+		assert.equal(ClassA.validate('1'), true)
+
+		const ClassB = FK(require('./model/Trips'), 'start_latlng')
+		assert.equal(ClassB.validate('25, 123'), true)
+		assert.equal(ClassB.validate('POINT(25.5, 123)'), true)
+		assert.equal(ClassB.validate('POINT(25.5, 123.5)'), true)
+		assert.equal(ClassB.validate({ x: 25, y: 123 }), true)
+		assert.equal(ClassB.validate({ x: 255, y: 123 }), false)
+
+		assert.equal(ClassB.inputMapper('25, 123').toSqlString(), 'POINT(25, 123)')
+		assert.equal(ClassB.inputMapper('POINT(25.5, 123)').toSqlString(), 'POINT(25.5, 123)')
+		assert.equal(ClassB.inputMapper('POINT(25.5, 123.5)').toSqlString(), 'POINT(25.5, 123.5)')
+		assert.equal(ClassB.inputMapper({ x: 25, y: 123 }).toSqlString(), 'POINT(25, 123)')
+		assert.equal(ClassB.inputMapper({ x: 25, y: 123.5 }).toSqlString(), 'POINT(25, 123.5)')
 	})
 
 	it('ENUM', async () => {

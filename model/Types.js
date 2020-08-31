@@ -14,6 +14,31 @@ class PK {
 	}
 }
 
+function FKGenerator(model, column) {
+	return class FK {
+		static get model() {
+			return model
+		}
+
+		static get column() {
+			return column
+		}
+
+		static get _refType() {
+			return model.columns[column].type || model.columns[column]
+		}
+
+		static validate(value) {
+			return this._refType.validate(value)
+		}
+
+		static inputMapper(value) {
+			return this._refType.inputMapper(value)
+		}
+	}
+}
+
+
 class Point {
 	static get regex() {
 		return /(\d+\.\d+)|(\d+)/g
@@ -274,6 +299,7 @@ class DateTime {
 module.exports = {
 	Base, // for extends
 	PK,
+	FK: FKGenerator,
 	Point,
 	Polygon,
 	ENUM: EnumGenerator,

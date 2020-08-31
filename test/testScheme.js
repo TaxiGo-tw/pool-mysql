@@ -196,12 +196,43 @@ describe('test POPULATE', async () => {
 			.ORDER_BY('trip_id', 'desc')
 			.POPULATE('all_trips')
 			.FIRST()
-			.PRINT()
+			// .PRINT()
 			.exec()
 
 		result.should.have.property('all_trips')
 		result.all_trips[0].should.have.property('user_id')
 		result.all_trips[0].should.have.property('start_latlng')
+	})
+
+	it('POPULATE 1v1 FK', async () => {
+		const result = await Drivers
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			.ORDER_BY('trip_id', 'desc')
+			.POPULATE('trip_id')
+			.FIRST()
+			.exec()
+
+		result.should.have.property('trip_id')
+		// result.all_trips[0].should.have.property('user_id')
+		// result.all_trips[0].should.have.property('start_latlng')
+	})
+
+
+	it('POPULATE Nv1 FK', async () => {
+		const result = await Drivers
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			.ORDER_BY('trip_id', 'desc')
+			.POPULATE('trip_id')
+			.FIRST()
+			.exec()
+
+		result.should.have.property('trip_id')
+		// result.all_trips[0].should.have.property('user_id')
+		// result.all_trips[0].should.have.property('start_latlng')
 	})
 })
 

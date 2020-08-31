@@ -8,7 +8,10 @@ module.exports = class drivers extends Base {
 			'location': Base.Types.Point,
 			'heading': Base.Types.Number,
 			'trip_eta': Base.Types.Number,
-
+			'trip_id': {
+				type: Base.Types.FK(require('./Trips'), 'trip_id'),
+				required: true,
+			},
 			'all_trips': [require('./Trips')]
 		}
 	}

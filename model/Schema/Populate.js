@@ -1,9 +1,10 @@
 const { isInherit, realType } = require('./Type')
 
-module.exports.find = async function ({ this: { connection, columns, constructor }, results, populates, print, Schema }) {
+module.exports.find = async function ({ this: { connection, columns, constructor }, results, populates, print = false, Schema }) {
 	if (populates instanceof Array) {
 		for (const populateColumn of populates) {
 			const populateType = columns[populateColumn]
+
 			if (populateType instanceof Array) {//coupons: [Coupons]
 				const [type] = populateType
 
@@ -15,44 +16,19 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 
 
 				const ids = results.map(result => result[PKColumn])
-				const populated = await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print || false).exec(connection)
+				const populated = await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print).exec(connection)
 
 				results.forEach(result => {
 					result[populateColumn] = populated.filter(p => p[tColumn] == result[PKColumn])
 				})
 			} else {// coupon: Coupons
-				let ids
-				let refType = populateType
-				let refColumn = populateColumn
+				const { refType, refColumn = populateColumn } = this.typeAndColumn(populateType)
 
-				if (results instanceof Array) {
-					if (typeof populateType == 'object') {
-						// {
-						// 	ref: require('...')
-						// 	column:...
-						// }
-						refColumn = populateType.column
-						refType = populateType.ref
-						ids = results.filter(result => result[refColumn]).map(result => result[refColumn])
-					} else {
-						ids = results.filter(result => result[refColumn]).map(result => result[refColumn])
-					}
+				const ids = results.filter(result => result[refColumn]).map(result => result[refColumn])
 
-					if (!ids.length) {
-						continue
-					}
-				} else if (results && results[refColumn]) {
-					ids = [results[refColumn]]
-					if (!ids) {
-						continue
-					}
-				} else {
-					continue
-				}
+				const [PKColumn] = Object.keys(refType.columns).filter(column => isInherit(realType(refType.columns[column]), Schema.Types.PK))
 
-				const PKColumn = Object.keys(refType.columns).filter(column => isInherit(realType(refType.columns[column]), Schema.Types.PK))[0]
-
-				const populated = await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).PRINT(print || false).exec(connection)
+				const populated = await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).PRINT(print).exec(connection)
 
 				results.forEach(result => {
 					if (result[refColumn]) {
@@ -68,4 +44,23 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 	}
 
 	return results
+}
+
+
+module.exports.typeAndColumn = function typeAndColumn(populateType) {
+	if (populateType.type && populateType.type.name === 'FK') {
+		return {
+			refType: populateType.type.model,
+			refColumn: populateType.type.column
+		}
+	} else if (populateType.ref) {
+		return {
+			refType: populateType.ref || populateType,
+			refColumn: populateType.column
+		}
+	}
+
+	return {
+		refType: populateType
+	}
 }
