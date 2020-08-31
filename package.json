@@ -24,8 +24,15 @@
 		"eslint-plugin-promise": "^4.2.1",
 		"eslint-plugin-require-in-package": "^1.0.3",
 		"expect": "^26.4.2",
+		"husky": "^4.2.5",
 		"jest": "^24.9.0",
 		"mocha": "^6.2.1",
 		"redis": "^2.8.0"
+	},
+	"husky": {
+		"hooks": {
+			"pre-commit": "npm run lint",
+			"pre-push": "npm run test"
+		}
 	}
 }
