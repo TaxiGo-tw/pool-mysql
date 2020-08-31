@@ -34,7 +34,7 @@ module.exports = class Connection {
 	}
 
 	get isUsing() {
-		return this._pool.connectionPool.using[this.tag.name][this.id] != undefined
+		return !!this.tag && this._pool.connectionPool.using[this.tag.name][this.id] != undefined
 	}
 
 	async connect() {

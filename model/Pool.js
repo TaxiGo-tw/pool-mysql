@@ -104,7 +104,7 @@ class Pool {
 		})
 	}
 
-	getConnection(callback, { tag_name = 'default', limit }) {
+	getConnection(callback, { tag_name = 'default', limit = this.options.connectionLimit } = { tag_name: 'default', limit: this.options.connectionLimit }) {
 		try {
 			let tag = {
 				name: tag_name,
@@ -189,7 +189,7 @@ class Pool {
 			Event.emit('recycle', connection)
 			connection.gotAt = new Date()
 			connection.tag = callback.tag
-			this.logger(undefined, `_recycle ${this.connectionID} ${JSON.stringify(this.connection.tag)}`)
+			this.logger(undefined, `_recycle ${this.connectionID} ${JSON.stringify(connection.tag)}`)
 			return callback(null, connection)
 		}
 
