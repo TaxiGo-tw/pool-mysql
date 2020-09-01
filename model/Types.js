@@ -29,15 +29,22 @@ function FKGenerator(model, column) {
 		}
 
 		static validate(value) {
+			if (!this || !this._refType || !this._refType.validate) {
+				return true
+			}
+
 			return this._refType.validate(value)
 		}
 
 		static inputMapper(value) {
+			if (!this || !this._refType || !this._refType.inputMapper) {
+				return value
+			}
+
 			return this._refType.inputMapper(value)
 		}
 	}
 }
-
 
 class Point {
 	static get regex() {

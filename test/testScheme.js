@@ -196,7 +196,6 @@ describe('test POPULATE', async () => {
 			.ORDER_BY('trip_id', 'desc')
 			.POPULATE('all_trips')
 			.FIRST()
-			// .PRINT()
 			.exec()
 
 		result.should.have.property('all_trips')
@@ -205,6 +204,8 @@ describe('test POPULATE', async () => {
 	})
 
 	it('POPULATE 1v1 FK', async () => {
+		await Drivers.UPDATE().SET({ trip_id: 23890 }).WHERE({ driver_id: 3925 }).exec()
+
 		const result = await Drivers
 			.SELECT()
 			.FROM()
@@ -215,6 +216,9 @@ describe('test POPULATE', async () => {
 			.exec()
 
 		result.should.have.property('trip_id')
+		result.trip_id.should.have.property('trip_id')
+
+		await Drivers.UPDATE().SET({ trip_id: 0 }).WHERE({ driver_id: 3925 }).exec()
 	})
 
 
@@ -223,13 +227,9 @@ describe('test POPULATE', async () => {
 			.SELECT()
 			.FROM()
 			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id', 'desc')
 			.POPULATE('driver_loc_FK')
 			.FIRST()
-			.PRINT()
 			.exec()
-
-		console.log(result)
 
 		result.should.have.property('trip_id')
 	})

@@ -6,18 +6,23 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 			const populateType = columns[populateColumn]
 
 			if (populateType instanceof Array) {//coupons: [Coupons]
-				const [type] = populateType
+				let [type] = populateType
+				const { refType, refColumn = populateColumn, isFK } = this.typeAndColumn({ type })
 
-				const [tColumn] = Object.keys(type.columns)
-					.filter(c => (type.columns[c].ref || type.columns[c]).name == constructor.name)
+				type = isFK ? refType : type
 
-				const [PKColumn] = Object.keys(columns)
-					.filter(column => isInherit(realType(columns[column]), Schema.Types.PK))
+				const [tColumn] = isFK
+					? [refColumn]
+					: Object.keys(type.columns).filter(c => (type.columns[c].ref || type.columns[c]).name == constructor.name)
 
-				const ids = results.map(result => result[PKColumn])
+				const [PKColumn] = isFK
+					? refColumn
+					: Object.keys(columns).filter(column => isInherit(realType(columns[column]), Schema.Types.PK))
+
+				const ids = results.map(result => result[PKColumn]).filter(r => r !== undefined)
 
 				const populated = ids.length
-					? await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print).exec(connection)
+					? await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(1).exec(connection)
 					: []
 
 				results.forEach(result => {
