@@ -12,7 +12,11 @@ module.exports = class drivers extends Base {
 				type: Base.Types.FK(require('./Trips'), 'trip_id'),
 				required: true,
 			},
-			'all_trips': [require('./Trips')]
+
+
+			////visual
+			'all_trips': [require('./Trips')],
+			'trips': [Base.Types.FK(require('./Trips'), 'driver_id')],
 		}
 	}
 }
