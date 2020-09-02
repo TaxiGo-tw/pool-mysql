@@ -1,7 +1,5 @@
-
-const { should } = require('chai')  // Using Assert style
-should()  // Modifies `Object.prototype`
-const assert = require('assert')
+const { should, expect, assert } = require('chai')  // Using Assert style
+should()
 
 const Trips = require('./model/Trips')
 const Users = require('./model/Users')
@@ -260,6 +258,35 @@ describe('test POPULATE', async () => {
 		result.trip_id.should.have.property('driver_loc_FK_single')
 		result.trip_id.driver_loc_FK_single.should.have.property('trip_id')
 		result.trip_id.driver_loc_FK_single.trip_id.should.have.property('driver_loc_FK_single')
+	})
+
+	it('POPULATE nest object', async () => {
+		const result = await Drivers
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			.POPULATE({
+				trip_id: {
+					//TODO: driver_id:3925,
+					driver_loc_FK_multiple: {
+						//TODO: driver_id:3925,
+						trip_id: {
+							//TODO: driver_id:3925,
+							driver_loc_FK_multiple: {
+								//TODO: driver_id:3925,
+							}
+						}
+					}
+				}
+			})
+			.FIRST()
+			.exec()
+
+		result.should.have.property('trip_id')
+		result.trip_id.should.have.property('driver_loc_FK_multiple')
+		expect(result.trip_id.driver_loc_FK_multiple).to.be.a('Array')
+		result.trip_id.driver_loc_FK_multiple[0].should.have.property('trip_id')
+		result.trip_id.driver_loc_FK_multiple[0].trip_id.should.have.property('driver_loc_FK_multiple')
 	})
 
 	after(async () => {

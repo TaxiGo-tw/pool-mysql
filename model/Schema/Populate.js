@@ -8,13 +8,13 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 		const struct = { [constructor.name]: populate }
 		const options = { T: constructor, print, connection }
 
-		return await this.reducer(struct, options, async (FK, results, populate, options, superValue) => {
+		return await this.reducer(struct, options, async (T, FK, results, populate, options, superValue) => {
 			if (!populate) {
 				return results
 			}
 
 			const { print, connection } = options
-			const populatedValue = FK.model.columns[populate]
+			const populatedValue = T.columns[populate]
 			const isArray = populatedValue instanceof Array
 
 			const { model, column } = FK
@@ -161,7 +161,7 @@ module.exports.reducer = async function (struct = {}, options, callback, initVal
 
 		if (!FK) break
 
-		const { current, total } = await callback(FK, initValue, firstKey, { print, connection }, superValue || initValue)
+		const { current, total } = await callback(T, FK, initValue, firstKey, { print, connection }, superValue || initValue)
 
 		results = total
 
