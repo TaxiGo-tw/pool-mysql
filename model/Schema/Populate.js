@@ -97,21 +97,24 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 }
 
 module.exports.typeAndColumn = function (populateType) {
-	if (populateType.type && populateType.type.name === 'FK') {
+
+	const populated = populateType.ref || populateType.type || populateType
+
+	if (populated && populated.name === 'FK') {
 		return {
 			isFK: true,
-			refType: populateType.type.model,
-			refColumn: populateType.type.column
+			refType: populated.model,
+			refColumn: populated.column
 		}
-	} else if (populateType.ref) {
+	} else if (populated) {
 		return {
-			refType: populateType.ref || populateType,
+			refType: populated,
 			refColumn: populateType.column
 		}
 	}
 
 	return {
-		refType: populateType
+		refType: populated
 	}
 }
 

@@ -221,13 +221,12 @@ describe('test POPULATE', async () => {
 		await Drivers.UPDATE().SET({ trip_id: 0 }).WHERE({ driver_id: 3925 }).exec()
 	})
 
-
 	it('POPULATE 1vN FK', async () => {
 		const result = await Trips
 			.SELECT()
 			.FROM()
 			.WHERE({ driver_id: 3925 })
-			.POPULATE('driver_loc_FK')
+			.POPULATE('driver_loc_FK_single')
 			.FIRST()
 			.exec()
 
