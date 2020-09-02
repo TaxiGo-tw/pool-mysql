@@ -97,8 +97,21 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 }
 
 module.exports.typeAndColumn = function (populateType) {
+	let populated
 
-	const populated = populateType.ref || populateType.type || populateType
+	switch (true) {
+		case populateType.ref && typeof populateType.ref === 'function':
+			populated = populateType.ref
+			break
+		case populateType.type && typeof populateType.type === 'function':
+			populated = populateType.type
+			break
+		case populateType && typeof populateType === 'function':
+			populated = populateType
+			break
+		default:
+			throw 'type error: check get columns() of model if defined correct'
+	}
 
 	if (populated && populated.name === 'FK') {
 		return {
