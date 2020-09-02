@@ -241,9 +241,14 @@ describe('test POPULATE', async () => {
 			.WHERE({ driver_id: 3925 })
 			.POPULATE({
 				trip_id: {
+					//TODO: driver_id:3925,
 					driver_loc_FK_single: {
+						//TODO: driver_id:3925,
 						trip_id: {
-							driver_loc_FK_single: {}
+							//TODO: driver_id:3925,
+							driver_loc_FK_single: {
+								//TODO: driver_id:3925,
+							}
 						}
 					}
 				}
