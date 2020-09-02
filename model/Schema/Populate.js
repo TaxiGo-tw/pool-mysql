@@ -1,7 +1,5 @@
 const { isInherit, realType } = require('./Type')
 
-require('color-name')
-
 module.exports.find = async function ({ this: { connection, columns, constructor }, results, populates, print = false, Schema }) {
 
 	//nest object ,  FK only
@@ -11,6 +9,7 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 		const options = { T: constructor, print, connection }
 
 		return await this.reducer(struct, options, async (FK, superValue, populate, options) => {
+			console.log('reducer callback')
 			if (!populate) {
 				return superValue
 			}
@@ -20,11 +19,10 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 			const isArray = populatedValue instanceof Array
 
 			const { model, column } = FK
-			const ids = superValue.map(r => r[column]) //my id
-			console.log('ids', ids)
+			const ids = superValue.map(r => r[column])
 
 			const values = ids.length
-				? await model.SELECT().FROM().WHERE(`${populate} IN (?)`, [ids]).PRINT(print).exec(connection)
+				? await model.SELECT().FROM().WHERE(`${populate} IN (?)`, [ids.join(',')]).PRINT(print).exec(connection)
 				: []
 
 			if (isArray) {
@@ -38,7 +36,10 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 				})
 			}
 
-			return superValue
+			return {
+				current: values,
+				total: superValue
+			}
 		}, results)
 	}
 	else if (populates instanceof Array) {
@@ -131,9 +132,12 @@ module.exports.typeAndColumn = function (populateType) {
 	}
 }
 
-module.exports.reducer = async function (struct = {}, options, callback, initValue = []) {
+module.exports.reducer = async function (struct = {}, options, callback, initValue = [], last) {
 	const _getFK = (T, firstKey) => {
+		if (!firstKey) return
+
 		const obj = T.columns[firstKey]
+
 		return obj instanceof Array
 			? obj[0]
 			: obj.type || obj.ref || obj
@@ -142,6 +146,7 @@ module.exports.reducer = async function (struct = {}, options, callback, initVal
 	const { T, print, connection } = options
 
 	let results
+
 	for (const key in struct) {
 		if (struct.hasOwnProperty(key)) {
 			const element = struct[key]
@@ -149,9 +154,15 @@ module.exports.reducer = async function (struct = {}, options, callback, initVal
 			if (Object.keys(element)) {
 				const [firstKey] = Object.keys(element)
 				const FK = _getFK(T, firstKey)
-				results = await callback(FK, initValue, firstKey, element, { print, connection })
-				console.log(results)
-				await this.reducer(element, { T: FK.model, print, connection }, callback, results)
+
+				if (!FK) break
+
+				const re = await callback(FK, initValue, firstKey, { print, connection }, last)
+
+				const { current } = re
+				results = re.total
+
+				await this.reducer(element, { T: FK.model, print, connection }, callback, results, current)
 			}
 		}
 	}

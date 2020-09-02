@@ -232,6 +232,23 @@ describe('test POPULATE', async () => {
 
 		result.should.have.property('trip_id')
 	})
+
+	it('POPULATE nest object', async () => {
+		await Drivers.UPDATE().SET({ trip_id: 23890 }).WHERE({ driver_id: 3925 }).exec()
+
+		const result = await Drivers
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			// .POPULATE({ trip_id: { driver_loc_FK_single: {} } })
+			.POPULATE({ trip_id: {} })
+			.FIRST()
+			.exec()
+
+		result.should.have.property('trip_id')
+
+		await Drivers.UPDATE().SET({ trip_id: 0 }).WHERE({ driver_id: 3925 }).exec()
+	})
 })
 
 describe('test LEFT JOIN, NESTTABLES', async () => {
