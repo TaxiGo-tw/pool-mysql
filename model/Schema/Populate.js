@@ -21,7 +21,7 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 			const ids = superValue.map(r => r[column])
 
 			const values = ids.length
-				? await model.SELECT().FROM().WHERE(`${column} IN (?)`, [ids.join(',')]).PRINT(print).exec(connection)
+				? await model.SELECT().FROM().WHERE(`${column} IN (${ids})`).PRINT(print).exec(connection)
 				: []
 
 			let toRef = []
