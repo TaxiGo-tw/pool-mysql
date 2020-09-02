@@ -239,14 +239,22 @@ describe('test POPULATE', async () => {
 			.SELECT()
 			.FROM()
 			.WHERE({ driver_id: 3925 })
-			.POPULATE({ trip_id: { driver_loc_FK_single: { trip_id: { driver_loc_FK_single: {} } } } })
+			.POPULATE({
+				trip_id: {
+					driver_loc_FK_single: {
+						trip_id: {
+							driver_loc_FK_single: {}
+						}
+					}
+				}
+			})
 			.FIRST()
-			.PRINT()
 			.exec()
 
 		result.should.have.property('trip_id')
-		// result.trip_id.should.have.property('driver_loc_FK_single')
-		// console.log(JSON.stringify(result))
+		result.trip_id.should.have.property('driver_loc_FK_single')
+		result.trip_id.driver_loc_FK_single.should.have.property('trip_id')
+		result.trip_id.driver_loc_FK_single.trip_id.should.have.property('driver_loc_FK_single')
 	})
 
 	after(async () => {
