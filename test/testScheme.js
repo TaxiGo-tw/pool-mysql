@@ -154,6 +154,10 @@ describe('test query', async () => {
 })
 
 describe('test POPULATE', async () => {
+	before(async () => {
+		await Drivers.UPDATE().SET({ trip_id: 23890 }).WHERE({ driver_id: 3925 }).exec()
+	})
+
 	it('POPULATE first', async () => {
 		const query = Trips.
 			SELECT()
@@ -204,7 +208,6 @@ describe('test POPULATE', async () => {
 	})
 
 	it('POPULATE 1v1 FK', async () => {
-		await Drivers.UPDATE().SET({ trip_id: 23890 }).WHERE({ driver_id: 3925 }).exec()
 
 		const result = await Drivers
 			.SELECT()
@@ -217,8 +220,6 @@ describe('test POPULATE', async () => {
 
 		result.should.have.property('trip_id')
 		result.trip_id.should.have.property('trip_id')
-
-		await Drivers.UPDATE().SET({ trip_id: 0 }).WHERE({ driver_id: 3925 }).exec()
 	})
 
 	it('POPULATE 1vN FK', async () => {
@@ -230,23 +231,25 @@ describe('test POPULATE', async () => {
 			.FIRST()
 			.exec()
 
-		result.should.have.property('trip_id')
+		result.should.have.property('driver_loc_FK_single')
 	})
 
 	it('POPULATE nest object', async () => {
-		await Drivers.UPDATE().SET({ trip_id: 23890 }).WHERE({ driver_id: 3925 }).exec()
-
 		const result = await Drivers
 			.SELECT()
 			.FROM()
 			.WHERE({ driver_id: 3925 })
-			// .POPULATE({ trip_id: { driver_loc_FK_single: {} } })
-			.POPULATE({ trip_id: {} })
+			.POPULATE({ trip_id: { driver_loc_FK_single: { trip_id: { driver_loc_FK_single: {} } } } })
 			.FIRST()
+			.PRINT()
 			.exec()
 
 		result.should.have.property('trip_id')
+		// result.trip_id.should.have.property('driver_loc_FK_single')
+		// console.log(JSON.stringify(result))
+	})
 
+	after(async () => {
 		await Drivers.UPDATE().SET({ trip_id: 0 }).WHERE({ driver_id: 3925 }).exec()
 	})
 })

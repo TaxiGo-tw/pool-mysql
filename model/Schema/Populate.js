@@ -8,10 +8,9 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 		const struct = { [constructor.name]: populate }
 		const options = { T: constructor, print, connection }
 
-		return await this.reducer(struct, options, async (FK, superValue, populate, options) => {
-			console.log('reducer callback')
+		return await this.reducer(struct, options, async (FK, results, populate, options, superValue) => {
 			if (!populate) {
-				return superValue
+				return results
 			}
 
 			const { print, connection } = options
@@ -22,7 +21,7 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 			const ids = superValue.map(r => r[column])
 
 			const values = ids.length
-				? await model.SELECT().FROM().WHERE(`${populate} IN (?)`, [ids.join(',')]).PRINT(print).exec(connection)
+				? await model.SELECT().FROM().WHERE(`${column} IN (?)`, [ids.join(',')]).PRINT(print).exec(connection)
 				: []
 
 			if (isArray) {
@@ -38,7 +37,7 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 
 			return {
 				current: values,
-				total: superValue
+				total: results
 			}
 		}, results)
 	}
@@ -132,7 +131,7 @@ module.exports.typeAndColumn = function (populateType) {
 	}
 }
 
-module.exports.reducer = async function (struct = {}, options, callback, initValue = [], last) {
+module.exports.reducer = async function (struct = {}, options, callback, initValue = [], superValue) {
 	const _getFK = (T, firstKey) => {
 		if (!firstKey) return
 
@@ -153,14 +152,13 @@ module.exports.reducer = async function (struct = {}, options, callback, initVal
 
 			if (Object.keys(element)) {
 				const [firstKey] = Object.keys(element)
+
 				const FK = _getFK(T, firstKey)
 
 				if (!FK) break
 
-				const re = await callback(FK, initValue, firstKey, { print, connection }, last)
-
-				const { current } = re
-				results = re.total
+				const { current, total } = await callback(FK, initValue, firstKey, { print, connection }, superValue || initValue)
+				results = total
 
 				await this.reducer(element, { T: FK.model, print, connection }, callback, results, current)
 			}
