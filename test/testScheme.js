@@ -828,7 +828,7 @@ describe('test reduce', () => {
 describe('test rollback', async () => {
 	it('1', async () => {
 		const notes = Math.random()
-		const rollback = await Block
+		const { insertId } = await Block
 			.INSERT()
 			.INTO()
 			.SET({ blocker: 1353221, blocked: 203, notes })
@@ -838,11 +838,11 @@ describe('test rollback', async () => {
 		const expected = await Block
 			.SELECT()
 			.FROM()
-			.WHERE({ id: rollback.insertId })
+			.WHERE({ id: insertId })
 			.FIRST()
 			.exec()
 
-		expected.notes.should.not.be.equal(notes)
+		assert.equal(expected, null)
 	})
 })
 
