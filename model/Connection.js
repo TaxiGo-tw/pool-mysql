@@ -34,7 +34,7 @@ module.exports = class Connection {
 	}
 
 	get isUsing() {
-		return this._pool.connectionPool.using[this.tag.name][this.id] != undefined
+		return !!this.tag && this._pool.connectionPool.using[this.tag.name][this.id] != undefined
 	}
 
 	async connect() {
@@ -175,12 +175,12 @@ module.exports = class Connection {
 	}
 
 	_q(sql, values) {
-		return new Promise((reslove, reject) => {
+		return new Promise((resolve, reject) => {
 			this.query(sql, values, (err, res) => {
 				if (err) {
 					reject(err)
 				} else {
-					reslove(res)
+					resolve(res)
 				}
 			})
 		})

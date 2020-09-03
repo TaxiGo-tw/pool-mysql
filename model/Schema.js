@@ -1,7 +1,9 @@
 const Types = require('./Types')
 const Encryption = require('./Encryption')
 const mysql = require('mysql')
-const throwError = require('./throwError')
+
+const { Validator, throwError } = require('./Helper')
+const { Type, Nested, Populate, Updated } = require('./Schema/')
 
 module.exports = class Schema {
 	constructor(dict) {
@@ -10,7 +12,6 @@ module.exports = class Schema {
 				this[key] = dict[key]
 			}
 		} else {
-			this._populadtes = []
 			this._q = []
 		}
 	}
@@ -42,7 +43,7 @@ module.exports = class Schema {
 		const columns = object.columns
 
 		return Object.keys(columns)
-			.filter(column => isRealColumn(columns[column]))
+			.filter(column => Type.isRealColumn(columns[column]))
 			.map(column => `${object.constructor.name}.${column}`)
 	}
 
@@ -269,11 +270,26 @@ module.exports = class Schema {
 	}
 
 	mocked(formatted) {
-		if (print) {
+		if (this._print) {
 			Schema._pool.logger('all', `${formatted}`)
 		}
 
 		return Schema._pool.mock(Schema._pool._mockCounter++, formatted)
+	}
+
+	async rollback(outSideConnection = null) {
+		const connection = outSideConnection || await Schema._pool.createConnection()
+		try {
+			await connection.awaitTransaction()
+			return await this.exec(connection)
+		} catch (error) {
+			throwError(error)
+		} finally {
+			await connection.rollback()
+			if (!outSideConnection) {
+				connection.release()
+			}
+		}
 	}
 
 	async exec(outSideConnection = null) {
@@ -301,6 +317,7 @@ module.exports = class Schema {
 				affectedRows,
 				onErr,
 				decryption,
+				populates,
 				ex
 			} = this._options()
 			///////////////////////////////////////////////////////////////////
@@ -340,63 +357,8 @@ module.exports = class Schema {
 			//SELECT()
 			if (this._connection.isSelect(query.sql)) {
 				//populate
-				if (this._populadtes.length && results.length) {
-
-					for (let i = 0; i < this._populadtes.length; i++) {
-						const column = this._populadtes[i]
-						const populateType = this.columns[column]
-						if (populateType instanceof Array) {//coupons: [Coupons]
-							const type = populateType[0]
-
-							const tColumn = Object.keys(type.columns).filter(c => type.columns[c].name == this.constructor.name)[0]
-							const PKColumn = Object.keys(this.columns).filter(column => isInherit(realType(this.columns[column]), Schema.Types.PK))[0]
-							const ids = results.map(result => result[PKColumn])
-							const populates = await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print || false).exec(this._connection)
-
-							results.forEach(result => {
-								result[column] = populates.filter(p => p[tColumn] == result[PKColumn])
-							})
-						} else {// coupon: Coupons
-							let ids
-							let refType = populateType
-							let refColumn = column
-
-							if (results instanceof Array) {
-								if (typeof populateType == 'object') {
-									// {
-									// 	ref: require('...')
-									// 	column:...
-									// }
-									refColumn = populateType.column
-									refType = populateType.ref
-									ids = results.filter(result => result[refColumn]).map(result => result[refColumn])
-								} else {
-									ids = results.filter(result => result[refColumn]).map(result => result[refColumn])
-								}
-
-								if (!ids.length) {
-									continue
-								}
-							} else if (results && results[refColumn]) {
-								ids = [results[refColumn]]
-								if (!ids) {
-									continue
-								}
-							} else {
-								continue
-							}
-
-							const PKColumn = Object.keys(refType.columns).filter(column => isInherit(realType(refType.columns[column]), Schema.Types.PK))[0]
-
-							const populates = await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).PRINT(print || false).exec(this._connection)
-
-							results.forEach(result => {
-								if (result[refColumn]) {
-									result[column] = populates.filter(populate => result[refColumn] == populate[PKColumn])[0] || result[refColumn]
-								}
-							})
-						}
-					}
+				if (populates.length && results.length) {
+					results = await Populate.find({ this: this, results, populates, print, Schema })
 				}
 
 				//for MAP()
@@ -409,7 +371,7 @@ module.exports = class Schema {
 				}
 
 				if (nested) {
-					const mapped = results.map(nestedMapper.bind(this))
+					const mapped = results.map(Nested.mapper.bind(this))
 					if (typeof mapped === 'object') {
 						results = new this.constructor(mapped)
 					} else {
@@ -429,7 +391,7 @@ module.exports = class Schema {
 			}
 			//select with query
 			else if (updated) {
-				return updatedHandler({ results, filter, getFirst })
+				return Updated.handler({ results, filter, getFirst })
 			}
 
 			return results
@@ -479,7 +441,7 @@ module.exports = class Schema {
 	SET(whereCaluse, whereCaluse2, { passUndefined = false, encryption = [] } = {}) {
 
 		if (typeof whereCaluse === 'object') {
-			validate.bind(this)(whereCaluse)
+			Validator.validate.bind(this)(whereCaluse)
 
 			for (const key of Object.keys(whereCaluse)) {
 				if (this.columns && this.columns[key] && this.columns[key].type && this.columns[key].type.inputMapper) {
@@ -607,8 +569,8 @@ module.exports = class Schema {
 
 		let pk
 		for (const key in this.columns) {
-			const value = realType(this.columns[key])
-			if (isInherit(value, Schema.Types.PK)) {
+			const value = Type.realType(this.columns[key])
+			if (Type.isInherit(value, Schema.Types.PK)) {
 				pk = key
 			}
 		}
@@ -715,6 +677,9 @@ module.exports = class Schema {
 		options.decryption = this._decryption || []
 		delete this._decryption
 
+		options.populates = this._populadtes || []
+		delete this._populadtes
+
 		const combine = this._combine || false
 		delete this._combine
 
@@ -742,7 +707,7 @@ module.exports = class Schema {
 			const value = this[key]
 
 			//detect if required
-			validateRequired.bind(this)({ key, value, option, isInsert })
+			Validator.required.bind(this)({ key, value, option, isInsert })
 
 			//throw if invalid
 			const { type } = option
@@ -754,7 +719,7 @@ module.exports = class Schema {
 			}
 
 			//detect length
-			validateLength.bind(this)({ key, value, option })
+			Validator.length.bind(this)({ key, value, option })
 		}
 
 		return true
@@ -782,117 +747,3 @@ function addQuery(reservedWord, whereCaluse, whereCaluse2, inBrackets = true) {
 }
 
 ////////////////////////////////////////////////////////////
-
-function validate(params) {
-	const object = new this.constructor(params)
-	switch (this._q[0].type) {
-		case 'INSERT':
-			object.validate(true)
-			break
-		case 'UPDATE':
-			object.validate()
-			break
-	}
-}
-
-function isRealColumn(column) {
-	const type = realType(column)
-
-	return type
-		&& (type instanceof Array === false)
-		&& typeof type !== 'object'
-}
-
-function realType(type) {
-	return type.type || type
-}
-
-
-// insert 時 required 都要有值
-// update 時 只看required不能是null
-function validateRequired({ key, value, option, isInsert }) {
-	const { required } = option
-	if (!required) {
-		return
-	}
-
-	if (isInsert && (value === undefined || value === null)) {
-		throwError(`${key} is required`)
-	} else if (!isInsert && value === null) {
-		throwError(`${key} is required`)
-	}
-}
-
-function validateLength({ key, value, option }) {
-	if (option instanceof Array || !option.length) {
-		return
-	}
-
-	if (value === undefined || value === null) {
-		return
-	}
-
-	const { length } = option
-
-	//validate value length
-	//ex: length: 3
-	if (typeof length === 'number' && value.length != length) {
-		throwError(`${this.constructor.name}.${key}.length should be ${length}, now is ${value.length}`)
-	}
-	//ex: length: { min:3 , max: 5 }
-	else if (typeof length === 'object' && (value.length < length.min || value.length > length.max)) {
-		throwError(`${this.constructor.name}.${key}.length should between ${length.min} and ${length.max}, now is ${value.length}`)
-	}
-}
-
-function isInherit(type, pk) {
-	return type == pk
-		|| type.prototype instanceof pk
-}
-
-function nestedMapper(result) {
-	const r = result[this.constructor.name]
-	for (const key in result) {
-		if (key == this.constructor.name) {
-			continue
-		}
-		r[key] = result[key]
-	}
-	return new this.constructor(r)
-}
-
-function updatedHandler({ results, filter, getFirst }) {
-	if (results[1].affectedRows == 0) {
-		return []
-	}
-
-	const updated = results.reverse()[0][0]
-	let updatedResults = []
-
-	for (const key in updated) {
-		const arr = typeof updated[key] === 'string'
-			? updated[key].replace(/,$/, '').split(',')
-			: [updated[key]]
-		for (let i = 0; i < arr.length; i++) {
-			if (!updatedResults[i]) {
-				updatedResults[i] = {}
-			}
-
-			if (arr[i] === '{{NULL}}') {
-				updatedResults[i][key] = undefined
-			} else {
-				updatedResults[i][key] = arr[i]
-			}
-		}
-	}
-
-	if (filter) {
-		updatedResults = updatedResults.filter(filter)
-	}
-
-	if (getFirst) {
-		return updatedResults[0]
-	}
-
-	return updatedResults
-}

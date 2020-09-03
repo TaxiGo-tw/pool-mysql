@@ -1,4 +1,4 @@
-const throwError = (error, onErr) => {
+module.exports = function (error, onErr) {
 	// if (process.env.NODE_ENV === 'TESTING') {
 	// 	console.log(error)
 	// }
@@ -14,5 +14,3 @@ const throwError = (error, onErr) => {
 			throw error
 	}
 }
-
-module.exports = throwError

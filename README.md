@@ -117,6 +117,19 @@ await Posts
       .exec()
 ```
 
+#### Populate
+
+```js
+// nest populate
+const result = await Drivers
+    .SELECT()
+    .FROM()
+    .WHERE({ driver_id: 3925 })
+    .POPULATE({ trip_id: { driver_loc_FK_multiple: {} }})
+    .FIRST()
+    .exec()
+```
+
 ### Nested Query
 
 ```js
