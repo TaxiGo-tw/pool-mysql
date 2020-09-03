@@ -56,6 +56,9 @@ module.exports = class trips extends Schema {
 				ref: require('./DriverReviewStatus'),
 				column: 'driver_id'
 			},
+			amount: {
+				type: Schema.Types.Number
+			}
 		}
 	}
 }
