@@ -5,6 +5,7 @@
 	"url": "https://github.com/vivalalova/pool-mysql",
 	"main": "index.js",
 	"scripts": {
+		"lint": "eslint ./**/*.js",
 		"test": "mocha --exit",
 		"t": "nodemon --exec 'mocha --exit -s 0'"
 	},
@@ -18,12 +19,14 @@
 		"chai": "^4.2.0",
 		"debug": "^4.1.1",
 		"dotenv": "^8.1.0",
-		"jest": "^24.9.0",
-		"mocha": "^6.2.1",
-		"redis": "^2.8.0",
 		"eslint": "^4.19.1",
 		"eslint-plugin-array-func": "^3.1.0",
 		"eslint-plugin-promise": "^4.2.1",
-		"eslint-plugin-require-in-package": "^1.0.3"
+		"eslint-plugin-require-in-package": "^1.0.3",
+		"expect": "^26.4.2",
+		"husky": "^4.2.5",
+		"jest": "^24.9.0",
+		"mocha": "^6.2.1",
+		"redis": "^2.8.0"
 	}
 }

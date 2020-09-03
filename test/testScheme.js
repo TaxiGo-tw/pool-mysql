@@ -1,11 +1,10 @@
-
-const { should } = require('chai')  // Using Assert style
-should()  // Modifies `Object.prototype`
-const assert = require('assert')
+const { should, expect, assert } = require('chai')  // Using Assert style
+should()
 
 const Trips = require('./model/Trips')
 const Users = require('./model/Users')
 const Block = require('./model/BlockPersonally')
+const Drivers = require('./model/Drivers')
 
 const pool = require('../index')
 const Redis = require('redis')
@@ -153,6 +152,10 @@ describe('test query', async () => {
 })
 
 describe('test POPULATE', async () => {
+	before(async () => {
+		await Drivers.UPDATE().SET({ trip_id: 23890 }).WHERE({ driver_id: 3925 }).exec()
+	})
+
 	it('POPULATE first', async () => {
 		const query = Trips.
 			SELECT()
@@ -169,8 +172,8 @@ describe('test POPULATE', async () => {
 
 	})
 
-	it('POPULATE 2', async () => {
-		const query = await Trips
+	it('POPULATE 1v1', async () => {
+		const result = await Trips
 			.SELECT()
 			.FROM()
 			.WHERE({ user_id: 3925 })
@@ -178,12 +181,116 @@ describe('test POPULATE', async () => {
 			.ORDER_BY('trip_id', 'desc')
 			.POPULATE('driver_loc', 'driver_info')
 			.FIRST()
+			.exec()
 
-		const result = await query.exec()
 		result.should.have.property('trip_id')
 		result.should.have.property('user_id')
 		result.driver_loc.should.have.property('location')
 		result.driver_info.should.have.property('first_name')
+	})
+
+
+	it('POPULATE 1vN', async () => {
+		const result = await Drivers
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			.ORDER_BY('trip_id', 'desc')
+			.POPULATE('all_trips')
+			.FIRST()
+			.exec()
+
+		result.should.have.property('all_trips')
+		result.all_trips[0].should.have.property('user_id')
+		result.all_trips[0].should.have.property('start_latlng')
+	})
+
+	it('POPULATE 1v1 FK', async () => {
+
+		const result = await Drivers
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			.ORDER_BY('trip_id', 'desc')
+			.POPULATE('trip_id')
+			.FIRST()
+			.exec()
+
+		result.should.have.property('trip_id')
+		result.trip_id.should.have.property('trip_id')
+	})
+
+	it('POPULATE 1vN FK', async () => {
+		const result = await Trips
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			.POPULATE('driver_loc_FK_single')
+			.FIRST()
+			.exec()
+
+		result.should.have.property('driver_loc_FK_single')
+	})
+
+	it('POPULATE nest object', async () => {
+		const result = await Drivers
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			.POPULATE({
+				trip_id: {
+					//TODO: driver_id:3925,
+					driver_loc_FK_single: {
+						//TODO: driver_id:3925,
+						trip_id: {
+							//TODO: driver_id:3925,
+							driver_loc_FK_single: {
+								//TODO: driver_id:3925,
+							}
+						}
+					}
+				}
+			})
+			.FIRST()
+			.exec()
+
+		result.should.have.property('trip_id')
+		result.trip_id.should.have.property('driver_loc_FK_single')
+		result.trip_id.driver_loc_FK_single.should.have.property('trip_id')
+		result.trip_id.driver_loc_FK_single.trip_id.should.have.property('driver_loc_FK_single')
+	})
+
+	it('POPULATE nest object', async () => {
+		const result = await Drivers
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			.POPULATE({
+				trip_id: {
+					//TODO: driver_id:3925,
+					driver_loc_FK_multiple: {
+						//TODO: driver_id:3925,
+						trip_id: {
+							//TODO: driver_id:3925,
+							driver_loc_FK_multiple: {
+								//TODO: driver_id:3925,
+							}
+						}
+					}
+				}
+			})
+			.FIRST()
+			.exec()
+
+		result.should.have.property('trip_id')
+		result.trip_id.should.have.property('driver_loc_FK_multiple')
+		expect(result.trip_id.driver_loc_FK_multiple).to.be.a('Array')
+		result.trip_id.driver_loc_FK_multiple[0].should.have.property('trip_id')
+		result.trip_id.driver_loc_FK_multiple[0].trip_id.should.have.property('driver_loc_FK_multiple')
+	})
+
+	after(async () => {
+		await Drivers.UPDATE().SET({ trip_id: 0 }).WHERE({ driver_id: 3925 }).exec()
 	})
 })
 
@@ -546,11 +653,11 @@ describe('test UPDATED', async () => {
 describe('test connection.query()', () => {
 	it('3', (done) => {
 		pool.createConnection().then(connection => {
-			connection.query('SELECT * FROM trips LIMIT 5', (e, r) => {
+			return connection.query('SELECT * FROM trips LIMIT 5', (e, r) => {
 				connection.release()
 				done()
 			})
-		})
+		}).catch(console.error)
 	})
 })
 
@@ -564,7 +671,8 @@ describe('test get connection', () => {
 
 	it('2', async () => {
 		for (let i = 0; i < 10000; i++) {
-			pool.createConnection().then(c => c.release())
+			const connection = await pool.createConnection()
+			connection.release()
 		}
 	})
 })

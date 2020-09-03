@@ -1,5 +1,5 @@
 const mysql = require('mysql')
-const throwError = require('./throwError')
+const throwError = require('./Helper/throwError')
 
 class Base {
 	// eslint-disable-next-line no-unused-vars
@@ -11,6 +11,38 @@ class Base {
 class PK {
 	static validate() {
 		return true
+	}
+}
+
+function FKGenerator(model, column) {
+	return class FK {
+		static get model() {
+			return model
+		}
+
+		static get column() {
+			return column
+		}
+
+		static get _refType() {
+			return model.columns[column].type || model.columns[column]
+		}
+
+		static validate(value) {
+			if (!this || !this._refType || !this._refType.validate) {
+				return true
+			}
+
+			return this._refType.validate(value)
+		}
+
+		static inputMapper(value) {
+			if (!this || !this._refType || !this._refType.inputMapper) {
+				return value
+			}
+
+			return this._refType.inputMapper(value)
+		}
 	}
 }
 
@@ -274,6 +306,7 @@ class DateTime {
 module.exports = {
 	Base, // for extends
 	PK,
+	FK: FKGenerator,
 	Point,
 	Polygon,
 	ENUM: EnumGenerator,
