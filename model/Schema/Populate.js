@@ -25,8 +25,6 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 			const currentColumn = FK_of_FK.name == 'FK' ? FK_of_FK.column : populate
 			const ids = superValue.map(r => r[currentColumn])
 
-			console.log(column, currentColumn, populate)
-
 			const values = ids.length
 				? await model.SELECT().FROM().WHERE(`${column} IN (${ids})`).PRINT(print).exec(connection)
 				: []
