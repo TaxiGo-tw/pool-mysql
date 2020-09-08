@@ -2,6 +2,10 @@ const { isInherit, realType } = require('./Type')
 
 module.exports.find = async function ({ this: { connection, columns, constructor }, results, populates, print = false, Schema }) {
 
+	if (populates[0] === undefined) {
+		return results
+	}
+
 	//nest object ,  FK only
 	if (typeof populates[0] === 'object') {
 		const [populate] = populates
