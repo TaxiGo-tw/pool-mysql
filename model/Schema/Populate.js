@@ -18,7 +18,14 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 			const isArray = populatedValue instanceof Array
 
 			const { model, column } = FK
-			const ids = superValue.map(r => r[column])
+
+			// populate 虛擬欄位
+			const FK_of_FK = _getFK(model, column)
+
+			const currentColumn = FK_of_FK.name == 'FK' ? FK_of_FK.column : populate
+			const ids = superValue.map(r => r[currentColumn])
+
+			console.log(column, currentColumn, populate)
 
 			const values = ids.length
 				? await model.SELECT().FROM().WHERE(`${column} IN (${ids})`).PRINT(print).exec(connection)
@@ -28,13 +35,13 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 
 			if (isArray) {
 				superValue.forEach(sv => {
-					toRef = toRef.concat(values.filter(v => v[column] == sv[column]))
-					sv[populate] = values.filter(v => v[column] == sv[column])
+					toRef = toRef.concat(values.filter(v => v[column] == sv[currentColumn]))
+					sv[populate] = values.filter(v => v[column] == sv[currentColumn])
 				})
 			} else {
 				superValue.forEach(sv => {
-					toRef = toRef.concat(values.filter(v => v[column] == sv[column]))
-					const [value] = values.filter(v => v[column] == sv[column])
+					toRef = toRef.concat(values.filter(v => v[column] == sv[currentColumn]))
+					const [value] = values.filter(v => v[column] == sv[currentColumn])
 					sv[populate] = value
 				})
 			}

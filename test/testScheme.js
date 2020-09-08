@@ -240,7 +240,7 @@ describe('test POPULATE', async () => {
 			.POPULATE({
 				trip_id: {
 					//TODO: driver_id:3925,
-					driver_loc_FK_single: {
+					driver_loc_FK_multiple: {
 						//TODO: driver_id:3925,
 						trip_id: {
 							//TODO: driver_id:3925,
@@ -255,9 +255,13 @@ describe('test POPULATE', async () => {
 			.exec()
 
 		result.should.have.property('trip_id')
-		result.trip_id.should.have.property('driver_loc_FK_single')
-		result.trip_id.driver_loc_FK_single.should.have.property('trip_id')
-		result.trip_id.driver_loc_FK_single.trip_id.should.have.property('driver_loc_FK_single')
+		result.trip_id.should.have.property('driver_loc_FK_multiple')
+
+		const [driver_loc_FK_multiple] = result.trip_id.driver_loc_FK_multiple
+		driver_loc_FK_multiple.should.have.property('trip_id')
+		driver_loc_FK_multiple.trip_id.should.have.property('driver_loc_FK_single')
+		driver_loc_FK_multiple.trip_id.driver_loc_FK_single.should.have.property('driver_id')
+
 	})
 
 	it('POPULATE nest object', async () => {
