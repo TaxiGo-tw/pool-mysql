@@ -1,8 +1,7 @@
 const { isInherit, realType } = require('./Type')
 
 module.exports.find = async function ({ this: { connection, columns, constructor }, results, populates, print = false, Schema }) {
-
-	if (populates[0] === undefined) {
+	if (populates[0] === undefined || !results.length) {
 		return results
 	}
 
@@ -13,7 +12,7 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 		const options = { T: constructor, print, connection }
 
 		return await this.reducer(struct, options, async (T, FK, results, populate, options, superValue) => {
-			if (!populate) {
+			if (!populate || !superValue.length || !results.length) {
 				return results
 			}
 
