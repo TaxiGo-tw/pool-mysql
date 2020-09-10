@@ -1,7 +1,6 @@
 # ReadME
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/928cce8dd2ba4fcaa4d857552209fd16)](https://app.codacy.com/gh/TaxiGo-tw/pool-mysql?utm_source=github.com&utm_medium=referral&utm_content=TaxiGo-tw/pool-mysql&utm_campaign=Badge_Grade_Dashboard)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a86fa5fa33cd4effb4ca5120d9e5ed67)](https://app.codacy.com/app/vivalalova0/pool-mysql?utm_source=github.com&utm_medium=referral&utm_content=vivalalova/pool-mysql&utm_campaign=Badge_Grade_Dashboard)
 
 This is depend on [mysql](https://github.com/mysqljs/mysql)
 which made for migrating to features
@@ -66,7 +65,7 @@ try {
 }
 ```
 
-##### Connection tag
+#### Connection tag
 
 pool of connection pool
 
@@ -299,7 +298,7 @@ Triggered on UPDATE()..SET(object) and INSERT()...SET(object)
 
 [default types](https://github.com/TaxiGo-tw/pool-mysql/blob/feature/validator/model/Types.js)
 
-##### Variables
+#### Variables
 
 * type: to limit type
 
@@ -363,7 +362,6 @@ module.exports = class driver_review_status extends Scheme {
 
 * assign mock() to pool will reset index to 0
 
-
 ### Log level
 
 * `all` print logs anywhere
@@ -379,8 +377,8 @@ pool.logger = 'error'
 // [3] Reader 1ms:  SELECT * FROM table
 ```
 
-##### Custom Logger
+#### Custom Logger
 
-```
+```js
 pool._logger = (err, toPrint) => { }
 ```
