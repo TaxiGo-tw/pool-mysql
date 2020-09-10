@@ -6,9 +6,13 @@ This is depend on [mysql](https://github.com/mysqljs/mysql)
 which made for migrating to features
 
 * connection pool
+
 * connection writer/reader
+
 * async/await
+
 * model.query
+
 * log print
 
 See the test [Examples](https://github.com/TaxiGo-tw/pool-mysql/tree/master/test)
