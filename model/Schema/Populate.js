@@ -3,7 +3,8 @@ const { isInherit, realType } = require('./Type')
 module.exports.find = async function ({ this: { connection, columns, constructor }, results, populates, print = false, Schema }) {
 
 	const [populate] = populates
-	if (populate === undefined || populate.constructor === Object || !results.length) {
+
+	if (populate === undefined || !Object.keys(populate).length || !results.length) {
 		return results
 	}
 	//nest object ,  FK only
