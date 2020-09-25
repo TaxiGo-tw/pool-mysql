@@ -100,6 +100,23 @@ describe('test query', async () => {
 		should(result).equal(undefined)
 	})
 
+	it('object entity', async () => {
+		const trip = new Trips()
+
+		const obj = { trip_id: 23890, user_id: 21640 }
+		const query = trip
+			.SELECT()
+			.FROM()
+			.WHERE_AND(obj)
+			.FIRST()
+		// .FILTER(t => t.trip_id != 23890)
+
+		const result = await query.exec()
+
+		assert.equal(result.trip_id, obj.trip_id)
+		assert.equal(result.user_id, obj.user_id)
+	})
+
 	it('find', async () => {
 		const query = Trips.FIND({ trip_id: 23890 }).FIRST()
 		const result = await query.exec()

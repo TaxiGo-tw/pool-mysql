@@ -133,6 +133,19 @@ module.exports = class Schema {
 		return this
 	}
 
+	WHERE_AND(obj) {
+		if (typeof obj !== 'object') {
+			throw 'WHERE_CLAUSE must input object'
+		}
+
+		let result = this.WHERE('1=1')
+		for (const key in obj) {
+			const value = obj[key]
+			result = result.AND({ [key]: value })
+		}
+		return result
+	}
+
 	OR(whereCaluse, whereCaluse2, { isExec = true } = {}) {
 		if (isExec) {
 			return addQuery.bind(this)('OR', whereCaluse, whereCaluse2)
