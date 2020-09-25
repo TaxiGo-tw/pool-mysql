@@ -1,7 +1,7 @@
 const { isInherit, realType } = require('./Type')
 
 module.exports.find = async function ({ this: { connection, columns, constructor }, results, populates, print = false, Schema }) {
-	if (populates[0] === undefined || !results.length) {
+	if (populates[0] === undefined || (!results && !results.length)) {
 		return results
 	}
 
