@@ -146,10 +146,10 @@ module.exports.typeAndColumn = function (populateType) {
 }
 
 
-const _getFK = (T, firstKey) => {
-	if (!firstKey) return
+const _getFK = (T, queryKey) => {
+	if (!queryKey) return
 
-	const obj = T.columns[firstKey]
+	const obj = T.columns[queryKey]
 
 	return obj instanceof Array
 		? obj[0]
