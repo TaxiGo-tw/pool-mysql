@@ -306,6 +306,8 @@ describe('test POPULATE', async () => {
 
 		result.should.have.property('trip_id')
 		result.trip_id.should.have.property('driver_loc_FK_multiple')
+		result.trip_id.ttttt.should.have.property('trip_id')
+
 		expect(result.trip_id.driver_loc_FK_multiple).to.be.a('Array')
 		result.trip_id.driver_loc_FK_multiple[0].should.have.property('trip_id')
 		result.trip_id.driver_loc_FK_multiple[0].trip_id.should.have.property('driver_loc_FK_multiple')
