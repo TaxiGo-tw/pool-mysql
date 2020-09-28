@@ -47,6 +47,9 @@ module.exports = class trips extends Schema {
 				ref: Schema.Types.FK(require('./Drivers'), 'trip_id')
 			},
 			driver_loc_FK_multiple: [Schema.Types.FK(require('./Drivers'), 'trip_id')],
+			ttttt: {
+				ref: Schema.Types.FK(require('./Drivers'), 'trip_id')
+			},
 
 			driver_loc: {
 				ref: require('./Drivers'),
