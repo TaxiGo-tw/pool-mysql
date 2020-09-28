@@ -146,10 +146,10 @@ module.exports.typeAndColumn = function (populateType) {
 }
 
 
-const _getFK = (T, firstKey) => {
-	if (!firstKey) return
+const _getFK = (T, queryKey) => {
+	if (!queryKey) return
 
-	const obj = T.columns[firstKey]
+	const obj = T.columns[queryKey]
 
 	return obj instanceof Array
 		? obj[0]
@@ -165,17 +165,18 @@ module.exports.reducer = async function (struct = {}, options, callback, initVal
 		const element = struct[key]
 		if (!Object.keys(element)) continue
 
-		const [firstKey] = Object.keys(element)
+		for (const queryKey of Object.keys(element)) {
 
-		const FK = _getFK(T, firstKey)
+			const FK = _getFK(T, queryKey)
 
-		if (!FK) break
+			if (!FK) break
 
-		const { current, total } = await callback(T, FK, initValue, firstKey, { print, connection }, superValue || initValue)
+			const { current, total } = await callback(T, FK, initValue, queryKey, { print, connection }, superValue || initValue)
 
-		results = total
+			results = total
 
-		await this.reducer(element, { T: FK.model, print, connection }, callback, results, current)
+			await this.reducer(element, { T: FK.model, print, connection }, callback, results, current)
+		}
 	}
 
 	return results
