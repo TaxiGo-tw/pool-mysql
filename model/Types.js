@@ -219,8 +219,13 @@ class SQLSelectOnlyString extends Str {
 			if (typeof string !== 'string') {
 				return false
 			}
+
+			// const regex = /^[^ ][\w\W ]*[^ ]/i
 			const regex = /^(?=.*SELECT.*FROM)(?!.*(?:CREATE|DROP|UPDATE|INSERT|ALTER|DELETE|ATTACH|DETACH|;)).*$/i
-			return (string.match(regex) == string)
+			const s = string.replace(/[ \n\t]+/g, ' ')
+
+			console.log(s)
+			return (s.match(regex) == string)
 		} catch (e) {
 			return false
 		}
