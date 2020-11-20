@@ -213,14 +213,15 @@ class JSONString extends Str {
 class SQLSelectOnlyString extends Str {
 	static validate(string) {
 		try {
-			if (!string) {
-				return false
-			}
 			if (typeof string !== 'string') {
 				return false
 			}
-			const regex = /^(?=.*SELECT.*FROM)(?!.*(?:CREATE|DROP|UPDATE|INSERT|ALTER|DELETE|ATTACH|DETACH|;)).*$/i
-			return (string.match(regex) == string)
+
+			const regex = /^SELECT (?!.*(?:CREATE |DROP |UPDATE |INSERT |ALTER |DELETE |ATTACH |DETACH |;)).*$/i
+			return string
+				.replace(/[ \n\t]+/g, ' ')
+				.match(regex)
+				.length > 0
 		} catch (e) {
 			return false
 		}

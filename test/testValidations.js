@@ -57,6 +57,18 @@ describe('test Validations', async () => {
 		assert.equal(SQLSelectOnlyString.validate(`INSERT INTO t (c1, c2, c3) VALUES('v1', 'v2', 'v3)`), false)
 		assert.equal(SQLSelectOnlyString.validate(`UPDATE t SET c1 = 'v1', c2 = 'v2`), false)
 		assert.equal(SQLSelectOnlyString.validate(`SELECT * FROM t1; SELECT * FROM t2`), false)
+
+		assert.equal(
+			SQLSelectOnlyString.validate(
+				`SELECT A.user_id, A.bot_id, count(*) count FROM trips A LEFT JOIN linebot_user B ON A.user_id = B.uid
+				WHERE A.trip_status = 'TRIP_PAYMENT_PROCESSED'
+				AND B.uid % 2 = 0
+				AND bot_type = 'line'
+				AND user_status = 'PHONE_VERIFIED'
+				AND UNIX_TIMESTAMP(DATE_ADD(created_time, INTERVAL 90 day)) < UNIX_TIMESTAMP()
+				AND A.user_id NOT IN (SELECT DISTINCT uid FROM pass_record)
+				group by A.user_id HAVING count < 3`),
+			true)
 	})
 
 	it('Email String', async () => {
