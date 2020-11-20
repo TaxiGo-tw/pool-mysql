@@ -68,9 +68,7 @@ describe('test Validations', async () => {
 				AND UNIX_TIMESTAMP(DATE_ADD(created_time, INTERVAL 90 day)) < UNIX_TIMESTAMP()
 				AND A.user_id NOT IN (SELECT DISTINCT uid FROM pass_record)
 				group by A.user_id HAVING count < 3`),
-			true,
-			'select'
-		)
+			true)
 	})
 
 	it('Email String', async () => {
