@@ -60,14 +60,16 @@ describe('test Validations', async () => {
 
 		assert.equal(
 			SQLSelectOnlyString.validate(
-				`SELECT A.user_id, A.bot_id, count(*) count FROM trips A LEFT JOIN linebot_user B ON A.user_id = B.uid
-				WHERE A.trip_status = 'TRIP_PAYMENT_PROCESSED'
+				`SELECT A.uid, A.bot_id, count(*) count
+				FROM table A
+				LEFT JOIN tableB B ON A.uid = B.uid
+				WHERE A.trip_status = 'PROCESSED'
 				AND B.uid % 2 = 0
 				AND bot_type = 'line'
-				AND user_status = 'PHONE_VERIFIED'
+				AND user_status = 'VERIFIED'
 				AND UNIX_TIMESTAMP(DATE_ADD(created_time, INTERVAL 90 day)) < UNIX_TIMESTAMP()
-				AND A.user_id NOT IN (SELECT DISTINCT uid FROM pass_record)
-				group by A.user_id HAVING count < 3`),
+				AND A.uid NOT IN (SELECT DISTINCT uid FROM record)
+				group by A.uid HAVING count < 3`),
 			true)
 	})
 
