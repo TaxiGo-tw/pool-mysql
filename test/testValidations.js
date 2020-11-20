@@ -48,15 +48,15 @@ describe('test Validations', async () => {
 	})
 
 	it('SQL Select Only String', async () => {
-		// assert.equal(SQLSelectOnlyString.validate('SELECT * FROM t WHERE 1 = 1 LIMIT 100'), true)
-		// assert.equal(SQLSelectOnlyString.validate('select * from t where 1 = 1 limit 100'), true)
-		// assert.equal(SQLSelectOnlyString.validate('DROP DATABASE d'), false)
-		// assert.equal(SQLSelectOnlyString.validate('DROP TABLE t'), false)
-		// assert.equal(SQLSelectOnlyString.validate('ALTER TABLE t ADD c varchar(255)'), false)
-		// assert.equal(SQLSelectOnlyString.validate('DELETE FROM t'), false)
-		// assert.equal(SQLSelectOnlyString.validate(`INSERT INTO t (c1, c2, c3) VALUES('v1', 'v2', 'v3)`), false)
-		// assert.equal(SQLSelectOnlyString.validate(`UPDATE t SET c1 = 'v1', c2 = 'v2`), false)
-		// assert.equal(SQLSelectOnlyString.validate(`SELECT * FROM t1; SELECT * FROM t2`), false)
+		assert.equal(SQLSelectOnlyString.validate('SELECT * FROM t WHERE 1 = 1 LIMIT 100'), true)
+		assert.equal(SQLSelectOnlyString.validate('select * from t where 1 = 1 limit 100'), true)
+		assert.equal(SQLSelectOnlyString.validate('DROP DATABASE d'), false)
+		assert.equal(SQLSelectOnlyString.validate('DROP TABLE t'), false)
+		assert.equal(SQLSelectOnlyString.validate('ALTER TABLE t ADD c varchar(255)'), false)
+		assert.equal(SQLSelectOnlyString.validate('DELETE FROM t'), false)
+		assert.equal(SQLSelectOnlyString.validate(`INSERT INTO t (c1, c2, c3) VALUES('v1', 'v2', 'v3)`), false)
+		assert.equal(SQLSelectOnlyString.validate(`UPDATE t SET c1 = 'v1', c2 = 'v2`), false)
+		assert.equal(SQLSelectOnlyString.validate(`SELECT * FROM t1; SELECT * FROM t2`), false)
 
 		assert.equal(
 			SQLSelectOnlyString.validate(
