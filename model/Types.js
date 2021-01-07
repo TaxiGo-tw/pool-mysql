@@ -217,8 +217,10 @@ class SQLSelectOnlyString extends Str {
 				return false
 			}
 
-			const regex = /^SELECT (?!.*(?:CREATE |DROP |UPDATE |INSERT |ALTER |DELETE |ATTACH |DETACH |;)).*$/i
+			const regex = /^SELECT (?!.*(?:(\(| )CREATE |(\(| )DROP |(\(| )UPDATE |(\(| )INSERT |(\(| )ALTER |(\(| )DELETE |(\(| )ATTACH |(\(| )DETACH |;)).*$/i
+
 			return string
+				.trim()
 				.replace(/[ \n\t]+/g, ' ')
 				.match(regex)
 				.length > 0
