@@ -4,7 +4,7 @@ const { should } = require('chai')  // Using Assert style
 should()  // Modifies `Object.prototype`
 const assert = require('assert')
 
-const { Number, String, Email, JSONString, SQLSelectOnlyString, NumberString, Point, Polygon, ENUM, FK, UNIX_TIMESTAMP, DateTime } = require('../model/Schema').Types
+const { Number, String, Email, JSONString, NumberString, Point, Polygon, ENUM, FK, UNIX_TIMESTAMP, DateTime } = require('../model/Schema').Types
 
 describe('test model Validations', async () => {
 	it('get pk ', async () => {
@@ -44,68 +44,6 @@ describe('test Validations', async () => {
 		assert.equal(JSONString.inputMapper({ a: 1 }), '{"a":1}')
 		assert.equal(JSONString.inputMapper([]), '[]')
 		assert.equal(JSONString.inputMapper([{ a: 1 }]), '[{"a":1}]')
-	})
-
-	it('SQL Select Only String', async () => {
-		assert.equal(SQLSelectOnlyString.validate(`SELECT * FROM t WHERE 1 = 1 LIMIT 100`), true)
-		assert.equal(SQLSelectOnlyString.validate(`select * from t where 1 = 1 limit 100`), true)
-		assert.equal(SQLSelectOnlyString.validate(`DROP DATABASE d`), false)
-		assert.equal(SQLSelectOnlyString.validate(`DROP TABLE t`), false)
-		assert.equal(SQLSelectOnlyString.validate(`ALTER TABLE t ADD c varchar(255)`), false)
-		assert.equal(SQLSelectOnlyString.validate(`DELETE FROM t`), false)
-		assert.equal(SQLSelectOnlyString.validate(`INSERT INTO t (c1, c2, c3) VALUES('v1', 'v2', 'v3)`), false)
-		assert.equal(SQLSelectOnlyString.validate(`UPDATE t SET c1 = 'v1', c2 = 'v2`), false)
-		assert.equal(SQLSelectOnlyString.validate(`SELECT * FROM t1; SELECT * FROM t2`), false)
-
-		assert.equal(
-			SQLSelectOnlyString.validate(`
-				SELECT A.uid, A.bot_id, count(*) count
-				FROM table A
-				LEFT JOIN tableB B ON A.uid = B.uid
-				WHERE A.trip_status = 'PROCESSED'
-				AND B.uid % 2 = 0
-				AND bot_type = 'line'
-				AND user_status = 'VERIFIED'
-				AND UNIX_TIMESTAMP(DATE_ADD(created_time, INTERVAL 90 day)) < UNIX_TIMESTAMP()
-				AND A.uid NOT IN (SELECT DISTINCT uid FROM record)
-				group by A.uid HAVING count < 3
-				`),
-			true)
-
-		assert.equal(
-			SQLSelectOnlyString.validate(`
-				SELECT a, b bb, c, d, IFNULL(e,'') ee
-				FROM user
-				WHERE uid IN (
-					SELECT uid
-					FROM pay
-					WHERE last_update <= 1606924799
-					AND Card6No IN (
-						SELECT BIN
-						FROM \`aaa\`.ggg
-						WHERE OO
-						LIKE '%tt%'
-					)
-				)
-			`),
-			true)
-
-		assert.equal(
-			SQLSelectOnlyString.validate(
-				`	SELECT a,b as bb, e, d, IFNULL(g,'') gg
-					FROM tt
-					WHERE uid in (
-						SELECT uid
-						FROM hh
-						WHERE bb between 1606924800 and 1608912000
-						AND qq IN (
-							SELECT BIN
-							FROM \`aaa\`.ggg
-							WHERE OO LIKE '%tt%'
-							)
-						)
-			`),
-			true)
 	})
 
 	it('Email String', async () => {

@@ -210,26 +210,6 @@ class JSONString extends Str {
 	}
 }
 
-class SQLSelectOnlyString extends Str {
-	static validate(string) {
-		try {
-			if (typeof string !== 'string') {
-				return false
-			}
-
-			const regex = /^SELECT (?!.*(?:(\(| )CREATE |(\(| )DROP |(\(| )UPDATE |(\(| )INSERT |(\(| )ALTER |(\(| )DELETE |(\(| )ATTACH |(\(| )DETACH |;)).*$/i
-
-			return string
-				.trim()
-				.replace(/[ \n\t]+/g, ' ')
-				.match(regex)
-				.length > 0
-		} catch (e) {
-			return false
-		}
-	}
-}
-
 class Email extends String {
 	static validate(string) {
 		if (!string) {
@@ -316,7 +296,6 @@ module.exports = {
 	Number: Num,
 	String: Str,
 	JSONString,
-	SQLSelectOnlyString,
 	NumberString,
 	Email,
 	URL,
