@@ -683,7 +683,7 @@ describe('test LIMIT OFFSET', () => {
 			.ORDER_BY('trip_id')
 			.LIMIT()
 			.OFFSET()
-			.exec()
+
 		//預期 20 筆行程
 		expect(checkTrips.length).to.equal(20)
 	})
@@ -694,7 +694,7 @@ describe('test LIMIT OFFSET', () => {
 			.WHERE({ driver_id: 3925 })
 			.ORDER_BY('trip_id')
 			.LIMIT(2)
-			.exec()
+
 		//預期 2 筆行程
 		expect(results.length).to.equal(2)
 	})
@@ -705,7 +705,7 @@ describe('test LIMIT OFFSET', () => {
 			.WHERE({ driver_id: 3925 })
 			.ORDER_BY('trip_id')
 			.LIMIT(3)
-			.exec()
+
 		//預期 3 筆行程
 		expect(results.length).to.equal(3)
 	})
@@ -717,7 +717,7 @@ describe('test LIMIT OFFSET', () => {
 			.ORDER_BY('trip_id')
 			.LIMIT(2)
 			.OFFSET(0)
-			.exec()
+
 		//預期 2 筆行程
 		expect(results.length).to.equal(2)
 	})
@@ -729,7 +729,7 @@ describe('test LIMIT OFFSET', () => {
 			.ORDER_BY('trip_id')
 			.LIMIT(2)
 			.OFFSET(2)
-			.exec()
+
 		//預期 2 筆行程
 		expect(results.length).to.equal(2)
 	})
@@ -741,7 +741,6 @@ describe('test LIMIT OFFSET', () => {
 			.ORDER_BY('trip_id')
 			.LIMIT(4)
 			.OFFSET(0)
-			.exec()
 
 		const results1 = await Trips.SELECT()
 			.FROM()
@@ -749,7 +748,6 @@ describe('test LIMIT OFFSET', () => {
 			.ORDER_BY('trip_id')
 			.LIMIT(2)
 			.OFFSET(0)
-			.exec()
 
 		const results2 = await Trips.SELECT()
 			.FROM()
@@ -757,7 +755,6 @@ describe('test LIMIT OFFSET', () => {
 			.ORDER_BY('trip_id')
 			.LIMIT(2)
 			.OFFSET(2)
-			.exec()
 
 		const arraySlice = checkTrips.map((item) => item.trip_id)
 		const arrayConcat = results1.concat(results2).map((item) => item.trip_id)
@@ -773,7 +770,6 @@ describe('test LIMIT OFFSET', () => {
 			.ORDER_BY('trip_id')
 			.LIMIT(2)
 			.OFFSET(2)
-			.exec()
 
 		const results = await Trips.SELECT()
 			.FROM()
@@ -781,7 +777,7 @@ describe('test LIMIT OFFSET', () => {
 			.ORDER_BY('trip_id')
 			.LIMIT(null, 2)
 			.OFFSET(null, 2)
-			.exec()
+
 		//預期行程會一樣
 		assert.equal(JSON.stringify(checkTrips), JSON.stringify(results))
 	})
@@ -792,7 +788,6 @@ describe('test LIMIT OFFSET', () => {
 			.WHERE({ driver_id: 3925 })
 			.ORDER_BY('trip_id')
 			.LIMIT(2, 2, true)
-			.exec()
 
 		//預期 2 筆行程
 		expect(results.length).to.equal(2)
@@ -804,7 +799,6 @@ describe('test LIMIT OFFSET', () => {
 			.WHERE({ driver_id: 3925 })
 			.ORDER_BY('trip_id')
 			.LIMIT(2, 2, { isExec: false })
-			.exec()
 
 		//預期 933 筆行程
 		assert.isTrue(results.length > 500, 'trip number more than 20')
@@ -816,7 +810,6 @@ describe('test LIMIT OFFSET', () => {
 			.WHERE({ driver_id: 3925 })
 			.ORDER_BY('trip_id')
 			.LIMIT(2, 2, { isExec: true })
-			.exec()
 
 		//預期 2 筆行程
 		expect(results.length).to.equal(2)
@@ -830,7 +823,6 @@ describe('test LIMIT OFFSET', () => {
 			.ORDER_BY('trip_id')
 			.LIMIT(2)
 			.OFFSET(2)
-			.exec()
 
 		const results = await Trips.SELECT()
 			.FROM()
@@ -838,7 +830,6 @@ describe('test LIMIT OFFSET', () => {
 			.ORDER_BY('trip_id')
 			.LIMIT(2, 2, { isExec: true })
 			.OFFSET(2, 0, { isExec: true })
-			.exec()
 
 		//預期行程會一樣
 		assert.equal(JSON.stringify(checkTrips), JSON.stringify(results))
@@ -852,7 +843,6 @@ describe('test LIMIT OFFSET', () => {
 			.ORDER_BY('trip_id')
 			.LIMIT(2)
 			.OFFSET(0)
-			.exec()
 
 		const results = await Trips.SELECT()
 			.FROM()
@@ -860,7 +850,6 @@ describe('test LIMIT OFFSET', () => {
 			.ORDER_BY('trip_id')
 			.LIMIT(2, 2, { isExec: true })
 			.OFFSET(2, 0, { isExec: false })
-			.exec()
 
 		//預期行程會一樣
 		assert.equal(JSON.stringify(checkTrips), JSON.stringify(results))
