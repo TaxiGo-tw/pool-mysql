@@ -677,184 +677,88 @@ describe('test UPDATED', async () => {
 
 describe('test LIMIT OFFSET', () => {
 	it('1 ori', async () => {
-		const checkTrips = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT()
-			.OFFSET()
+		const checkTrips = Trips.SELECT().FROM().LIMIT()
 
-		//預期 20 筆行程
-		expect(checkTrips.length).to.equal(20)
+		expect(checkTrips._q[2].type).to.equal('LIMIT')
+		expect(checkTrips._q[2].value).to.equal(20)
 	})
 
 	it('2-1 limit', async () => {
-		const results = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(2)
+		const results = await Trips.SELECT().FROM().LIMIT(2)
 
 		//預期 2 筆行程
-		expect(results.length).to.equal(2)
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
 	})
 
 	it('2-2 limit', async () => {
-		const results = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(3)
+		const results = await Trips.SELECT().FROM().LIMIT(3)
 
 		//預期 3 筆行程
-		expect(results.length).to.equal(3)
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(3)
 	})
 
 	it('3-1 offset', async () => {
-		const results = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(2)
-			.OFFSET(0)
+		const results = await Trips.SELECT().FROM().LIMIT(2).OFFSET(0)
 
 		//預期 2 筆行程
-		expect(results.length).to.equal(2)
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
 	})
 
 	it('3-2 offset', async () => {
-		const results = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(2)
-			.OFFSET(2)
+		const results = await Trips.SELECT().FROM().LIMIT(2).OFFSET(2)
 
-		//預期 2 筆行程
-		expect(results.length).to.equal(2)
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+		expect(results._q[3].type).to.equal('OFFSET')
+		expect(results._q[3].value).to.equal(2)
 	})
 
-	it('3-3 offset', async () => {
-		const checkTrips = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(4)
-			.OFFSET(0)
+	it('4-1 default', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(null, 2).OFFSET(null, 2)
 
-		const results1 = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(2)
-			.OFFSET(0)
-
-		const results2 = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(2)
-			.OFFSET(2)
-
-		const arraySlice = checkTrips.map((item) => item.trip_id)
-		const arrayConcat = results1.concat(results2).map((item) => item.trip_id)
-
-		//預期行程會一樣
-		assert.equal(JSON.stringify(arraySlice), JSON.stringify(arrayConcat))
-	})
-
-	it('4 default', async () => {
-		const checkTrips = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(2)
-			.OFFSET(2)
-
-		const results = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(null, 2)
-			.OFFSET(null, 2)
-
-		//預期行程會一樣
-		assert.equal(JSON.stringify(checkTrips), JSON.stringify(results))
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+		expect(results._q[3].type).to.equal('OFFSET')
+		expect(results._q[3].value).to.equal(2)
 	})
 
 	it('5-1 LIMIT isExec', async () => {
-		const results = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(2, 2, true)
+		const results = await Trips.SELECT().FROM().LIMIT(2, 2, { isExec: true })
 
-		//預期 2 筆行程
-		expect(results.length).to.equal(2)
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
 	})
 
 	it('5-2 LIMIT isExec', async () => {
-		const results = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(2, 2, { isExec: false })
+		const results = await Trips.SELECT().FROM().LIMIT(2, 2, { isExec: false })
 
-		//預期 933 筆行程
-		assert.isTrue(results.length > 500, 'trip number more than 20')
+		expect(results._q.length).to.equal(2)
 	})
-
-	it('5-3 LIMIT isExec', async () => {
-		const results = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(2, 2, { isExec: true })
-
-		//預期 2 筆行程
-		expect(results.length).to.equal(2)
-	})
-
 
 	it('6-1 OFFSET isExec', async () => {
-		const checkTrips = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(2)
-			.OFFSET(2)
-
 		const results = await Trips.SELECT()
 			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(2, 2, { isExec: true })
-			.OFFSET(2, 0, { isExec: true })
-
-		//預期行程會一樣
-		assert.equal(JSON.stringify(checkTrips), JSON.stringify(results))
+			.LIMIT(2)
+			.OFFSET(2, 2, { isExec: false })
+		expect(results._q.length).to.equal(3)
 	})
-
 
 	it('6-2 OFFSET isExec', async () => {
-		const checkTrips = await Trips.SELECT()
-			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(2)
-			.OFFSET(0)
-
 		const results = await Trips.SELECT()
 			.FROM()
-			.WHERE({ driver_id: 3925 })
-			.ORDER_BY('trip_id')
-			.LIMIT(2, 2, { isExec: true })
-			.OFFSET(2, 0, { isExec: false })
+			.LIMIT(2)
+			.OFFSET(2, 2, { isExec: true })
 
-		//預期行程會一樣
-		assert.equal(JSON.stringify(checkTrips), JSON.stringify(results))
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+		expect(results._q[3].type).to.equal('OFFSET')
+		expect(results._q[3].value).to.equal(2)
 	})
 })
+
 
 
 describe('test connection.query()', () => {
