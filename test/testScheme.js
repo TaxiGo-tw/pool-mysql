@@ -674,6 +674,93 @@ describe('test UPDATED', async () => {
 	})
 })
 
+
+describe('test LIMIT OFFSET', () => {
+	it('1 ori', async () => {
+		const checkTrips = Trips.SELECT().FROM().LIMIT()
+
+		expect(checkTrips._q[2].type).to.equal('LIMIT')
+		expect(checkTrips._q[2].value).to.equal(20)
+	})
+
+	it('2-1 limit', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(2)
+
+		//預期 2 筆行程
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+	})
+
+	it('2-2 limit', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(3)
+
+		//預期 3 筆行程
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(3)
+	})
+
+	it('3-1 offset', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(2).OFFSET(0)
+
+		//預期 2 筆行程
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+	})
+
+	it('3-2 offset', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(2).OFFSET(2)
+
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+		expect(results._q[3].type).to.equal('OFFSET')
+		expect(results._q[3].value).to.equal(2)
+	})
+
+	it('4-1 default', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(null, 2).OFFSET(null, 2)
+
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+		expect(results._q[3].type).to.equal('OFFSET')
+		expect(results._q[3].value).to.equal(2)
+	})
+
+	it('5-1 LIMIT isExec', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(2, 2, { isExec: true })
+
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+	})
+
+	it('5-2 LIMIT isExec', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(2, 2, { isExec: false })
+
+		expect(results._q.length).to.equal(2)
+	})
+
+	it('6-1 OFFSET isExec', async () => {
+		const results = await Trips.SELECT()
+			.FROM()
+			.LIMIT(2)
+			.OFFSET(2, 2, { isExec: false })
+		expect(results._q.length).to.equal(3)
+	})
+
+	it('6-2 OFFSET isExec', async () => {
+		const results = await Trips.SELECT()
+			.FROM()
+			.LIMIT(2)
+			.OFFSET(2, 2, { isExec: true })
+
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+		expect(results._q[3].type).to.equal('OFFSET')
+		expect(results._q[3].value).to.equal(2)
+	})
+})
+
+
+
 describe('test connection.query()', () => {
 	it('3', (done) => {
 		pool.createConnection().then(connection => {

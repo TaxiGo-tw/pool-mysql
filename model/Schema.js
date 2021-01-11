@@ -158,14 +158,21 @@ module.exports = class Schema {
 	GROUP_BY(...column) { return addQuery.bind(this)('GROUP BY', column.join(', '), null, false) }
 	ORDER_BY(column, sort = 'ASC') { return addQuery.bind(this)('ORDER BY ', `${column} ${sort}`, null, false) }
 
-	LIMIT(numbers, defaultValue = 20) {
-		const limit = numbers ? parseInt(numbers) : defaultValue
-		return addQuery.bind(this)('LIMIT', limit, null)
+	LIMIT(numbers, defaultValue = 20, { isExec = true } = {}) {
+		if (isExec) {
+			const limit = numbers ? parseInt(numbers) : defaultValue
+			return addQuery.bind(this)('LIMIT', limit, null)
+		}
+
+		return this
 	}
 
-	OFFSET(numbers, defaultValue = 0) {
-		const limit = numbers ? parseInt(numbers) : defaultValue
-		return addQuery.bind(this)('OFFSET', limit, null)
+	OFFSET(numbers, defaultValue = 0, { isExec = true } = {}) {
+		if (isExec) {
+			const limit = numbers ? parseInt(numbers) : defaultValue
+			return addQuery.bind(this)('OFFSET', limit, null)
+		}
+		return this
 	}
 
 	POPULATE(...fileds) {
