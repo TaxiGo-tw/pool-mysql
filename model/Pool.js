@@ -193,6 +193,16 @@ class Pool {
 		return callback
 	}
 
+	_move({ from, to }) {
+		delete this.connectionPool.using[from.tag.name][from.id]
+		if (to) {
+			from.tag = to.tag
+			this.connectionPool.using[to.tag.name][from.id] = from
+		} else {
+			delete from.tag
+		}
+	}
+
 	_recycle(connection) {
 		const callback = this._getNextWaitingCallback()
 
@@ -200,16 +210,13 @@ class Pool {
 			Event.emit('recycle', connection)
 			connection.gotAt = new Date()
 
-			delete this.connectionPool.using[connection.tag.name][connection.id]
-			connection.tag = callback.tag
-			this.connectionPool.using[callback.tag.name][connection.id] = connection
+			this._move({ from: connection, to: callback })
 
 			this.logger(undefined, `_recycle ${this.connectionID} ${JSON.stringify(connection.tag)}`)
 			return callback(null, connection)
 		}
 
-		delete this.connectionPool.using[connection.tag.name][connection.id]
-		delete connection.tag
+		this._move({ from: connection })
 
 		connection._resetStatus()
 		this.connectionPool.waiting.push(connection)
