@@ -127,8 +127,8 @@ class Pool {
 
 			//on connection limit, 去排隊
 			if (
-				this.numberOfConnections >= this.options.connectionLimit ||
-				Object.keys(this.connectionPool.using[tag.name]).length >= limit
+				this.numberOfConnections >= this.options.connectionLimit
+				|| Object.keys(this.connectionPool.using[tag.name]).length >= limit
 			) {
 				callback.requestTime = new Date()
 				callback.tag = tag
@@ -180,16 +180,30 @@ class Pool {
 
 	release() { }
 
-	_recycle(connection) {
-
+	_getNextWaitingCallback() {
 		const [callback] = this._connectionRequests.filter((callback) => {
-			return Object.keys(this.connectionPool.using[callback.tag.name]).length < callback.tag.limit
+			const callback_tag_name = callback.tag.name
+			const isUnderTagLimit = Object.keys(this.connectionPool.using[callback_tag_name]).length < parseInt(callback.tag.limit)
+			return isUnderTagLimit
 		})
+
+		const callback_index = this._connectionRequests.indexOf(callback)
+		delete this._connectionRequests[callback_index]
+
+		return callback
+	}
+
+	_recycle(connection) {
+		const callback = this._getNextWaitingCallback()
 
 		if (callback) {
 			Event.emit('recycle', connection)
 			connection.gotAt = new Date()
+
+			delete this.connectionPool.using[connection.tag.name][connection.id]
 			connection.tag = callback.tag
+			this.connectionPool.using[callback.tag.name][connection.id] = connection
+
 			this.logger(undefined, `_recycle ${this.connectionID} ${JSON.stringify(connection.tag)}`)
 			return callback(null, connection)
 		}
