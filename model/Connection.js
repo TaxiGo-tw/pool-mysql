@@ -165,7 +165,7 @@ module.exports = class Connection {
 			Event.emit('did_query', query.sql)
 
 			if (mustUpdateOneRow && b && b.affectedRows != 1) {
-				return cb(a || Error('MUST_UPDATE_ONE_ROW'), b, c)
+				return cb(a || Error(`MUST_UPDATE_ONE_ROW: ${query.sql}`), b, c)
 			}
 
 			cb(a, b, c)
