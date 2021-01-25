@@ -700,6 +700,9 @@ module.exports = class Schema {
 		options.populates = this._populadtes || []
 		delete this._populadtes
 
+		options._forceWriter = this._forceWriter
+		delete this._forceWriter
+
 		const combine = this._combine || false
 		delete this._combine
 
