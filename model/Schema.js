@@ -318,8 +318,6 @@ module.exports = class Schema {
 			let results
 
 			///////////////////////////////////////////////////////////////////
-			this._connection.useWriter = this._forceWriter
-			this._forceWriter = false
 
 			const {
 				query,
@@ -338,13 +336,16 @@ module.exports = class Schema {
 				onErr,
 				decryption,
 				populates,
-				ex
+				ex,
+				forceWriter
 			} = this._options()
 			///////////////////////////////////////////////////////////////////
 			if (this.shouldMock()) {
 				return this.mocked(formatted)
 			}
 			///////////////////////////////////////////////////////////////////
+
+			this._connection.useWriter = forceWriter
 
 			// eslint-disable-next-line no-unused-vars
 			let conn = this._connection
