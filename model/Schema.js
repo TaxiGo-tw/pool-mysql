@@ -222,8 +222,8 @@ module.exports = class Schema {
 	}
 
 
-	WRITER() {
-		this._forceWriter = true
+	WRITER(forceWriter) {
+		this._forceWriter = !!forceWriter || true
 		return this
 	}
 
