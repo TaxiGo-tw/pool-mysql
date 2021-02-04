@@ -183,7 +183,8 @@ class Pool {
 	_getNextWaitingCallback() {
 		const [callback] = this._connectionRequests.filter((callback) => {
 			const callback_tag_name = callback.tag.name
-			const isUnderTagLimit = Object.keys(this.connectionPool.using[callback_tag_name]).length < parseInt(callback.tag.limit)
+			const callback_tag_limit = parseInt(callback.tag.limit)
+			const isUnderTagLimit = Object.keys(this.connectionPool.using[callback_tag_name]).length < callback_tag_limit
 			return isUnderTagLimit
 		})
 
