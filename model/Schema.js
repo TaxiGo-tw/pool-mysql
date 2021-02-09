@@ -222,8 +222,8 @@ module.exports = class Schema {
 	}
 
 
-	WRITER(forceWriter = true) {
-		this._forceWriter = forceWriter
+	WRITER(useWriter = true) {
+		this._useWriter = useWriter
 		return this
 	}
 
@@ -337,7 +337,7 @@ module.exports = class Schema {
 				decryption,
 				populates,
 				ex,
-				forceWriter
+				useWriter
 			} = this._options()
 			///////////////////////////////////////////////////////////////////
 			if (this.shouldMock()) {
@@ -345,7 +345,7 @@ module.exports = class Schema {
 			}
 			///////////////////////////////////////////////////////////////////
 
-			this._connection.useWriter = forceWriter
+			this._connection.useWriter = useWriter
 
 			// eslint-disable-next-line no-unused-vars
 			let conn = this._connection
@@ -701,8 +701,8 @@ module.exports = class Schema {
 		options.populates = this._populadtes || []
 		delete this._populadtes
 
-		options.forceWriter = this._forceWriter
-		delete this._forceWriter
+		options.useWriter = this._useWriter
+		delete this._useWriter
 
 		const combine = this._combine || false
 		delete this._combine
