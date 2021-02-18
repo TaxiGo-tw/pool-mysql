@@ -1,6 +1,10 @@
-const assert = require('assert')
-assert.ok(process.env.DATA_ENCRYPTION_KEY, 'process.env.DATA_ENCRYPTION_KEY is undefined')
-assert.ok(process.env.DATA_ENCRYPTION_IV, 'process.env.DATA_ENCRYPTION_IV is undefined')
+if (!process.env.DATA_ENCRYPTION_KEY) {
+	console.error('process.env.DATA_ENCRYPTION_KEY is undefined')
+}
+
+if (!process.env.DATA_ENCRYPTION_IV) {
+	console.error('process.env.DATA_ENCRYPTION_IV is undefined')
+}
 
 const crypto = require('crypto')
 const algorithm = 'aes-256-cbc'
@@ -15,7 +19,7 @@ module.exports = class Encryption {
 			let encrypted = cipher.update(text)
 			encrypted = Buffer.concat([encrypted, cipher.final()])
 			return encrypted.toString('hex')
-		} catch(e) {
+		} catch (e) {
 			return ''
 		}
 	}
@@ -27,7 +31,7 @@ module.exports = class Encryption {
 			let decrypted = decipher.update(encryptedText, 'binary')
 			decrypted = Buffer.concat([decrypted, decipher.final()])
 			return decrypted.toString()
-		} catch(e) {
+		} catch (e) {
 			return ''
 		}
 	}
