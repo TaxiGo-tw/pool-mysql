@@ -12,10 +12,10 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
-		"mysql": "^2.16.0"
+		"mysql": "^2.18.1"
 	},
 	"devDependencies": {
-		"bluebird": "^3.7.0",
+		"bluebird": "^3.7.2",
 		"chai": "^4.2.0",
 		"debug": "^4.1.1",
 		"dotenv": "^8.1.0",
