@@ -146,11 +146,11 @@ class Polygon {
 				return `(${string})`
 			}).join(',')
 
-			return mysql.raw(`POLYGON(${result})`)
+			return mysql.raw(`ST_GeomFromText("POLYGON(${result})")`)
 		} else if (typeof value === 'string') {
 			const matched = value.match(/\(\s*\(\s*([+-]?\d*\.\d+)\s+([+-]?\d*\.\d+)\s*(,\s*[+-]?\d*\.\d+\s+[+-]?\d*\.\d+)+\s*,\s*\1\s+\2\s*\)\s*\)/i)
 			if (matched) {
-				return mysql.raw(`POLYGON${matched[0]}`)
+				return mysql.raw(`ST_GeomFromText("POLYGON${matched[0]}")`)
 			}
 		}
 
