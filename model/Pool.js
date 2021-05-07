@@ -8,6 +8,26 @@ const Event = require('./Event')
 const extendRedis = require('./RedisExtend')
 
 class Pool {
+	static async createPool({ options, redisClient }) {
+		if (!options.writer) {
+			throw Error('need options')
+		}
+
+		if (!instance._pools) {
+			instance._pools = {}
+		}
+
+		const key = options.writer
+
+		if (instance._pools[key]) {
+			return instance._pools[key]
+		} else {
+			const pool = new Pool({ options, redisClient })
+			instance._pools[key] = pool
+			return pool
+		}
+	}
+
 	constructor({ options, redisClient } = {}) {
 		this.options = options || defaultOptions
 
@@ -259,4 +279,6 @@ class Pool {
 	}
 }
 
-module.exports = new Pool()
+
+const instance = new Pool()
+module.exports = instance
