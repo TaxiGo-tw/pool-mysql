@@ -8,7 +8,7 @@ const Event = require('./Event')
 const extendRedis = require('./RedisExtend')
 
 class Pool {
-	static async createPool({ options, redisClient }) {
+	createPool({ options = {}, redisClient }) {
 		if (!options.writer) {
 			throw Error('need options')
 		}
