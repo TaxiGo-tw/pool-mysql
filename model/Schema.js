@@ -516,9 +516,9 @@ module.exports = class Schema {
 
 	VALUES(values) {
 		if (values instanceof Array) {
-			const command = values.map(value => {
-				return `('${value.join(`','`)}')`
-			}).join(',')
+			const command = values
+				.map(value => `('${value.join(`','`)}')`)
+				.join(',')
 
 			this._q.push({ type: 'VALUES', command })
 			return this
