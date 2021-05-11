@@ -1,3 +1,5 @@
+process.env.TZ = 'UTC'
+
 const DriverReviewStatus = require('./model/DriverReviewStatus')
 
 const { should } = require('chai')  // Using Assert style
