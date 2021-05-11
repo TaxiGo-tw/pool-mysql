@@ -12,8 +12,8 @@ module.exports = class Connection {
 	constructor(pool) {
 		this._pool = pool
 
-		this.reader = MySQLConnectionManager.createConnection(this._pool.options.reader, 'Reader', this)
-		this.writer = MySQLConnectionManager.createConnection(this._pool.options.writer, 'Writer', this)
+		this.reader = this._pool._manager.getWriter(this)
+		this.writer = this._pool._manager.getReader(this)
 		this.useWriter = false
 
 		this.id = pool.connectionID

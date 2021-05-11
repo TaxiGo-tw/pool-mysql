@@ -1,6 +1,8 @@
 require('./Misc')
 const LogLevel = require('./LogLevel')
 const defaultOptions = require('./DefaultOptions')
+
+const MySQLConnectionManager = require('./MySQLConnectionManager')
 const Connection = require('./Connection')
 
 const Event = require('./Event')
@@ -30,6 +32,8 @@ class Pool {
 
 	constructor({ options, redisClient } = {}) {
 		this.options = options || defaultOptions
+
+		this._manager = new MySQLConnectionManager(options)
 
 		this.connectionPool = {
 			using: {
@@ -112,7 +116,6 @@ class Pool {
 		this._mock = callback
 	}
 
-	//TODO: { tag, limit = 0 } = {}
 	async createConnection({ tag_name = 'default', limit = this.options.connectionLimit } = {}) {
 		return new Promise(async (resolve, reject) => {
 			this.getConnection((err, connection) => {
@@ -164,7 +167,7 @@ class Pool {
 			connection.tag = tag
 			this.connectionPool.using[tag.name][connection.id] = connection
 
-			connection.connect().then(value => {
+			connection.connect().then(() => {
 				Event.emit('create', connection)
 				this.numberOfConnections
 				return callback(undefined, connection)
