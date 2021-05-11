@@ -1,6 +1,4 @@
 const launchTme = new Date()
-const QUERY_THRESHOLD_START = process.env.QUERY_THRESHOLD_START || 60 * 1000
-const QUERY_THRESHOLD_MS = process.env.QUERY_THRESHOLD_MS || 500
 
 const mysql = require('mysql')
 const Event = require('./Event')
@@ -148,7 +146,7 @@ module.exports = class Connection {
 			].join(',')
 
 			const costTime = endTime - startTime
-			const isLongQuery = endTime - launchTme > QUERY_THRESHOLD_START && costTime > QUERY_THRESHOLD_MS
+			const isLongQuery = endTime - launchTme > this._pool.options.QUERY_THRESHOLD_START && costTime > this._pool.options.QUERY_THRESHOLD_MS
 			const printString = `${connection.logPrefix} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
 
 			if (isLongQuery) {

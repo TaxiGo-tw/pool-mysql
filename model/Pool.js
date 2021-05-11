@@ -32,7 +32,7 @@ class Pool {
 	}
 
 	constructor({ options, redisClient } = {}) {
-		this.options = options || require('./DefaultOptions')
+		this.options = require('./Options')(options)
 
 		this._manager = new MySQLConnectionManager(this.options)
 
@@ -250,7 +250,7 @@ class Pool {
 
 	//結束一半的waiting connections, 至少留10個
 	_endFreeConnections() {
-		const atLeast = process.env.SQL_FREE_CONNECTIONS || 10
+		const atLeast = this._options.SQL_FREE_CONNECTIONS || 10
 		const stayAmount = Math.ceil(this.connectionPool.waiting.length / 2)
 
 		while (stayAmount > atLeast && this.connectionPool.waiting.length > stayAmount) {
