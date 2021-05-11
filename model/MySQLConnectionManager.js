@@ -1,3 +1,4 @@
+const assert = require('assert')
 const mysql = require('mysql')
 
 module.exports = class MySQLConnectionManager {
@@ -5,15 +6,21 @@ module.exports = class MySQLConnectionManager {
 
 		this._options = options
 
-		this._writerPool = { waiting: [], using: [] }
-		this._readerPool = { waiting: [], using: [] }
+		this._writerPool = { waiting: [], using: {} }
+		this._readerPool = { waiting: [], using: {} }
 	}
 
 	async getWriter(connection) {
 		const mysqlConnection = this._writerPool.waiting.shift()
 			|| this._createConnection(this._options.writer, 'Writer', connection)
 
-		this._writerPool.using.push(mysqlConnection)
+		mysqlConnection.connectionID = connection.id
+
+		if (!this._writerPool.using[mysqlConnection.connectionID]) {
+			this._writerPool.using[mysqlConnection.connectionID] = mysqlConnection
+		} else {
+			assert.fail('getWriter duplicated connection')
+		}
 
 		return mysqlConnection
 	}
@@ -22,7 +29,13 @@ module.exports = class MySQLConnectionManager {
 		const mysqlConnection = this._readerPool.waiting.shift()
 			|| this._createConnection(this._options.reader, 'Reader', connection)
 
-		this._readerPool.using.push(mysqlConnection)
+		mysqlConnection.connectionID = connection.id
+
+		if (!this._readerPool.using[mysqlConnection.connectionID]) {
+			this._readerPool.using[mysqlConnection.connectionID] = mysqlConnection
+		} else {
+			assert.fail('getReader duplicated connection')
+		}
 
 		return mysqlConnection
 	}
@@ -76,7 +89,13 @@ module.exports = class MySQLConnectionManager {
 		}
 
 		mysqlConnection.return = () => {
-			this.waiting.push(mysqlConnection)
+			if (mysqlConnection.role == 'writer') {
+				// this._writerPool.using.
+				this._writerPool.waiting.push(mysqlConnection)
+			} else if (mysqlConnection.role == 'reader') {
+				// this._writerPool.using.
+				this._writerPool.reader.push(mysqlConnection)
+			}
 		}
 
 		return mysqlConnection
