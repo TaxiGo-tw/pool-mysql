@@ -60,7 +60,7 @@ module.exports = class Connection {
 		try {
 			// await this.reader.startTransaction()
 			await this.writer.startTransaction()
-			this._status.isStartedStransaction = true
+			this._status.isStartedTransaction = true
 			cb(undefined)
 		} catch (e) {
 			cb(e)
@@ -95,26 +95,26 @@ module.exports = class Connection {
 			cb = bb
 		}
 
-		let sqlStatment = sql.sql || sql
+		let sqlStatement = sql.sql || sql
 
 		if (!this.isUsing) {
 			this._pool.logger(`
 	pool-mysql: connection is not using, might released too early
-	Query: ${sqlStatment}
+	Query: ${sqlStatement}
 			`)
 		}
 
 		// is pool.mock available
 		if (process.env.NODE_ENV !== 'production' && this._pool.mock && !isNaN(this._pool._mockCounter)) {
-			return cb(null, this._pool.mock(this._pool._mockCounter++, sqlStatment))
+			return cb(null, this._pool.mock(this._pool._mockCounter++, sqlStatement))
 		}
 
 		const connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
 		this.useWriter = false
 
 
-		if (this.isSelect(sqlStatment) && this._noCache) {
-			sqlStatment = sqlStatment.replace(/^select/gi, 'SELECT SQL_NO_CACHE ')
+		if (this.isSelect(sqlStatement) && this._noCache) {
+			sqlStatement = sqlStatement.replace(/^select/gi, 'SELECT SQL_NO_CACHE ')
 		}
 		this._noCache = false
 
@@ -125,7 +125,7 @@ module.exports = class Connection {
 		this._print = false
 
 		const query = {
-			sql: mysql.format(sqlStatment.trim(), values),
+			sql: mysql.format(sqlStatement.trim(), values),
 			nestTables: sql.nestTables
 		}
 
@@ -274,7 +274,7 @@ module.exports = class Connection {
 				this._pool.logger(e, `${this.writer.logPrefix} : COMMIT`)
 			}
 
-			this._status.isCommited = true
+			this._status.isCommitted = true
 
 			if (cb) {
 				cb(e)
@@ -286,7 +286,7 @@ module.exports = class Connection {
 		return new Promise((resolve, reject) => {
 			const x = this.reader.rollback(() => {
 				const y = this.writer.rollback(() => {
-					this._status.isCommited = true
+					this._status.isCommitted = true
 
 					this._pool.logger(null, '[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
 					this._pool.logger(null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
@@ -299,7 +299,7 @@ module.exports = class Connection {
 	release() {
 		this._pool.logger(null, `[${this.id}] RELEASE`)
 
-		if (this._status.isStartedStransaction && !this._status.isCommited) {
+		if (this._status.isStartedTransaction && !this._status.isCommitted) {
 			this._pool.logger(undefined, 'pool-mysql: Transaction started, should be Committed')
 		}
 		this._resetStatus()
