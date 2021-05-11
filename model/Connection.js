@@ -3,7 +3,7 @@ const QUERY_THRESHOLD_START = process.env.QUERY_THRESHOLD_START || 60 * 1000
 const QUERY_THRESHOLD_MS = process.env.QUERY_THRESHOLD_MS || 500
 
 const mysql = require('mysql')
-
+const MySQLConnectionManager = require('./MySQLConnectionManager')
 const Event = require('./Event')
 
 const Combine = require('./Combine')
@@ -12,8 +12,8 @@ module.exports = class Connection {
 	constructor(pool) {
 		this._pool = pool
 
-		this.reader = this._mysqlConnection(this._pool.options.reader, 'Reader', this)
-		this.writer = this._mysqlConnection(this._pool.options.writer, 'Writer', this)
+		this.reader = MySQLConnectionManager.createConnection(this._pool.options.reader, 'Reader', this)
+		this.writer = MySQLConnectionManager.createConnection(this._pool.options.writer, 'Writer', this)
 		this.useWriter = false
 
 		this.id = pool.connectionID
@@ -376,56 +376,5 @@ module.exports = class Connection {
 	onErr(callbackOrString) {
 		this._onErr = callbackOrString
 		return this
-	}
-
-	_mysqlConnection(option, role, connection) {
-		const mysqlConnection = mysql.createConnection(option)
-		mysqlConnection.role = role
-
-		mysqlConnection.on('error', err => {
-			this._pool.logger(err, `connection error: ${(err && err.message) ? err.message : err}`)
-			//丟掉這個conneciton
-			connection.end()
-		})
-
-		mysqlConnection.q = (sql, values) => {
-			return new Promise((resolve, reject) => {
-				mysqlConnection.query(sql, values, (err, result) => {
-					if (err) {
-						reject(err)
-					} else {
-						resolve(result)
-					}
-				})
-			})
-		}
-
-		mysqlConnection.startTransaction = () => {
-			return new Promise((resolve, reject) => {
-				mysqlConnection.beginTransaction((err) => {
-					this._pool.logger(err, `${mysqlConnection.logPrefix} : Start Transaction`)
-					if (err) {
-						reject(err)
-					} else {
-						resolve(mysqlConnection)
-					}
-				})
-			})
-		}
-
-		mysqlConnection.commitChange = () => {
-			return new Promise((resolve, reject) => {
-				mysqlConnection.commit((err) => {
-					this._pool.logger(err, `${mysqlConnection.logPrefix} : COMMIT`)
-					if (err) {
-						reject(err)
-					} else {
-						resolve(mysqlConnection)
-					}
-				})
-			})
-		}
-
-		return mysqlConnection
 	}
 }

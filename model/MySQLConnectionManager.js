@@ -1,42 +1,55 @@
+const promisify = require('util').promisify
+
 const mysql = require('mysql')
 
 // the real pool
 
-module.exports = class ConnectionManager {
+module.exports = class MySQLConnectionManager {
 	constructor(options) {
 		this._options = options
-		this._writers = []
-		this._readers = []
+
+		this._writerPool = {
+			waiting: [],
+			using: []
+		}
+
+		this._readerPool = {
+			waiting: [],
+			using: []
+		}
 	}
 
 	async getWriter() {
-		let conn = this._writers.shift()
-		if (!conn) {
-			conn = 1
-		}
-		return conn
+		const mysqlConnection = this._writerPool.waiting.shift()
+			|| MySQLConnectionManager.createConnection(this._options.writer, 'Writer')
+
+		this._writerPool.using.push(mysqlConnection)
+
+		return mysqlConnection
 	}
 
 	async getRider() {
-		let conn = this._readers.shift()
-		if (!conn) {
-			conn = 1
-		}
-		return conn
+		const mysqlConnection = this._readerPool.waiting.shift()
+			|| MySQLConnectionManager.createConnection(this._options.reader, 'Reader')
+
+		this._readerPool.using.push(mysqlConnection)
+
+		return mysqlConnection
 	}
 
 
+
 	//
-	_mysqlConnection(option, role, connection) {
+	static createConnection(option, role) {
 		const mysqlConnection = mysql.createConnection(option)
 		mysqlConnection.role = role
 
 		mysqlConnection.on('error', err => {
 			this._pool.logger(err, `connection error: ${(err && err.message) ? err.message : err}`)
-			//丟掉這個connection
-			connection.end()
+			throw err
 		})
 
+		mysqlConnection.q = promisify(mysqlConnection.query)
 		mysqlConnection.q = (sql, values) => {
 			return new Promise((resolve, reject) => {
 				mysqlConnection.query(sql, values, (err, result) => {
@@ -77,4 +90,5 @@ module.exports = class ConnectionManager {
 
 		return mysqlConnection
 	}
+
 }
