@@ -1,6 +1,5 @@
 require('./Misc')
 const LogLevel = require('./LogLevel')
-const defaultOptions = require('./DefaultOptions')
 
 const MySQLConnectionManager = require('./MySQLConnectionManager')
 const Connection = require('./Connection')
@@ -10,6 +9,8 @@ const Event = require('./Event')
 const extendRedis = require('./RedisExtend')
 
 class Pool {
+
+	/* for create second or more pool */
 	createPool({ options = {}, redisClient }) {
 		if (!options.writer) {
 			throw Error('need options')
@@ -31,9 +32,9 @@ class Pool {
 	}
 
 	constructor({ options, redisClient } = {}) {
-		this.options = options || defaultOptions
+		this.options = options || require('./DefaultOptions')
 
-		this._manager = new MySQLConnectionManager(options)
+		this._manager = new MySQLConnectionManager(this.options)
 
 		this.connectionPool = {
 			using: {

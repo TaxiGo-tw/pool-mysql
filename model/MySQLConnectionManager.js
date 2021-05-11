@@ -1,7 +1,5 @@
 const mysql = require('mysql')
 
-// the real pool
-
 module.exports = class MySQLConnectionManager {
 	constructor(options) {
 
@@ -12,11 +10,6 @@ module.exports = class MySQLConnectionManager {
 	}
 
 	getWriter(connection) {
-		// if (this._writerPool.waiting.length > this._options.writer.connectionLimit) {
-
-		// }
-
-
 		const mysqlConnection = this._writerPool.waiting.shift()
 			|| MySQLConnectionManager._createConnection(this._options.writer, 'Writer', connection)
 

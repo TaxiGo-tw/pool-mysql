@@ -3,7 +3,6 @@ const QUERY_THRESHOLD_START = process.env.QUERY_THRESHOLD_START || 60 * 1000
 const QUERY_THRESHOLD_MS = process.env.QUERY_THRESHOLD_MS || 500
 
 const mysql = require('mysql')
-const MySQLConnectionManager = require('./MySQLConnectionManager')
 const Event = require('./Event')
 
 const Combine = require('./Combine')
