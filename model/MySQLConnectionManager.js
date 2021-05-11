@@ -9,18 +9,18 @@ module.exports = class MySQLConnectionManager {
 		this._readerPool = { waiting: [], using: [] }
 	}
 
-	getWriter(connection) {
+	async getWriter(connection) {
 		const mysqlConnection = this._writerPool.waiting.shift()
-			|| MySQLConnectionManager._createConnection(this._options.writer, 'Writer', connection)
+			|| this._createConnection(this._options.writer, 'Writer', connection)
 
 		this._writerPool.using.push(mysqlConnection)
 
 		return mysqlConnection
 	}
 
-	getReader(connection) {
+	async getReader(connection) {
 		const mysqlConnection = this._readerPool.waiting.shift()
-			|| MySQLConnectionManager._createConnection(this._options.reader, 'Reader', connection)
+			|| this._createConnection(this._options.reader, 'Reader', connection)
 
 		this._readerPool.using.push(mysqlConnection)
 
@@ -28,7 +28,7 @@ module.exports = class MySQLConnectionManager {
 	}
 
 	//
-	static _createConnection(option, role, connection) {
+	_createConnection(option, role, connection) {
 		const mysqlConnection = mysql.createConnection(option)
 		mysqlConnection.role = role
 
@@ -73,6 +73,10 @@ module.exports = class MySQLConnectionManager {
 					}
 				})
 			})
+		}
+
+		mysqlConnection.return = () => {
+			this.waiting.push(mysqlConnection)
 		}
 
 		return mysqlConnection

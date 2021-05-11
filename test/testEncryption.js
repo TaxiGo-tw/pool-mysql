@@ -13,8 +13,6 @@ describe('test Encrypt', async () => {
 		const encrypted = Encryption.encrypt(string)
 		const decrypted = Encryption.decrypt(encrypted)
 
-		console.log(string, encrypted, decrypted)
-
 		assert.strictEqual(decrypted, string)
 	})
 })

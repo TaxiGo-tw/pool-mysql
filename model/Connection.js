@@ -9,8 +9,6 @@ module.exports = class Connection {
 	constructor(pool) {
 		this._pool = pool
 
-		this.reader = this._pool._manager.getWriter(this)
-		this.writer = this._pool._manager.getReader(this)
 		this.useWriter = false
 
 		this.id = pool.connectionID
@@ -35,6 +33,9 @@ module.exports = class Connection {
 	}
 
 	async connect() {
+		this.reader = await this._pool._manager.getWriter(this)
+		this.writer = await this._pool._manager.getReader(this)
+
 		const create = async (connection) => {
 			return new Promise((resolve, reject) => {
 				connection.connect(err => {
