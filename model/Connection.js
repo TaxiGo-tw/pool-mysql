@@ -58,7 +58,6 @@ module.exports = class Connection {
 
 	async beginTransaction(cb) {
 		try {
-			// await this.reader.startTransaction()
 			await this.writer.startTransaction()
 			this._status.isStartedTransaction = true
 			cb(undefined)

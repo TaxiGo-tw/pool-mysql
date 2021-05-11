@@ -4,11 +4,16 @@ const assert = require('assert')
 
 const pool = require('../model/Pool')
 
-const options = require('../model/DefaultOptions')
-options.writer.host = process.env.HOST2
-options.writer.database = process.env.DB2
-options.reader.host = process.env.HOST2
-options.reader.database = process.env.DB2
+const options = require('../model/Options')({
+	writer: {
+		host: process.env.HOST2,
+		database: process.env.DB2
+	},
+	reader: {
+		host: process.env.HOST2,
+		database: process.env.DB2
+	}
+})
 
 const pool2 = pool.createPool({ options })
 
