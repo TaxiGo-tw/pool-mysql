@@ -20,7 +20,7 @@ class Pool {
 			instance._pools = {}
 		}
 
-		const key = options.writer
+		const key = options.writer.host + options.reader.host + options.database
 
 		if (instance._pools[key]) {
 			return instance._pools[key]
