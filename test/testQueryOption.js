@@ -40,7 +40,7 @@ describe('test Query Option', async () => {
 						query: `{"sql":"SET @a := '';SELECT zzz_pool_mysql_testing.id, zzz_pool_mysql_testing.email SET ? FROM zzz_pool_mysql_testing WHERE (?) LIMIT ? AND ((SELECT @a := CONCAT_WS(',', IF(a IS NULL, "{{NULL}}",a), @a)) + 1);SELECT @a a","nestTables":true}`,
 						values: `[{"a":1},{"id":1},1]`,
 						formatted: `SET @a := '';SELECT zzz_pool_mysql_testing.id, zzz_pool_mysql_testing.email SET \`a\` = 1 FROM zzz_pool_mysql_testing WHERE (\`id\` = 1) LIMIT 1 AND ((SELECT @a := CONCAT_WS(',', IF(a IS NULL, "{{NULL}}",a), @a)) + 1);SELECT @a a`,
-						reduceInitiVal: 0,
+						reduceInitVal: 0,
 						nested: true,
 						print: true,
 						getFirst: true,
@@ -83,7 +83,8 @@ describe('test Query Option', async () => {
 			}
 		}
 
-		const string = '{"query":{"sql":"SET @a := \'\';SELECT zzz_pool_mysql_testing.id, zzz_pool_mysql_testing.email SET ? FROM zzz_pool_mysql_testing WHERE (?) LIMIT ? AND ((SELECT @a := CONCAT_WS(\',\', IF(a IS NULL, \\"{{NULL}}\\",a), @a)) + 1);SELECT @a a","nestTables":true},"values":[{"a":1},{"id":1},1],"formatted":"SET @a := \'\';SELECT zzz_pool_mysql_testing.id, zzz_pool_mysql_testing.email SET `a` = 1 FROM zzz_pool_mysql_testing WHERE (`id` = 1) LIMIT 1 AND ((SELECT @a := CONCAT_WS(\',\', IF(a IS NULL, \\"{{NULL}}\\",a), @a)) + 1);SELECT @a a","reduceInitiVal":0,"nested":true,"print":true,"getFirst":true,"updated":true,"changedRows":1,"affectedRows":1,"onErr":"hi","decryption":["abc"],"populates":[{"fk":{"value":{}}}],"useWriter":true,"encryption":"a","ex":{"EX":300,"redisPrint":true}}'
+		const json = { 'query': { 'sql': 'SET @a := \'\';SELECT zzz_pool_mysql_testing.id, zzz_pool_mysql_testing.email SET ? FROM zzz_pool_mysql_testing WHERE (?) LIMIT ? AND ((SELECT @a := CONCAT_WS(\',\', IF(a IS NULL, "{{NULL}}",a), @a)) + 1);SELECT @a a', 'nestTables': true }, 'values': [{ 'a': 1 }, { 'id': 1 }, 1], 'formatted': 'SET @a := \'\';SELECT zzz_pool_mysql_testing.id, zzz_pool_mysql_testing.email SET `a` = 1 FROM zzz_pool_mysql_testing WHERE (`id` = 1) LIMIT 1 AND ((SELECT @a := CONCAT_WS(\',\', IF(a IS NULL, "{{NULL}}",a), @a)) + 1);SELECT @a a', 'reduceInitVal': 0, 'nested': true, 'print': true, 'getFirst': true, 'updated': true, 'changedRows': 1, 'affectedRows': 1, 'onErr': 'hi', 'decryption': ['abc'], 'populates': [{ 'fk': { 'value': {} } }], 'useWriter': true, 'encryption': 'a', 'ex': { 'EX': 300, 'redisPrint': true } }
+		const string = JSON.stringify(json)
 		JSON.stringify(options).should.equal(string)
 	})
 })

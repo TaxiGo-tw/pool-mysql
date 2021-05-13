@@ -97,8 +97,8 @@ module.exports = class Schema {
 		return this
 	}
 
-	JOIN(whereCaluse, whereCaluse2) {
-		const tableName = whereCaluse.split(' ')[0]
+	JOIN(whereClause, whereClause2) {
+		const tableName = whereClause.split(' ')[0]
 		for (const q of this._q) {
 			if (q.type == 'SELECT') {
 				if (q.customed) {
@@ -107,11 +107,11 @@ module.exports = class Schema {
 				break
 			}
 		}
-		return addQuery.bind(this)('JOIN', whereCaluse, whereCaluse2, false)
+		return addQuery.bind(this)('JOIN', whereClause, whereClause2, false)
 	}
 
-	LEFTJOIN(whereCaluse, whereCaluse2) {
-		const tableName = whereCaluse.split(' ')[0]
+	LEFTJOIN(whereClause, whereClause2) {
+		const tableName = whereClause.split(' ')[0]
 
 		for (const q of this._q) {
 			if (q.type == 'SELECT') {
@@ -121,14 +121,14 @@ module.exports = class Schema {
 				break
 			}
 		}
-		return addQuery.bind(this)('LEFT JOIN', whereCaluse, whereCaluse2, false)
+		return addQuery.bind(this)('LEFT JOIN', whereClause, whereClause2, false)
 	}
 
-	WHERE(whereCaluse, whereCaluse2) { return addQuery.bind(this)('WHERE', whereCaluse, whereCaluse2) }
+	WHERE(whereClause, whereClause2) { return addQuery.bind(this)('WHERE', whereClause, whereClause2) }
 
-	AND(whereCaluse, whereCaluse2, { isExec = true } = {}) {
+	AND(whereClause, whereClause2, { isExec = true } = {}) {
 		if (isExec) {
-			return addQuery.bind(this)('AND', whereCaluse, whereCaluse2)
+			return addQuery.bind(this)('AND', whereClause, whereClause2)
 		}
 		return this
 	}
@@ -146,9 +146,9 @@ module.exports = class Schema {
 		return result
 	}
 
-	OR(whereCaluse, whereCaluse2, { isExec = true } = {}) {
+	OR(whereClause, whereClause2, { isExec = true } = {}) {
 		if (isExec) {
-			return addQuery.bind(this)('OR', whereCaluse, whereCaluse2)
+			return addQuery.bind(this)('OR', whereClause, whereClause2)
 		}
 
 		return this
@@ -175,8 +175,8 @@ module.exports = class Schema {
 		return this
 	}
 
-	POPULATE(...fileds) {
-		this._populadtes = fileds
+	POPULATE(...fields) {
+		this._populates = fields
 		return this
 	}
 
@@ -237,9 +237,9 @@ module.exports = class Schema {
 		return this
 	}
 
-	REDUCE(reduceCallback, reduceInitiVal = undefined) {
+	REDUCE(reduceCallback, reduceInitVal = undefined) {
 		this._reduceCallback = reduceCallback
-		this._reduceInitiVal = reduceInitiVal
+		this._reduceInitVal = reduceInitVal
 		return this
 	}
 
@@ -324,7 +324,7 @@ module.exports = class Schema {
 				formatted,
 				mapCallback,
 				reduceCallback,
-				reduceInitiVal,
+				reduceInitVal,
 				nested,
 				print,
 				filter,
@@ -402,7 +402,7 @@ module.exports = class Schema {
 				}
 
 				if (reduceCallback) {
-					results = results.reduce(reduceCallback, reduceInitiVal)
+					results = results.reduce(reduceCallback, reduceInitVal)
 				}
 
 				if (nested) {
@@ -473,7 +473,7 @@ module.exports = class Schema {
 		return this
 	}
 
-	SET(whereCaluse, whereCaluse2, { passUndefined = false, encryption = [] } = {}) {
+	SET(whereClause, whereClause2, { passUndefined = false, encryption = [] } = {}) {
 		function passUndefinedIfNeeded(passUndefined, value) {
 			if (!passUndefined || !(value instanceof Object)) {
 				return value
@@ -489,13 +489,13 @@ module.exports = class Schema {
 		}
 
 		//inputMapper
-		if (typeof whereCaluse === 'object') {
-			Validator.validate.bind(this)(whereCaluse)
+		if (typeof whereClause === 'object') {
+			Validator.validate.bind(this)(whereClause)
 
-			for (const key of Object.keys(whereCaluse)) {
+			for (const key of Object.keys(whereClause)) {
 				if (this.columns && this.columns[key] && this.columns[key].type && this.columns[key].type.inputMapper) {
 					const { inputMapper } = this.columns[key].type
-					whereCaluse[key] = inputMapper(whereCaluse[key])
+					whereClause[key] = inputMapper(whereClause[key])
 				}
 			}
 		}
@@ -503,13 +503,13 @@ module.exports = class Schema {
 		this._encryption = encryption
 
 		//pre handle
-		if (whereCaluse instanceof Object) {
-			const value = passUndefinedIfNeeded(passUndefined, whereCaluse)
+		if (whereClause instanceof Object) {
+			const value = passUndefinedIfNeeded(passUndefined, whereClause)
 			this._q.push({ type: 'SET', command: '?', value })
 			return this
 		} else {
-			const value = passUndefinedIfNeeded(passUndefined, whereCaluse2)
-			return addQuery.bind(this)('SET', whereCaluse, value, false)
+			const value = passUndefinedIfNeeded(passUndefined, whereClause2)
+			return addQuery.bind(this)('SET', whereClause, value, false)
 		}
 	}
 
@@ -526,13 +526,13 @@ module.exports = class Schema {
 		}
 	}
 
-	DUPLICATE(whereCaluse, whereCaluse2) {
-		if (whereCaluse instanceof Object) {
-			this._q.push({ type: 'ON DUPLICATE KEY', command: 'UPDATE ?', value: whereCaluse })
+	DUPLICATE(whereClause, whereClause2) {
+		if (whereClause instanceof Object) {
+			this._q.push({ type: 'ON DUPLICATE KEY', command: 'UPDATE ?', value: whereClause })
 			return this
 		}
 
-		return addQuery.bind(this)('ON DUPLICATE KEY UPDATE', whereCaluse, whereCaluse2, false)
+		return addQuery.bind(this)('ON DUPLICATE KEY UPDATE', whereClause, whereClause2, false)
 	}
 
 	FIRST() {
@@ -541,9 +541,9 @@ module.exports = class Schema {
 		return this
 	}
 
-	static FIND(...whereCaluse) {
+	static FIND(...whereClause) {
 		const object = new this()
-		return object.SELECT().FROM().WHERE(...whereCaluse)
+		return object.SELECT().FROM().WHERE(...whereClause)
 	}
 
 	static FIND_PK(pk) {
@@ -667,8 +667,8 @@ module.exports = class Schema {
 		options.reduceCallback = this._reduceCallback
 		delete this._reduceCallback
 
-		options.reduceInitiVal = this._reduceInitiVal
-		delete this._reduceInitiVal
+		options.reduceInitVal = this._reduceInitVal
+		delete this._reduceInitVal
 
 		options.nested = this._nested
 		this._nested = false
@@ -697,8 +697,8 @@ module.exports = class Schema {
 		options.decryption = this._decryption || []
 		delete this._decryption
 
-		options.populates = this._populadtes || []
-		delete this._populadtes
+		options.populates = this._populates || []
+		delete this._populates
 
 		options.useWriter = this._useWriter
 		delete this._useWriter
@@ -752,21 +752,21 @@ module.exports = class Schema {
 	}
 }
 
-function addQuery(reservedWord, whereCaluse, whereCaluse2, inBrackets = true) {
-	if (!whereCaluse) {
+function addQuery(reservedWord, whereClause, whereClause2, inBrackets = true) {
+	if (!whereClause) {
 		return this
 	}
 
-	if (typeof whereCaluse == 'string') {
+	if (typeof whereClause == 'string') {
 		if (inBrackets) {
-			this._q.push({ type: reservedWord, command: `(${whereCaluse})`, value: whereCaluse2 })
+			this._q.push({ type: reservedWord, command: `(${whereClause})`, value: whereClause2 })
 		} else {
-			this._q.push({ type: reservedWord, command: `${whereCaluse}`, value: whereCaluse2 })
+			this._q.push({ type: reservedWord, command: `${whereClause}`, value: whereClause2 })
 		}
-	} else if (typeof whereCaluse == 'object') {
-		this._q.push({ type: reservedWord, command: `(?)`, value: whereCaluse })
+	} else if (typeof whereClause == 'object') {
+		this._q.push({ type: reservedWord, command: `(?)`, value: whereClause })
 	} else {
-		this._q.push({ type: reservedWord, command: `?`, value: whereCaluse })
+		this._q.push({ type: reservedWord, command: `?`, value: whereClause })
 	}
 
 	return this
