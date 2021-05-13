@@ -1,20 +1,19 @@
-if (!process.env.DATA_ENCRYPTION_KEY) {
-	console.error('process.env.DATA_ENCRYPTION_KEY is undefined')
-}
-
-if (!process.env.DATA_ENCRYPTION_IV) {
-	console.error('process.env.DATA_ENCRYPTION_IV is undefined')
-}
-
 const crypto = require('crypto')
 const algorithm = 'aes-256-cbc'
-const key = Buffer.from(process.env.DATA_ENCRYPTION_KEY, 'hex')
-const iv = Buffer.from(process.env.DATA_ENCRYPTION_IV, 'hex')
 
 module.exports = class Encryption {
 
-	static encrypt(text) {
+	static buffered({ key, iv }) {
+		return {
+			key: Buffer.from(key, 'hex'),
+			iv: Buffer.from(iv, 'hex')
+		}
+	}
+
+	static encrypt(text, secret) {
 		try {
+			const { key, iv } = Encryption.buffered(secret)
+
 			const cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv)
 			let encrypted = cipher.update(text)
 			encrypted = Buffer.concat([encrypted, cipher.final()])
@@ -24,8 +23,10 @@ module.exports = class Encryption {
 		}
 	}
 
-	static decrypt(text) {
+	static decrypt(text, secret) {
 		try {
+			const { key, iv } = Encryption.buffered(secret)
+
 			const encryptedText = Buffer.from(text, 'hex')
 			const decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv)
 			let decrypted = decipher.update(encryptedText, 'binary')

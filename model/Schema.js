@@ -318,7 +318,6 @@ module.exports = class Schema {
 			let results
 
 			///////////////////////////////////////////////////////////////////
-
 			const {
 				query,
 				values,
@@ -337,7 +336,8 @@ module.exports = class Schema {
 				decryption,
 				populates,
 				ex,
-				useWriter
+				useWriter,
+				encryption
 			} = this._options()
 			///////////////////////////////////////////////////////////////////
 			if (this.shouldMock()) {
@@ -356,6 +356,15 @@ module.exports = class Schema {
 			if (onErr) {
 				conn = conn.onErr(onErr)
 			}
+
+			//encryption
+			encryption.forEach(e => {
+				this._q.filter(q => q.type === 'SET' && q.value instanceof Object).forEach(q => {
+					const key = conn._pool.options.DATA_ENCRYPTION_KEY
+					const iv = conn._pool.options.DATA_ENCRYPTION_IV
+					q.value[e] = Encryption.encrypt(q.value[e], { key, iv })
+				})
+			})
 
 			///////////////////////////////////////////////////////////////////
 			results = await conn.q(query, values, ex)
@@ -476,22 +485,6 @@ module.exports = class Schema {
 			return result
 		}
 
-		function encryptIfNeeded(encryption, value) {
-			if (!(value instanceof Object) || !encryption.length) {
-				return value
-			}
-
-			const result = JSON.parse(JSON.stringify(value))
-			encryption.forEach(column => {
-				Object.keys(result).forEach((key) => {
-					if (key === column) {
-						result[key] = Encryption.encrypt(result[key])
-					}
-				})
-			})
-			return result
-		}
-
 		//inputMapper
 		if (typeof whereCaluse === 'object') {
 			Validator.validate.bind(this)(whereCaluse)
@@ -504,15 +497,15 @@ module.exports = class Schema {
 			}
 		}
 
+		this._encryption = encryption
+
 		//pre handle
 		if (whereCaluse instanceof Object) {
-			let value = passUndefinedIfNeeded(passUndefined, whereCaluse)
-			value = encryptIfNeeded(encryption, whereCaluse)
+			const value = passUndefinedIfNeeded(passUndefined, whereCaluse)
 			this._q.push({ type: 'SET', command: '?', value })
 			return this
 		} else {
-			let value = passUndefinedIfNeeded(passUndefined, whereCaluse2)
-			value = encryptIfNeeded(encryption, whereCaluse2)
+			const value = passUndefinedIfNeeded(passUndefined, whereCaluse2)
 			return addQuery.bind(this)('SET', whereCaluse, value, false)
 		}
 	}
@@ -706,6 +699,9 @@ module.exports = class Schema {
 
 		options.useWriter = this._useWriter
 		delete this._useWriter
+
+		options.encryption = this._encryption || []
+		delete this.encryption
 
 		const combine = this._combine || false
 		delete this._combine
