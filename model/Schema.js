@@ -510,11 +510,11 @@ module.exports = class Schema {
 			value = encryptIfNeeded(encryption, whereCaluse)
 			this._q.push({ type: 'SET', command: '?', value })
 			return this
+		} else {
+			let value = passUndefinedIfNeeded(passUndefined, whereCaluse2)
+			value = encryptIfNeeded(encryption, whereCaluse2)
+			return addQuery.bind(this)('SET', whereCaluse, value, false)
 		}
-
-		let value = passUndefinedIfNeeded(passUndefined, whereCaluse2)
-		value = encryptIfNeeded(encryption, whereCaluse2)
-		return addQuery.bind(this)('SET', whereCaluse, value, false)
 	}
 
 	VALUES(values) {

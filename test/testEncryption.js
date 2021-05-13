@@ -19,10 +19,12 @@ describe('test Encryption', async () => {
 		const connection = await pool.createConnection()
 		await connection.awaitTransaction()
 
+		const email = 'test@g.com'
+
 		const result = await ZZZPoolMysqlTesting
 			.INSERT()
 			.INTO()
-			.SET({ email: 'test@g.com' }, undefined, { encryption: ['email'] })
+			.SET({ email }, undefined, { encryption: ['email'] })
 			.exec(connection)
 
 		result.affectedRows.should.equal(1)
@@ -31,12 +33,11 @@ describe('test Encryption', async () => {
 
 		const [obj] = await ZZZPoolMysqlTesting.SELECT().FROM().WHERE({ id }).WRITER().exec(connection)
 		obj.id.should.equal(id)
-		obj.email.should.not.equal('test@g.com')
+		obj.email.should.not.equal(email)
 
 		const [obj2] = await ZZZPoolMysqlTesting.SELECT().FROM().WHERE({ id }).DECRYPT('email').WRITER().exec(connection)
 		obj2.id.should.equal(id)
-		obj2.email.should.equal('test@g.com')
-
+		obj2.email.should.equal(email)
 
 		await connection.rollback()
 		connection.release()
