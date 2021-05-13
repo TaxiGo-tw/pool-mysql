@@ -37,6 +37,6 @@ describe('test data mock', async () => {
 	})
 
 	after(() => {
-		delete pool.mock
+		pool.mock = undefined
 	})
 })
