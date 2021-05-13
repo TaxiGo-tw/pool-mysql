@@ -13,6 +13,7 @@ module.exports = class Schema {
 			}
 		} else {
 			this._q = []
+			this._queryOptions = {}
 		}
 	}
 
@@ -223,7 +224,7 @@ module.exports = class Schema {
 
 
 	WRITER(useWriter = true) {
-		this._useWriter = useWriter
+		this._queryOptions.useWriter = useWriter
 		return this
 	}
 
@@ -500,7 +501,7 @@ module.exports = class Schema {
 			}
 		}
 
-		this._encryption = encryption
+		this._queryOptions.encryption = encryption
 
 		//pre handle
 		if (whereClause instanceof Object) {
@@ -700,11 +701,10 @@ module.exports = class Schema {
 		options.populates = this._populates || []
 		delete this._populates
 
-		options.useWriter = this._useWriter
-		delete this._useWriter
 
-		options.encryption = this._encryption || []
-		delete this.encryption
+		const queryOptions = this._queryOptions
+		options.useWriter = queryOptions.useWriter || false
+		options.encryption = queryOptions.encryption || []
 
 		const combine = this._combine || false
 		delete this._combine
@@ -712,6 +712,8 @@ module.exports = class Schema {
 		options.ex = this._EX || { combine }
 		options.ex.redisPrint = options.print
 		this._EX = {}
+
+		this._queryOptions = {}
 
 		return options
 	}
