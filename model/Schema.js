@@ -177,7 +177,7 @@ module.exports = class Schema {
 	}
 
 	POPULATE(...fields) {
-		this._populates = fields
+		this._queryOptions.populates = fields
 		return this
 	}
 
@@ -218,7 +218,7 @@ module.exports = class Schema {
 	}
 
 	ON_ERR(callbackOrString) {
-		this._onErr = callbackOrString
+		this._queryOptions.onErr = callbackOrString
 		return this
 	}
 
@@ -614,7 +614,7 @@ module.exports = class Schema {
 	}
 
 	DECRYPT(...decryption) {
-		this._decryption = decryption
+		this._queryOptions.decryption = decryption
 		return this
 	}
 
@@ -643,12 +643,12 @@ module.exports = class Schema {
 	}
 
 	CHANGED_ROWS(changedRows) {
-		this._changedRows = changedRows
+		this._queryOptions.changedRows = changedRows
 		return this
 	}
 
 	AFFECTED_ROWS(affectedRows) {
-		this._affectedRows = affectedRows
+		this._queryOptions.affectedRows = affectedRows
 		return this
 	}
 
@@ -686,23 +686,13 @@ module.exports = class Schema {
 		options.updated = this._updated
 		delete this._updated
 
-		options.changedRows = this._changedRows
-		delete this._changedRows
-
-		options.affectedRows = this._affectedRows
-		delete this._affectedRows
-
-		options.onErr = this._onErr
-		delete this._onErr
-
-		options.decryption = this._decryption || []
-		delete this._decryption
-
-		options.populates = this._populates || []
-		delete this._populates
-
-
 		const queryOptions = this._queryOptions
+
+		options.changedRows = queryOptions.changedRows
+		options.affectedRows = queryOptions.affectedRows
+		options.onErr = queryOptions.onErr
+		options.decryption = queryOptions.decryption || []
+		options.populates = queryOptions.populates || []
 		options.useWriter = queryOptions.useWriter || false
 		options.encryption = queryOptions.encryption || []
 
