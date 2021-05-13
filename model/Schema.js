@@ -357,7 +357,9 @@ module.exports = class Schema {
 				conn = conn.onErr(onErr)
 			}
 
+			///////////////////////////////////////////////////////////////////
 			results = await conn.q(query, values, ex)
+			///////////////////////////////////////////////////////////////////
 
 			decryption.forEach(column => {
 				results.forEach((result) => {
@@ -460,18 +462,6 @@ module.exports = class Schema {
 	}
 
 	SET(whereCaluse, whereCaluse2, { passUndefined = false, encryption = [] } = {}) {
-
-		if (typeof whereCaluse === 'object') {
-			Validator.validate.bind(this)(whereCaluse)
-
-			for (const key of Object.keys(whereCaluse)) {
-				if (this.columns && this.columns[key] && this.columns[key].type && this.columns[key].type.inputMapper) {
-					const { inputMapper } = this.columns[key].type
-					whereCaluse[key] = inputMapper(whereCaluse[key])
-				}
-			}
-		}
-
 		function passUndefinedIfNeeded(passUndefined, value) {
 			if (!passUndefined || !(value instanceof Object)) {
 				return value
@@ -502,6 +492,19 @@ module.exports = class Schema {
 			return result
 		}
 
+		//inputMapper
+		if (typeof whereCaluse === 'object') {
+			Validator.validate.bind(this)(whereCaluse)
+
+			for (const key of Object.keys(whereCaluse)) {
+				if (this.columns && this.columns[key] && this.columns[key].type && this.columns[key].type.inputMapper) {
+					const { inputMapper } = this.columns[key].type
+					whereCaluse[key] = inputMapper(whereCaluse[key])
+				}
+			}
+		}
+
+		//pre handle
 		if (whereCaluse instanceof Object) {
 			let value = passUndefinedIfNeeded(passUndefined, whereCaluse)
 			value = encryptIfNeeded(encryption, whereCaluse)
