@@ -13,7 +13,7 @@ module.exports = class Schema {
 			}
 		} else {
 			this._q = []
-			this._queryOptions = {}
+			this._resetQueryOptions()
 		}
 	}
 
@@ -684,10 +684,19 @@ module.exports = class Schema {
 			}
 		}
 
-		this._queryOptions = {}
+		this._resetQueryOptions()
 		delete this._nestTables
 
 		return options
+	}
+
+	_resetQueryOptions() {
+		this._queryOptions = {
+			decryption: [],
+			populates: [],
+			useWriter: false,
+			encryption: [],
+		}
 	}
 
 	validate(isInsert) {
