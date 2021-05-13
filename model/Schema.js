@@ -653,40 +653,42 @@ module.exports = class Schema {
 	}
 
 	_options() {
-		const options = {}
-
-		const formatted = this.FORMATTED()
-		options.query = formatted.query
-		options.values = formatted.values
-		options.formatted = formatted.formatted
+		const queryOptions = this._queryOptions
+		const { query, values, formatted } = this.FORMATTED()
 
 		delete this._nestTables
-
-		const queryOptions = this._queryOptions
-
-		options.mapCallback = queryOptions.mapCallback
-		options.reduceCallback = queryOptions.reduceCallback
-		options.reduceInitVal = queryOptions.reduceInitVal
-		options.nested = queryOptions.nested
-		options.print = queryOptions.print
-		options.filter = queryOptions.filter
-		options.getFirst = queryOptions.getFirst
-		options.updated = queryOptions.updated
-		options.changedRows = queryOptions.changedRows
-		options.affectedRows = queryOptions.affectedRows
-		options.onErr = queryOptions.onErr
-		options.decryption = queryOptions.decryption || []
-		options.populates = queryOptions.populates || []
-		options.useWriter = queryOptions.useWriter || false
-		options.encryption = queryOptions.encryption || []
 
 		const combine = this._combine || false
 		delete this._combine
 
-		options.ex = this._EX || { combine }
-		options.ex.redisPrint = options.print
-		this._EX = {}
+		const ex = this._EX || { combine }
+		ex.redisPrint = queryOptions.print
 
+		const options = {
+			query,
+			values,
+			formatted,
+
+			mapCallback: queryOptions.mapCallback,
+			reduceCallback: queryOptions.reduceCallback,
+			reduceInitVal: queryOptions.reduceInitVal,
+			nested: queryOptions.nested,
+			print: queryOptions.print,
+
+			filter: queryOptions.filter,
+			getFirst: queryOptions.getFirst,
+			updated: queryOptions.updated,
+			changedRows: queryOptions.changedRows,
+			affectedRows: queryOptions.affectedRows,
+			onErr: queryOptions.onErr,
+			decryption: queryOptions.decryption || [],
+			populates: queryOptions.populates || [],
+			useWriter: queryOptions.useWriter || false,
+			encryption: queryOptions.encryption || [],
+			ex
+		}
+
+		this._EX = {}
 		this._queryOptions = {}
 
 		return options
