@@ -14,6 +14,8 @@ module.exports = class Schema {
 		} else {
 			this._q = []
 		}
+
+		this._resetQueryOptions()
 	}
 
 	static get _pool() {
@@ -175,8 +177,8 @@ module.exports = class Schema {
 		return this
 	}
 
-	POPULATE(...fileds) {
-		this._populadtes = fileds
+	POPULATE(...fields) {
+		this._queryOptions.populadtes = fields
 		return this
 	}
 
@@ -208,48 +210,48 @@ module.exports = class Schema {
 
 	PRINT(options) {
 		if (options == false) {
-			this._print = false
+			this._queryOptions.print = false
 			return this
 		}
 
-		this._print = true
+		this._queryOptions.print = true
 		return this
 	}
 
 	ON_ERR(callbackOrString) {
-		this._onErr = callbackOrString
+		this._queryOptions.onErr = callbackOrString
 		return this
 	}
 
 
 	WRITER(useWriter = true) {
-		this._useWriter = useWriter
+		this._queryOptions.useWriter = useWriter
 		return this
 	}
 
 	NESTTABLES() {
-		this._nestTables = true
+		this._queryOptions.nestTables = true
 		return this
 	}
 
 	MAP(mapCallback) {
-		this._mapCallback = mapCallback
+		this._queryOptions.mapCallback = mapCallback
 		return this
 	}
 
 	REDUCE(reduceCallback, reduceInitiVal = undefined) {
-		this._reduceCallback = reduceCallback
-		this._reduceInitiVal = reduceInitiVal
+		this._queryOptions.reduceCallback = reduceCallback
+		this._queryOptions.reduceInitiVal = reduceInitiVal
 		return this
 	}
 
 	NESTED() {
-		this._nested = true
+		this._queryOptions.nested = true
 		return this
 	}
 
 	EX(expireSecond, { key, forceUpdate = false, shouldRefreshInCache } = {}) {
-		this._EX = {
+		this._queryOptions.EX = {
 			key,
 			EX: expireSecond,
 			shouldRefreshInCache: forceUpdate ? () => { return forceUpdate } : shouldRefreshInCache,
@@ -500,7 +502,7 @@ module.exports = class Schema {
 			}
 		}
 
-		this._encryption = encryption
+		this._queryOptions.encryption = encryption
 
 		//pre handle
 		if (whereCaluse instanceof Object) {
@@ -536,7 +538,7 @@ module.exports = class Schema {
 	}
 
 	FIRST() {
-		this._getFirst = true
+		this._queryOptions.getFirst = true
 		addQuery.bind(this)('LIMIT', 1, null)
 		return this
 	}
@@ -561,7 +563,7 @@ module.exports = class Schema {
 	}
 
 	FILTER(callback) {
-		this._filter = callback
+		this._queryOptions.filter = callback
 		return this
 	}
 
@@ -603,27 +605,27 @@ module.exports = class Schema {
 	}
 
 	_PRE(command) {
-		this._pre = command + ';'
+		this._queryOptions.pre = command + ';'
 		return this
 	}
 
 	_AFTER(command) {
-		this._after = ';' + command
+		this._queryOptions.after = ';' + command
 		return this
 	}
 
 	DECRYPT(...decryption) {
-		this._decryption = decryption
+		this._queryOptions.decryption = decryption
 		return this
 	}
 
 	COMBINE() {
-		this._combine = true
+		this._queryOptions.combine = true
 		return this
 	}
 
 	UPDATED(...variables) {
-		this._updated = true
+		this._queryOptions.updated = true
 
 		let obj = this
 
@@ -642,78 +644,52 @@ module.exports = class Schema {
 	}
 
 	CHANGED_ROWS(changedRows) {
-		this._changedRows = changedRows
+		this._queryOptions.changedRows = changedRows
 		return this
 	}
 
 	AFFECTED_ROWS(affectedRows) {
-		this._affectedRows = affectedRows
+		this._queryOptions.affectedRows = affectedRows
 		return this
 	}
 
 	_options() {
-		const options = {}
+		const queryOptions = this._queryOptions
+		const { combine } = queryOptions
 
-		const formatted = this.FORMATTED()
-		options.query = formatted.query
-		options.values = formatted.values
-		options.formatted = formatted.formatted
+		const { query, values, formatted } = this.FORMATTED()
+		queryOptions.query = query
+		queryOptions.values = values
+		queryOptions.formatted = formatted
 
-		delete this._nestTables
+		queryOptions.ex = this._queryOptions.EX || { combine }
+		queryOptions.ex.redisPrint = this._queryOptions.print
+		// console.log(queryOptions)
+		this._resetQueryOptions()
+		return queryOptions
+	}
 
-		options.mapCallback = this._mapCallback
-		delete this._mapCallback
-
-		options.reduceCallback = this._reduceCallback
-		delete this._reduceCallback
-
-		options.reduceInitiVal = this._reduceInitiVal
-		delete this._reduceInitiVal
-
-		options.nested = this._nested
-		this._nested = false
-
-		options.print = this._print
-		this._print = false
-
-		options.filter = this._filter
-		delete this._filter
-
-		options.getFirst = this._getFirst
-		delete this._getFirst
-
-		options.updated = this._updated
-		delete this._updated
-
-		options.changedRows = this._changedRows
-		delete this._changedRows
-
-		options.affectedRows = this._affectedRows
-		delete this._affectedRows
-
-		options.onErr = this._onErr
-		delete this._onErr
-
-		options.decryption = this._decryption || []
-		delete this._decryption
-
-		options.populates = this._populadtes || []
-		delete this._populadtes
-
-		options.useWriter = this._useWriter
-		delete this._useWriter
-
-		options.encryption = this._encryption || []
-		delete this.encryption
-
-		const combine = this._combine || false
-		delete this._combine
-
-		options.ex = this._EX || { combine }
-		options.ex.redisPrint = options.print
-		this._EX = {}
-
-		return options
+	_resetQueryOptions() {
+		this._queryOptions = {
+			nestTables: false,
+			mapCallback: undefined,
+			reduceCallback: undefined,
+			reduceInitiVal: undefined,
+			nested: false,
+			print: false,
+			filter: undefined,
+			getFirst: undefined,
+			updated: undefined,
+			changedRows: undefined,
+			affectedRows: undefined,
+			onErr: undefined,
+			populates: [],
+			useWriter: false,
+			decryption: [],
+			encryption: [],
+			combine: false,
+			EX: {}
+		}
 	}
 
 	validate(isInsert) {
