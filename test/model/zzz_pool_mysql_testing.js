@@ -11,7 +11,6 @@ module.exports = class zzz_pool_mysql_testing extends Schema {
 				type: Schema.Types.Email
 			},
 
-
 			fk: {
 				ref: Schema.Types.FK(require('./Trips'), 'id')
 			}
