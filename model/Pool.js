@@ -250,7 +250,7 @@ class Pool {
 
 	//結束一半的waiting connections, 至少留10個
 	_endFreeConnections() {
-		const atLeast = this._options.SQL_FREE_CONNECTIONS || 10
+		const atLeast = this.options.SQL_FREE_CONNECTIONS || 10
 		const stayAmount = Math.ceil(this.connectionPool.waiting.length / 2)
 
 		while (stayAmount > atLeast && this.connectionPool.waiting.length > stayAmount) {
