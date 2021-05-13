@@ -250,7 +250,7 @@ module.exports = class Schema {
 	}
 
 	EX(expireSecond, { key, forceUpdate = false, shouldRefreshInCache } = {}) {
-		this._EX = {
+		this._queryOptions.EX = {
 			key,
 			EX: expireSecond,
 			shouldRefreshInCache: forceUpdate ? () => { return forceUpdate } : shouldRefreshInCache,
@@ -619,7 +619,7 @@ module.exports = class Schema {
 	}
 
 	COMBINE() {
-		this._combine = true
+		this._queryOptions.combine = true
 		return this
 	}
 
@@ -658,12 +658,6 @@ module.exports = class Schema {
 
 		delete this._nestTables
 
-		const combine = this._combine || false
-		delete this._combine
-
-		const ex = this._EX || { combine }
-		ex.redisPrint = queryOptions.print
-
 		const options = {
 			query,
 			values,
@@ -685,10 +679,12 @@ module.exports = class Schema {
 			populates: queryOptions.populates || [],
 			useWriter: queryOptions.useWriter || false,
 			encryption: queryOptions.encryption || [],
-			ex
+			ex: {
+				...queryOptions.EX || { combine: queryOptions.combine || false },
+				...{ redisPrint: queryOptions.print }
+			}
 		}
 
-		this._EX = {}
 		this._queryOptions = {}
 
 		return options
