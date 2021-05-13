@@ -209,11 +209,11 @@ module.exports = class Schema {
 
 	PRINT(options) {
 		if (options == false) {
-			this._print = false
+			this._queryOptions.print = false
 			return this
 		}
 
-		this._print = true
+		this._queryOptions.print = true
 		return this
 	}
 
@@ -537,7 +537,7 @@ module.exports = class Schema {
 	}
 
 	FIRST() {
-		this._getFirst = true
+		this._queryOptions.getFirst = true
 		addQuery.bind(this)('LIMIT', 1, null)
 		return this
 	}
@@ -562,7 +562,7 @@ module.exports = class Schema {
 	}
 
 	FILTER(callback) {
-		this._filter = callback
+		this._queryOptions.filter = callback
 		return this
 	}
 
@@ -624,7 +624,7 @@ module.exports = class Schema {
 	}
 
 	UPDATED(...variables) {
-		this._updated = true
+		this._queryOptions.updated = true
 
 		let obj = this
 
@@ -674,20 +674,13 @@ module.exports = class Schema {
 		options.nested = this._nested
 		this._nested = false
 
-		options.print = this._print
-		this._print = false
-
-		options.filter = this._filter
-		delete this._filter
-
-		options.getFirst = this._getFirst
-		delete this._getFirst
-
-		options.updated = this._updated
-		delete this._updated
 
 		const queryOptions = this._queryOptions
 
+		options.print = queryOptions.print
+		options.filter = queryOptions.filter
+		options.getFirst = queryOptions.getFirst
+		options.updated = queryOptions.updated
 		options.changedRows = queryOptions.changedRows
 		options.affectedRows = queryOptions.affectedRows
 		options.onErr = queryOptions.onErr
