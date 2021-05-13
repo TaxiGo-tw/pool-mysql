@@ -9,8 +9,13 @@ describe('test Encryption', async () => {
 		const Encryption = require('../model/Encryption')
 		const string = 'abc'
 
-		const encrypted = Encryption.encrypt(string)
-		const decrypted = Encryption.decrypt(encrypted)
+
+		const key = pool.options.DATA_ENCRYPTION_KEY
+		const iv = pool.options.DATA_ENCRYPTION_IV
+
+
+		const encrypted = Encryption.encrypt(string, { key, iv })
+		const decrypted = Encryption.decrypt(encrypted, { key, iv })
 
 		assert.strictEqual(decrypted, string)
 	})

@@ -370,10 +370,13 @@ module.exports = class Schema {
 			results = await conn.q(query, values, ex)
 			///////////////////////////////////////////////////////////////////
 
+			//decryption
 			decryption.forEach(column => {
 				results.forEach((result) => {
 					if (result[column]) {
-						result[column] = Encryption.decrypt(result[column])
+						const key = conn._pool.options.DATA_ENCRYPTION_KEY
+						const iv = conn._pool.options.DATA_ENCRYPTION_IV
+						result[column] = Encryption.decrypt(result[column], { key, iv })
 					}
 				})
 			})
