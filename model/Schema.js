@@ -86,7 +86,7 @@ module.exports = class Schema {
 					.join(', ')
 				: '*'
 
-			this._q.push({ type: 'SELECT', command: `${keys}`, customed: true })
+			this._q.push({ type: 'SELECT', command: `${keys}`, costumed: true })
 		}
 
 		return this
@@ -101,7 +101,7 @@ module.exports = class Schema {
 		const tableName = whereClause.split(' ')[0]
 		for (const q of this._q) {
 			if (q.type == 'SELECT') {
-				if (q.customed) {
+				if (q.costumed) {
 					q.command += `, ${tableName}.*`
 				}
 				break
@@ -115,7 +115,7 @@ module.exports = class Schema {
 
 		for (const q of this._q) {
 			if (q.type == 'SELECT') {
-				if (q.customed) {
+				if (q.costumed) {
 					q.command += `, ${tableName}.*`
 				}
 				break
