@@ -234,18 +234,18 @@ module.exports = class Schema {
 	}
 
 	MAP(mapCallback) {
-		this._mapCallback = mapCallback
+		this._queryOptions.mapCallback = mapCallback
 		return this
 	}
 
 	REDUCE(reduceCallback, reduceInitVal = undefined) {
-		this._reduceCallback = reduceCallback
-		this._reduceInitVal = reduceInitVal
+		this._queryOptions.reduceCallback = reduceCallback
+		this._queryOptions.reduceInitVal = reduceInitVal
 		return this
 	}
 
 	NESTED() {
-		this._nested = true
+		this._queryOptions.nested = true
 		return this
 	}
 
@@ -269,7 +269,7 @@ module.exports = class Schema {
 
 		const query = {
 			sql: pre + this._q.map(q => `${q.type || ''} ${q.command || ''}`).join(' ') + after,
-			nestTables: this._nestTables || this._nested
+			nestTables: this._nestTables || this._queryOptions.nested
 		}
 
 		const values = this._q
@@ -662,21 +662,12 @@ module.exports = class Schema {
 
 		delete this._nestTables
 
-		options.mapCallback = this._mapCallback
-		delete this._mapCallback
-
-		options.reduceCallback = this._reduceCallback
-		delete this._reduceCallback
-
-		options.reduceInitVal = this._reduceInitVal
-		delete this._reduceInitVal
-
-		options.nested = this._nested
-		this._nested = false
-
-
 		const queryOptions = this._queryOptions
 
+		options.mapCallback = queryOptions.mapCallback
+		options.reduceCallback = queryOptions.reduceCallback
+		options.reduceInitVal = queryOptions.reduceInitVal
+		options.nested = queryOptions.nested
 		options.print = queryOptions.print
 		options.filter = queryOptions.filter
 		options.getFirst = queryOptions.getFirst
