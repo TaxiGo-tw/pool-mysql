@@ -656,7 +656,6 @@ module.exports = class Schema {
 		const queryOptions = this._queryOptions
 		const { query, values, formatted } = this.FORMATTED()
 
-		delete this._nestTables
 
 		const options = {
 			query,
@@ -686,6 +685,7 @@ module.exports = class Schema {
 		}
 
 		this._queryOptions = {}
+		delete this._nestTables
 
 		return options
 	}
