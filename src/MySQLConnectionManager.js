@@ -40,7 +40,7 @@ module.exports = class MySQLConnectionManager {
 		return mysqlConnection
 	}
 
-	//
+	// decorator
 	_createConnection(option, role, connection) {
 		const mysqlConnection = mysql.createConnection(option)
 		mysqlConnection.role = role
