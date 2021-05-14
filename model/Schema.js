@@ -514,12 +514,30 @@ module.exports = class Schema {
 		return addQuery.bind(this)('SET', whereCaluse, value, false)
 	}
 
-	VALUES(values) {
+	VALUES(values, typeSensitive = false) {
 		if (values instanceof Array) {
-			const command = values.map(value => {
-				return `('${value.join(`','`)}')`
-			}).join(',')
-
+			let command
+			if (typeSensitive) {
+				command = values.map(value => {
+					let string = '('
+					value.forEach(v => {
+						if (typeof v === 'string') {
+							string = `${string}'${v}',`
+						} else if (typeof v === 'undefined') {
+							string = `${string}null,`
+						} else {
+							string = `${string}${v},`
+						}
+					})
+					string = `${string.slice(0, -1)})`
+					return string
+				})
+			} else {
+				command = values.map(value => {
+					return `('${value.join(`','`)}')`
+				}).join(',')
+			}
+			
 			this._q.push({ type: 'VALUES', command })
 			return this
 		} else {
