@@ -241,45 +241,29 @@ module.exports = class Connection {
 		}
 	}
 
-	commit(cb) {
-		this.writer.commit((e) => {
-			if (this.writer) {
-				Event.emit('log', e, `${this.writer.logPrefix} : COMMIT`)
-			}
-
-			this._status.isCommitted = true
-
-			if (cb) {
-				cb(e)
-			}
-		})
+	commit(cb = () => { }) {
+		this.awaitCommit().then(cb).catch(cb)
 	}
 
 	async awaitCommit() {
-		return new Promise((resolve, reject) => {
-			try {
-				this.commit((err) => {
-					if (err) {
-						return reject(err)
-					}
-					resolve()
-				})
-			} catch (e) {
-				reject(e)
-			}
-		})
+		const awaitCommit = require('util').promisify(this.writer.commit)
+
+		try {
+			await awaitCommit()
+			Event.emit('log', undefined, `${this.writer.logPrefix} : COMMIT`)
+		} catch (error) {
+			Event.emit('log', error, `${this.writer.logPrefix} : COMMIT`)
+		} finally {
+			this._status.isCommitted = true
+		}
 	}
 
 	async rollback() {
-		return new Promise((resolve, reject) => {
-			const x = this.reader.rollback(() => {
-				const y = this.writer.rollback(() => {
-					this._status.isCommitted = true
-
-					Event.emit('log', null, '[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
-					Event.emit('log', null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
-					resolve()
-				})
+		return new Promise(resolve => {
+			const y = this.writer.rollback(() => {
+				this._status.isCommitted = true
+				Event.emit('log', null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
+				resolve()
 			})
 		})
 	}
@@ -312,7 +296,11 @@ module.exports = class Connection {
 	}
 
 	async getReaderOrWriter(sql) {
-		return this.isSelect(sql) ? this.reader : this.writer
+		if (this.isSelect(sql)) {
+			return this.reader
+		} else {
+			return this.writer
+		}
 	}
 
 	get forceWriter() {
