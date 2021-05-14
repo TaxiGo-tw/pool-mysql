@@ -32,20 +32,20 @@ module.exports = class Connection {
 		return !!this.tag && this._pool.connectionPool.using[this.tag.name][this.id] != undefined
 	}
 
-	async toConnect(type = 'all') {
+	async toConnect(type = 'All') {
 		switch (type) {
-			case 'all':
+			case 'All':
 				this.writer = await this._pool._mysqlConnectionManager.getReader(this)
 				await this.writer.awaitConnect()
 
 				this.reader = await this._pool._mysqlConnectionManager.getWriter(this)
 				await this.reader.awaitConnect()
 				break
-			case 'writer':
+			case 'Writer':
 				this.writer = await this._pool._mysqlConnectionManager.getReader(this)
 				await this.writer.awaitConnect()
 				break
-			case 'reader':
+			case 'Reader':
 				this.reader = await this._pool._mysqlConnectionManager.getWriter(this)
 				await this.reader.awaitConnect()
 				break
@@ -96,7 +96,7 @@ module.exports = class Connection {
 			return this._pool.mock(this._pool._mockCounter++, sqlStatement)
 		}
 
-		const mysqlConnection = this.useWriter ? this.writer : await this.getReaderOrWriter(sql)
+		const mysqlConnection = await this.getReaderOrWriter(sql, this.useWriter)
 		this.useWriter = false
 
 		if (this.isSelect(sqlStatement) && this._noCache) {
@@ -276,6 +276,14 @@ module.exports = class Connection {
 		}
 		this._resetStatus()
 
+		if (this.reader) {
+			this.reader.returnToPool()
+		}
+
+		if (this.writer) {
+			this.writer.returnToPool()
+		}
+
 		this._pool._recycle(this)
 	}
 
@@ -295,10 +303,16 @@ module.exports = class Connection {
 		return (/^select/i).test(command) && command.indexOf('for update') == -1
 	}
 
-	async getReaderOrWriter(sql) {
-		if (this.isSelect(sql)) {
+	async getReaderOrWriter(sql, useWriter) {
+		if (this.isSelect(sql) && !useWriter) {
+			if (!this.reader) {
+				await this.toConnect('Reader')
+			}
 			return this.reader
 		} else {
+			if (!this.writer) {
+				await this.toConnect('Writer')
+			}
 			return this.writer
 		}
 	}

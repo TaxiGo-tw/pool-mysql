@@ -5,11 +5,21 @@ const Event = require('./Event')
 
 module.exports = class MySQLConnectionManager {
 	constructor(options) {
-
 		this._options = options
 
-		this._writerPool = { waiting: [], using: {} }
-		this._readerPool = { waiting: [], using: {} }
+		this._writerPool = {
+			waiting: [],
+			using: {
+				default: {}
+			}
+		}
+
+		this._readerPool = {
+			waiting: [],
+			using: {
+				default: {}
+			}
+		}
 	}
 
 	async getWriter(connection) {
@@ -104,13 +114,13 @@ module.exports = class MySQLConnectionManager {
 			})
 		}
 
-		mysqlConnection.return = () => {
-			if (mysqlConnection.role == 'writer') {
+		mysqlConnection.returnToPool = () => {
+			if (mysqlConnection.role == 'Writer') {
 				// this._writerPool.using.
 				this._writerPool.waiting.push(mysqlConnection)
-			} else if (mysqlConnection.role == 'reader') {
+			} else if (mysqlConnection.role == 'Reader') {
 				// this._writerPool.using.
-				this._writerPool.reader.push(mysqlConnection)
+				this._readerPool.waiting.push(mysqlConnection)
 			}
 		}
 
