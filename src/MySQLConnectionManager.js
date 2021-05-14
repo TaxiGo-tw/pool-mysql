@@ -8,6 +8,7 @@ module.exports = class MySQLConnectionManager {
 		this._options = options
 
 		this._writerPool = {
+			connectionRequests: [],
 			waiting: [],
 			using: {
 				default: {}
@@ -15,6 +16,7 @@ module.exports = class MySQLConnectionManager {
 		}
 
 		this._readerPool = {
+			connectionRequests: [],
 			waiting: [],
 			using: {
 				default: {}
@@ -28,9 +30,14 @@ module.exports = class MySQLConnectionManager {
 			|| this._createConnection(options, role, connection)
 
 		mysqlConnection.connectionID = connection.id
+		mysqlConnection.tag = connection.tag
 
-		if (!connectionPool.using[mysqlConnection.connectionID]) {
-			connectionPool.using[mysqlConnection.connectionID] = mysqlConnection
+		if (!connectionPool.using[mysqlConnection.tag]) {
+			connectionPool.using[mysqlConnection.tag] = {}
+		}
+
+		if (!connectionPool.using[mysqlConnection.tag][mysqlConnection.connectionID]) {
+			connectionPool.using[mysqlConnection.tag][mysqlConnection.connectionID] = mysqlConnection
 		} else {
 			assert.fail(`get ${role} duplicated connection`)
 		}
@@ -55,7 +62,63 @@ module.exports = class MySQLConnectionManager {
 		})
 	}
 
-	// decorator
+	//////////////////////////////////////////////////////////////
+
+	_connectionPool(mysqlConnection) {
+		return mysqlConnection.role == 'Writer' ? this._writerPool : this._readerPool
+	}
+
+	_getNextWaitingCallback(connectionPool) {
+		const [callback] = this._connectionRequests.filter((callback) => {
+			const callback_tag_name = callback.tag.name
+			const callback_tag_limit = parseInt(callback.tag.limit, 10)
+			const isUnderTagLimit = Object.keys(connectionPool.using[callback_tag_name]).length < callback_tag_limit
+			return isUnderTagLimit
+		})
+
+		const callback_index = this._connectionRequests.indexOf(callback)
+		delete this._connectionRequests[callback_index]
+
+		return callback
+	}
+
+	_moveConnectionToCallback({ mysqlConnection, callback }) {
+		const connectionPool = this._connectionPool(mysqlConnection)
+
+		delete connectionPool.using[mysqlConnection.tag.name][mysqlConnection.id]
+		if (callback) {
+			mysqlConnection.tag = callback.tag
+			connectionPool.using[callback.tag.name][mysqlConnection.id] = mysqlConnection
+		} else {
+			delete mysqlConnection.tag
+		}
+	}
+
+	_recycle(mysqlConnection) {
+		const connectionPool = this._connectionPool(mysqlConnection)
+
+		const callback = this._getNextWaitingCallback(connectionPool)
+
+		if (callback) {
+			Event.emit('recycle', mysqlConnection)
+			mysqlConnection.gotAt = new Date()
+
+			this._moveConnectionToCallback({ connection: mysqlConnection, callback })
+
+			Event.emit('log', undefined, `_recycle ${this.connectionID} ${JSON.stringify(mysqlConnection.tag)}`)
+			return callback(null, mysqlConnection)
+		}
+
+		this._moveConnectionToCallback({ mysqlConnection })
+
+		mysqlConnection._resetStatus()
+		connectionPool.waiting.push(mysqlConnection)
+		Event.emit('release', mysqlConnection)
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// mysqlConnection decorator
 	_createConnection(option, role, connection) {
 		const mysqlConnection = mysql.createConnection(option)
 		mysqlConnection.role = role
@@ -119,10 +182,10 @@ module.exports = class MySQLConnectionManager {
 
 		mysqlConnection.returnToPool = () => {
 			if (mysqlConnection.role == 'Writer') {
-				// this._writerPool.using.
+				delete this._writerPool.using[mysqlConnection.tag][mysqlConnection.connectionID]
 				this._writerPool.waiting.push(mysqlConnection)
 			} else if (mysqlConnection.role == 'Reader') {
-				// this._writerPool.using.
+				delete this._readerPool.using[mysqlConnection.tag][mysqlConnection.connectionID]
 				this._readerPool.waiting.push(mysqlConnection)
 			}
 		}
