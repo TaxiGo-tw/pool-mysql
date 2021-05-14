@@ -168,7 +168,7 @@ class Pool {
 			connection.tag = tag
 			this.connectionPool.using[tag.name][connection.id] = connection
 
-			connection.connect().then(() => {
+			connection.toConnect().then(() => {
 				Event.emit('create', connection)
 				this.numberOfConnections
 				return callback(undefined, connection)

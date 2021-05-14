@@ -32,27 +32,24 @@ module.exports = class Connection {
 		return !!this.tag && this._pool.connectionPool.using[this.tag.name][this.id] != undefined
 	}
 
-	async connect() {
-		this.reader = await this._pool._manager.getWriter(this)
-		this.writer = await this._pool._manager.getReader(this)
+	async toConnect(type = 'all') {
+		switch (type) {
+			case 'all':
+				this.writer = await this._pool._manager.getReader(this)
+				await this.writer.awaitConnect()
 
-		const create = async (connection) => {
-			return new Promise((resolve, reject) => {
-				connection.connect(err => {
-					if (err) {
-						this._pool.logger(err)
-						return reject(err)
-					}
-
-					connection.logPrefix = `[${(this.id || 'default')}] ${connection.role}`
-
-					resolve(connection)
-				})
-			})
+				this.reader = await this._pool._manager.getWriter(this)
+				await this.reader.awaitConnect()
+				break
+			case 'writer':
+				this.writer = await this._pool._manager.getReader(this)
+				await this.writer.awaitConnect()
+				break
+			case 'reader':
+				this.reader = await this._pool._manager.getWriter(this)
+				await this.reader.awaitConnect()
+				break
 		}
-
-		await create(this.reader)
-		await create(this.writer)
 
 		return this
 	}

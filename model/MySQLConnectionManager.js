@@ -98,6 +98,21 @@ module.exports = class MySQLConnectionManager {
 			}
 		}
 
+		mysqlConnection.awaitConnect = () => {
+			return new Promise((resolve, reject) => {
+				mysqlConnection.connect(err => {
+					if (err) {
+						this._pool.logger(err)
+						return reject(err)
+					}
+
+					mysqlConnection.logPrefix = `[${(this.id || 'default')}] ${mysqlConnection.role}`
+
+					resolve(mysqlConnection)
+				})
+			})
+		}
+
 		return mysqlConnection
 	}
 }

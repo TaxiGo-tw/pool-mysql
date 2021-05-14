@@ -656,7 +656,6 @@ module.exports = class Schema {
 		const queryOptions = this._queryOptions
 		const { query, values, formatted } = this.FORMATTED()
 
-
 		const options = {
 			query,
 			values,
