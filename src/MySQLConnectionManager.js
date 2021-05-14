@@ -1,6 +1,8 @@
 const assert = require('assert')
 const mysql = require('mysql')
 
+const Event = require('./Event')
+
 module.exports = class MySQLConnectionManager {
 	constructor(options) {
 
@@ -46,7 +48,7 @@ module.exports = class MySQLConnectionManager {
 		mysqlConnection.role = role
 
 		mysqlConnection.on('error', err => {
-			this._pool.logger(err, `connection error: ${(err && err.message) ? err.message : err}`)
+			Event.emit('log', err, `connection error: ${(err && err.message) ? err.message : err}`)
 			connection.end()
 		})
 
@@ -79,7 +81,7 @@ module.exports = class MySQLConnectionManager {
 		mysqlConnection.startTransaction = () => {
 			return new Promise((resolve, reject) => {
 				mysqlConnection.beginTransaction((err) => {
-					this._pool.logger(err, `${mysqlConnection.logPrefix} : Start Transaction`)
+					Event.emit('log', err, `${mysqlConnection.logPrefix} : Start Transaction`)
 					if (err) {
 						reject(err)
 					} else {
@@ -92,7 +94,7 @@ module.exports = class MySQLConnectionManager {
 		mysqlConnection.commitChange = () => {
 			return new Promise((resolve, reject) => {
 				mysqlConnection.commit((err) => {
-					this._pool.logger(err, `${mysqlConnection.logPrefix} : COMMIT`)
+					Event.emit('log', err, `${mysqlConnection.logPrefix} : COMMIT`)
 					if (err) {
 						reject(err)
 					} else {
@@ -116,7 +118,7 @@ module.exports = class MySQLConnectionManager {
 			return new Promise((resolve, reject) => {
 				mysqlConnection.connect(err => {
 					if (err) {
-						this._pool.logger(err)
+						Event.emit('log', err)
 						return reject(err)
 					}
 

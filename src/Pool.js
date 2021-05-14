@@ -1,10 +1,10 @@
 require('./Misc')
+const logger = require('./Logger')
 const LogLevel = require('./LogLevel')
+const Event = require('./Event')
 
 const MySQLConnectionManager = require('./MySQLConnectionManager')
 const Connection = require('./Connection')
-
-const Event = require('./Event')
 
 const extendRedis = require('./RedisExtend')
 
@@ -43,15 +43,14 @@ class Pool {
 			waiting: []
 		}
 
-		this._logger = LogLevel.error
 		this.redisClient = redisClient
 
 		this.connectionID = 0
 
 		this._connectionRequests = []
 
-		this.logger(undefined, `pool-mysql writer host: ${this.options.writer.host}`)
-		this.logger(undefined, `pool-mysql reader host: ${this.options.reader.host}`)
+		Event.emit('log', undefined, `pool-mysql writer host: ${this.options.writer.host}`)
+		Event.emit('log', undefined, `pool-mysql reader host: ${this.options.reader.host}`)
 
 		this._runSchedulers()
 
@@ -82,19 +81,19 @@ class Pool {
 	}
 
 	get logger() {
-		return this._logger
+		return logger.current()
 	}
 
 	set logger(string) {
 		switch (string) {
 			case 'all':
-				this._logger = LogLevel.all
+				logger.set(LogLevel.all)
 				break
 			case 'error':
-				this._logger = LogLevel.error
+				logger.set(LogLevel.error)
 				break
 			default:
-				this._logger = LogLevel.none
+				logger.set(LogLevel.none)
 				break
 		}
 	}
@@ -237,7 +236,7 @@ class Pool {
 
 			this._moveConnectionToCallback({ connection, callback })
 
-			this.logger(undefined, `_recycle ${this.connectionID} ${JSON.stringify(connection.tag)}`)
+			Event.emit('log', undefined, `_recycle ${this.connectionID} ${JSON.stringify(connection.tag)}`)
 			return callback(null, connection)
 		}
 

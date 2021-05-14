@@ -5,6 +5,8 @@ const mysql = require('mysql')
 const { Validator, throwError } = require('./Helper')
 const { Type, Nested, Populate, Updated } = require('./Schema/')
 
+const Event = require('./Event')
+
 module.exports = class Schema {
 	constructor(dict) {
 		if (dict) {
@@ -292,7 +294,7 @@ module.exports = class Schema {
 
 	mocked(formatted) {
 		if (this._print) {
-			Schema._pool.logger('all', `${formatted}`)
+			Event.emit('log', 'all', `${formatted}`)
 		}
 
 		return Schema._pool.mock(Schema._pool._mockCounter++, formatted)

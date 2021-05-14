@@ -85,7 +85,7 @@ module.exports = class Connection {
 		let sqlStatement = sql.sql || sql
 
 		if (!this.isUsing) {
-			this._pool.logger(`
+			Event.emit('log', `
 	pool-mysql: connection is not using, might released too early
 	Query: ${sqlStatement}
 			`)
@@ -138,11 +138,11 @@ module.exports = class Connection {
 		const printString = `${mysqlConnection.logPrefix} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
 
 		if (isLongQuery) {
-			this._pool.logger('Long Query', printString)
+			Event.emit('log', 'Long Query', printString)
 		} else if (print) {
-			this._pool.logger('PRINT()', printString)
+			Event.emit('log', 'PRINT()', printString)
 		} else {
-			this._pool.logger(undefined, printString)
+			Event.emit('log', undefined, printString)
 		}
 
 		//emit
@@ -180,7 +180,7 @@ module.exports = class Connection {
 			}
 
 			if (EX && !this._pool.redisClient) {
-				this._pool.logger('should assign redis client to this._pool.redisClient')
+				Event.emit('log', 'should assign redis client to this._pool.redisClient')
 				return await this._q(sql, values)
 			}
 
@@ -190,7 +190,7 @@ module.exports = class Connection {
 			const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
 			if (someThing && keepCache) {
 				if (redisPrint) {
-					this._pool.logger(undefined, 'Cached in redis: true')
+					Event.emit('log', undefined, 'Cached in redis: true')
 				}
 
 				if (someThing.isNull) {
@@ -210,7 +210,7 @@ module.exports = class Connection {
 			const result = await this._q(sql, values)
 
 			if (redisPrint) {
-				this._pool.logger(undefined, 'Cached in redis: false ')
+				Event.emit('log', undefined, 'Cached in redis: false ')
 			}
 
 			let toCache = result
@@ -229,11 +229,11 @@ module.exports = class Connection {
 			switch (true) {
 				case typeof onErr == 'string':
 					// eslint-disable-next-line no-console
-					this._pool.logger(error)
+					Event.emit('log', error)
 					throw Error(onErr)
 				case typeof onErr == 'function':
 					// eslint-disable-next-line no-console
-					this._pool.logger(error)
+					Event.emit('log', error)
 					throw Error(onErr(error))
 				default:
 					throw error
@@ -244,7 +244,7 @@ module.exports = class Connection {
 	commit(cb) {
 		this.writer.commit((e) => {
 			if (this.writer) {
-				this._pool.logger(e, `${this.writer.logPrefix} : COMMIT`)
+				Event.emit('log', e, `${this.writer.logPrefix} : COMMIT`)
 			}
 
 			this._status.isCommitted = true
@@ -276,8 +276,8 @@ module.exports = class Connection {
 				const y = this.writer.rollback(() => {
 					this._status.isCommitted = true
 
-					this._pool.logger(null, '[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
-					this._pool.logger(null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
+					Event.emit('log', null, '[' + (x._connection.threadId || 'default') + ']  : ' + x.sql)
+					Event.emit('log', null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
 					resolve()
 				})
 			})
@@ -285,10 +285,10 @@ module.exports = class Connection {
 	}
 
 	release() {
-		this._pool.logger(null, `[${this.id}] RELEASE`)
+		Event.emit('log', null, `[${this.id}] RELEASE`)
 
 		if (this._status.isStartedTransaction && !this._status.isCommitted) {
-			this._pool.logger(undefined, 'pool-mysql: Transaction started, should be Committed')
+			Event.emit('log', undefined, 'pool-mysql: Transaction started, should be Committed')
 		}
 		this._resetStatus()
 
