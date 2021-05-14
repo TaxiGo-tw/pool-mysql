@@ -22,34 +22,37 @@ module.exports = class MySQLConnectionManager {
 		}
 	}
 
-	async getWriter(connection) {
-		const mysqlConnection = this._writerPool.waiting.shift()
-			|| this._createConnection(this._options.writer, 'Writer', connection)
+
+	async _getConnection({ connection, connectionPool, options, role }) {
+		const mysqlConnection = connectionPool.waiting.shift()
+			|| this._createConnection(options, role, connection)
 
 		mysqlConnection.connectionID = connection.id
 
-		if (!this._writerPool.using[mysqlConnection.connectionID]) {
-			this._writerPool.using[mysqlConnection.connectionID] = mysqlConnection
+		if (!connectionPool.using[mysqlConnection.connectionID]) {
+			connectionPool.using[mysqlConnection.connectionID] = mysqlConnection
 		} else {
-			assert.fail('getWriter duplicated connection')
+			assert.fail(`get ${role} duplicated connection`)
 		}
-
 		return mysqlConnection
 	}
 
+	async getWriter(connection) {
+		return await this._getConnection({
+			connection,
+			connectionPool: this._writerPool,
+			options: this._options.writer,
+			role: 'Writer'
+		})
+	}
+
 	async getReader(connection) {
-		const mysqlConnection = this._readerPool.waiting.shift()
-			|| this._createConnection(this._options.reader, 'Reader', connection)
-
-		mysqlConnection.connectionID = connection.id
-
-		if (!this._readerPool.using[mysqlConnection.connectionID]) {
-			this._readerPool.using[mysqlConnection.connectionID] = mysqlConnection
-		} else {
-			assert.fail('getReader duplicated connection')
-		}
-
-		return mysqlConnection
+		return await this._getConnection({
+			connection,
+			connectionPool: this._readerPool,
+			options: this._options.reader,
+			role: 'Reader'
+		})
 	}
 
 	// decorator
