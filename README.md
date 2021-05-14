@@ -366,6 +366,14 @@ module.exports = class driver_review_status extends Scheme {
 
 * assign mock() to pool will reset index to 0
 
+### Dry Run
+
+* rollback after execute
+
+```js
+await Table.INSERT().INTO().rollback()
+```
+
 ### Log level
 
 * `all` print logs anywhere
