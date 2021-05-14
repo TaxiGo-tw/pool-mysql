@@ -870,6 +870,18 @@ describe('test onErr', () => {
 			assert.equal(err.message, 'yoyoyoyoyoyo')
 		}
 	})
+
+	it('connection', async () => {
+		const errMessage = 'yoyoyoyoyoyo'
+		try {
+			const connection = await pool.createConnection()
+			await connection.onErr(errMessage).q('...')
+
+			assert(false)
+		} catch (err) {
+			assert.equal(err.message, 'yoyoyoyoyoyo')
+		}
+	})
 })
 
 describe('test map', () => {
