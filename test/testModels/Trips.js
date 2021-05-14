@@ -1,4 +1,4 @@
-const Schema = require('../../index').Schema
+const Schema = require('../../src/Pool').Schema
 
 module.exports = class trips extends Schema {
 

@@ -6,7 +6,7 @@ const Users = require('./testModels/Users')
 const Block = require('./testModels/BlockPersonally')
 const Drivers = require('./testModels/Drivers')
 
-const pool = require('../index')
+const pool = require('../src/Pool')
 const Redis = require('redis')
 const bluebird = require('bluebird')
 bluebird.promisifyAll(Redis.RedisClient.prototype)

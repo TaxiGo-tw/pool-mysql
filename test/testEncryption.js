@@ -1,7 +1,7 @@
 const { should, expect, assert } = require('chai')  // Using Assert style
 should()
 
-const pool = require('../index')
+const pool = require('../src/Pool')
 const ZZZPoolMysqlTesting = require('./testModels/zzz_pool_mysql_testing')
 
 describe('test Encryption', async () => {

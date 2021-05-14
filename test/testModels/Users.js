@@ -1,4 +1,4 @@
-const Schema = require('../../index').Schema
+const Schema = require('../../src/Pool').Schema
 module.exports = class user_info extends Schema {
 	get columns() {
 		return {

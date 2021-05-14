@@ -1,4 +1,4 @@
-const Scheme = require('../../index').Schema
+const Scheme = require('../../src/Pool').Schema
 
 class PlateNumber extends Scheme.Types.Base {
 	static validate(string) {
