@@ -1,6 +1,6 @@
 const assert = require('assert')
 
-module.exports = class ConnectionPool {
+module.exports = class MySQLConnectionPool {
 	constructor() {
 		this.connectionRequests = []
 		this.waiting = []
