@@ -29,7 +29,7 @@ See the test [Examples](https://github.com/TaxiGo-tw/pool-mysql/tree/master/test
 <details>
   <summary>Settings</summary>
 
-pool-mysql loads settings from process.env
+* pool-mysql loads settings from process.env
 There is a helpful package [dotenv](https://github.com/motdotla/dotenv)
 
 ```bash
@@ -45,7 +45,7 @@ SQL_TABLE={{table name}}
 <details>
   <summary>Normal Query</summary>
 
-Require `pool-mysql`
+* Require `pool-mysql`
 
 ```js
 const pool = require('pool-mysql')
@@ -74,12 +74,14 @@ try {
   console.log(err)
 }
 ```
+</details>
 
-#### Connection tag
+<details>
+  <summary>Connection tag</summary>
 
-pool of connection pool
+* pool of connection pool
 
-limit max connection amount with same tag_name
+* limit max connection amount with same tag_name
 
 ```js
 // if equal or more than 5 connections which tagged `foo`, wait for releasing
@@ -130,8 +132,10 @@ await Posts
       .WRITER           //force query on writer
       .exec()
 ```
+</details>
 
-#### Populate
+<details>
+  <summary>Populate</summary>
 
 ```js
 // nest populate
@@ -194,7 +198,7 @@ await FOO.INSERT()
 <details>
   <summary>Updated</summary>
 
-return value after updated
+* return value after updated
 
 ```js
 const results = await Block
@@ -272,7 +276,7 @@ await Trips.UPDATE('user_info')
 <details>
   <summary>Combine queries</summary>
 
-mass queries in the same time, combined queries will query once only (scope in instance)
+* mass queries in the same time, combined queries will query once only (scope in instance)
 
 ```js
 Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
@@ -286,13 +290,15 @@ Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
 <details>
   <summary>Auto Free Connections</summary>
 
-Every 300 seconds free half reader&writer connections
+* Every 300 seconds free half reader&writer connections
 
-But will keep at least 10 reader&writer connections
+* But will keep at least 10 reader&writer connections
 </details>
 
 <details>
   <summary>Events</summary>
+
+* `log` all logs `not suggested to subscribe`
 
 * `get` called when connection got from pool
 
@@ -324,7 +330,7 @@ pool.event.on('get', connection => {
 <details>
   <summary>Validation</summary>
 
-Triggered on UPDATE()..SET(object) and INSERT()...SET(object)
+* Triggered on UPDATE()..SET(object) and INSERT()...SET(object)
 
 * `values must be object`
 
