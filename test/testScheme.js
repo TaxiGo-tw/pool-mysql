@@ -814,9 +814,9 @@ describe('test insert values', async () => {
 		const query = Block
 			.INSERT()
 			.INTO(`block_personally (blocker, blocked, notes)`)
-			.VALUES([[101, 301, '101 block 301'], [101, 402, '101 block 402']])
+			.VALUES([[101, undefined, '101 block 301'], [101, 402, '101 block 402']])
 
-		assert.equal(query.FORMATTED().formatted, `INSERT  INTO block_personally (blocker, blocked, notes) VALUES ('101','301','101 block 301'),('101','402','101 block 402')`)
+		assert.equal(query.FORMATTED().formatted, `INSERT  INTO block_personally (blocker, blocked, notes) VALUES (101,NULL,'101 block 301'),(101,402,'101 block 402')`)
 	})
 })
 

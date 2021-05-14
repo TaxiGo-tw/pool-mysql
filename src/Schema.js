@@ -517,16 +517,16 @@ module.exports = class Schema {
 	}
 
 	VALUES(values) {
-		if (values instanceof Array) {
-			const command = values
-				.map(value => `('${value.join(`','`)}')`)
-				.join(',')
-
-			this._q.push({ type: 'VALUES', command })
-			return this
-		} else {
+		if (!(values instanceof Array)) {
 			throwError(`${this.constructor.name} values is not an array`)
 		}
+
+		this._q.push({
+			type: 'VALUES',
+			value: values.reduce((a, b) => a.concat(b), []),
+			command: values.map(value => `(${value.map(_ => '?').join(`,`)})`).join(',')
+		})
+		return this
 	}
 
 	DUPLICATE(whereClause, whereClause2) {
