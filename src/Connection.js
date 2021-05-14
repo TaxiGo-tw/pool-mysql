@@ -92,6 +92,10 @@ module.exports = class Connection {
 			cb = bb
 		}
 
+		this._q(sql, values).then(data => cb(undefined, data)).catch(err => cb(err, undefined))
+	}
+
+	async _q(sql, values) {
 		let sqlStatement = sql.sql || sql
 
 		if (!this.isUsing) {
@@ -103,12 +107,11 @@ module.exports = class Connection {
 
 		// is pool.mock available
 		if (process.env.NODE_ENV !== 'production' && this._pool.mock && !isNaN(this._pool._mockCounter)) {
-			return cb(null, this._pool.mock(this._pool._mockCounter++, sqlStatement))
+			return this._pool.mock(this._pool._mockCounter++, sqlStatement)
 		}
 
-		const connection = this.useWriter ? this.writer : this.getReaderOrWriter(sql)
+		const mysqlConnection = this.useWriter ? this.writer : await this.getReaderOrWriter(sql)
 		this.useWriter = false
-
 
 		if (this.isSelect(sqlStatement) && this._noCache) {
 			sqlStatement = sqlStatement.replace(/^select/gi, 'SELECT SQL_NO_CACHE ')
@@ -133,51 +136,38 @@ module.exports = class Connection {
 
 		const startTime = new Date()
 
-		connection.query(query, (a, b, c) => {
-			const endTime = new Date()
+		// Query
+		const { result, fields: _ } = await mysqlConnection.qV2(query)
 
-			delete this.querying
-			//log
-			const optionsString = [
-				mustUpdateOneRow ? 'mustUpdateOneRow' : ''
-			].join(',')
+		const endTime = new Date()
 
-			const costTime = endTime - startTime
-			const isLongQuery = endTime - launchTme > this._pool.options.QUERY_THRESHOLD_START && costTime > this._pool.options.QUERY_THRESHOLD_MS
-			const printString = `${connection.logPrefix} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
+		delete this.querying
+		//log
+		const optionsString = [
+			mustUpdateOneRow ? 'mustUpdateOneRow' : ''
+		].join(',')
 
-			if (isLongQuery) {
-				this._pool.logger('Long Query', printString)
-			} else if (print) {
-				this._pool.logger('PRINT()', printString)
-			} else {
-				this._pool.logger(undefined, printString)
-			}
+		const costTime = endTime - startTime
+		const isLongQuery = endTime - launchTme > this._pool.options.QUERY_THRESHOLD_START && costTime > this._pool.options.QUERY_THRESHOLD_MS
+		const printString = `${mysqlConnection.logPrefix} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
 
-			//emit
-			Event.emit('query', printString)
-			Event.emit('did_query', query.sql)
+		if (isLongQuery) {
+			this._pool.logger('Long Query', printString)
+		} else if (print) {
+			this._pool.logger('PRINT()', printString)
+		} else {
+			this._pool.logger(undefined, printString)
+		}
 
-			if (mustUpdateOneRow && b && b.affectedRows != 1) {
-				return cb(a || Error(`MUST_UPDATE_ONE_ROW: ${query.sql}`), b, c)
-			}
+		//emit
+		Event.emit('query', printString)
+		Event.emit('did_query', query.sql)
 
-			cb(a, b, c)
-		})
+		if (mustUpdateOneRow && result && result.affectedRows != 1) {
+			throw Error(`MUST_UPDATE_ONE_ROW: ${query.sql}`)
+		}
 
-		return query
-	}
-
-	_q(sql, values) {
-		return new Promise((resolve, reject) => {
-			this.query(sql, values, (err, res) => {
-				if (err) {
-					reject(err)
-				} else {
-					resolve(res)
-				}
-			})
-		})
+		return result
 	}
 
 	async q(sql, values, { key, EX, shouldRefreshInCache, redisPrint, combine } = {}) {
@@ -323,7 +313,7 @@ module.exports = class Connection {
 		return false
 	}
 
-	getReaderOrWriter(sql) {
+	async getReaderOrWriter(sql) {
 		return this.isSelect(sql) ? this.reader : this.writer
 	}
 

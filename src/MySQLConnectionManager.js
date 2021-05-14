@@ -50,6 +50,8 @@ module.exports = class MySQLConnectionManager {
 			connection.end()
 		})
 
+		// 向下相容 ex: connection.writer.q()
+		// 所以留著不動
 		mysqlConnection.q = (sql, values) => {
 			return new Promise((resolve, reject) => {
 				mysqlConnection.query(sql, values, (err, result) => {
@@ -57,6 +59,18 @@ module.exports = class MySQLConnectionManager {
 						reject(err)
 					} else {
 						resolve(result)
+					}
+				})
+			})
+		}
+
+		mysqlConnection.qV2 = (sql, values) => {
+			return new Promise((resolve, reject) => {
+				mysqlConnection.query(sql, values, (err, result, fields) => {
+					if (err) {
+						reject(err)
+					} else {
+						resolve({ result, fields })
 					}
 				})
 			})
