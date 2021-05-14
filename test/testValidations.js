@@ -139,7 +139,7 @@ describe('test Validations', async () => {
 		assert.equal(ClassB.validate('F'), true)
 	})
 
-	it('Timstamp', async () => {
+	it('Timestamp', async () => {
 		assert.equal(UNIX_TIMESTAMP.validate('2020-01-01'), true)
 		assert.equal(UNIX_TIMESTAMP.validate('2020-01-01 05:00'), true)
 		assert.equal(UNIX_TIMESTAMP.validate(1592972101), true)

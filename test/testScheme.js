@@ -898,15 +898,15 @@ describe('test map', () => {
 })
 
 describe('test reduce', () => {
-	const reducer = (accumlator, currentValue) => {
+	const reducer = (accumulator, currentValue) => {
 
-		if (typeof accumlator == 'object') {
-			accumlator = accumlator.amount
-		} else if (typeof accumlator == 'undefined') {
-			accumlator = 0
+		if (typeof accumulator == 'object') {
+			accumulator = accumulator.amount
+		} else if (typeof accumulator == 'undefined') {
+			accumulator = 0
 		}
 
-		return parseInt(accumlator) + parseInt(currentValue.amount)
+		return parseInt(accumulator) + parseInt(currentValue.amount)
 	}
 
 	it('number', async () => {
