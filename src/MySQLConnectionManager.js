@@ -3,44 +3,25 @@ const mysql = require('mysql')
 
 const Event = require('./Event')
 
+const MySQLConnectionPool = require('./MySQLConnectionPool')
+
 module.exports = class MySQLConnectionManager {
 	constructor(options) {
 		this._options = options
 
-		this._writerPool = {
-			connectionRequests: [],
-			waiting: [],
-			using: {
-				default: {}
-			}
-		}
-
-		this._readerPool = {
-			connectionRequests: [],
-			waiting: [],
-			using: {
-				default: {}
-			}
-		}
+		this._writerPool = new MySQLConnectionPool()
+		this._readerPool = new MySQLConnectionPool()
 	}
 
-
 	async _getConnection({ connection, connectionPool, options, role }) {
-		const mysqlConnection = connectionPool.waiting.shift()
+		const mysqlConnection = connectionPool.shift()
 			|| this._createConnection(options, role, connection)
 
 		mysqlConnection.connectionID = connection.id
 		mysqlConnection.tag = connection.tag
 
-		if (!connectionPool.using[mysqlConnection.tag]) {
-			connectionPool.using[mysqlConnection.tag] = {}
-		}
+		connectionPool.setUsing(mysqlConnection)
 
-		if (!connectionPool.using[mysqlConnection.tag][mysqlConnection.connectionID]) {
-			connectionPool.using[mysqlConnection.tag][mysqlConnection.connectionID] = mysqlConnection
-		} else {
-			assert.fail(`get ${role} duplicated connection`)
-		}
 		return mysqlConnection
 	}
 
