@@ -307,10 +307,7 @@ module.exports = class Connection {
 	isSelect(sql) {
 		const command = (sql.sql || sql).trim().toLowerCase()
 
-		if ((/^select/i).test(command) && command.indexOf('for update') == -1) {
-			return true
-		}
-		return false
+		return (/^select/i).test(command) && command.indexOf('for update') == -1
 	}
 
 	async getReaderOrWriter(sql) {
