@@ -122,7 +122,7 @@ module.exports = class MySQLConnectionManager {
 						return reject(err)
 					}
 
-					mysqlConnection.logPrefix = `[${(this.id || 'default')}] ${mysqlConnection.role}`
+					mysqlConnection.logPrefix = `[${(mysqlConnection.connectionID || 'default')}] ${mysqlConnection.role}`
 
 					resolve(mysqlConnection)
 				})

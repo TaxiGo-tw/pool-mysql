@@ -1,4 +1,4 @@
-const Event = require('../src/Event')
+const Event = require('../Event')
 const LogLevel = require('./LogLevel')
 
 class Logger {
@@ -6,6 +6,7 @@ class Logger {
 	constructor() {
 		this._logger = LogLevel.error
 
+		// (err, toPrint)
 		Event.on('log', this._logger)
 	}
 

@@ -1,6 +1,6 @@
 require('./Misc')
-const logger = require('./Logger')
-const LogLevel = require('./LogLevel')
+const logger = require('./Logger/Logger')
+const LogLevel = require('./Logger/LogLevel')
 const Event = require('./Event')
 
 const MySQLConnectionManager = require('./MySQLConnectionManager')
