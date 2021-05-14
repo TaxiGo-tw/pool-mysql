@@ -2,9 +2,9 @@ const { should } = require('chai')
 should()
 const assert = require('assert')
 
-const pool = require('../model/Pool')
+const pool = require('../src/Pool')
 
-const options = require('../model/Options')({
+const options = require('../src/Options')({
 	writer: {
 		host: process.env.HOST2,
 		database: process.env.DB2

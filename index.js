@@ -1,1 +1,1 @@
-module.exports = require('./model/Pool')
+module.exports = require('./src/Pool')

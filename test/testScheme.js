@@ -1,10 +1,10 @@
 const { should, expect, assert } = require('chai')  // Using Assert style
 should()
 
-const Trips = require('./model/Trips')
-const Users = require('./model/Users')
-const Block = require('./model/BlockPersonally')
-const Drivers = require('./model/Drivers')
+const Trips = require('./testModels/Trips')
+const Users = require('./testModels/Users')
+const Block = require('./testModels/BlockPersonally')
+const Drivers = require('./testModels/Drivers')
 
 const pool = require('../index')
 const Redis = require('redis')

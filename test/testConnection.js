@@ -2,7 +2,7 @@ const { should } = require('chai')  // Using Assert style
 should()  // Modifies `Object.prototype`
 const assert = require('assert')
 
-const pool = require('../model/Pool')
+const pool = require('../src/Pool')
 
 
 describe('test data mock', async () => {

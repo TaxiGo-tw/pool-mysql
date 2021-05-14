@@ -2,7 +2,7 @@
 (async () => {
 	require('dotenv').config({ path: '.env' })
 
-	const pool = require('../model/Pool')
+	const pool = require('../src/Pool')
 	pool.event.on('amount', amount => console.log('pool-mysql connections amount :', amount))
 	pool.event.on('request', amount => console.log('pool-mysql connection 額滿使用中', amount))
 	pool.event.on('recycle', () => console.log('pool-mysql connection 排隊解除'))

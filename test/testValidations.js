@@ -1,12 +1,12 @@
 process.env.TZ = 'UTC'
 
-const DriverReviewStatus = require('./model/DriverReviewStatus')
+const DriverReviewStatus = require('./testModels/DriverReviewStatus')
 
 const { should } = require('chai')  // Using Assert style
 should()  // Modifies `Object.prototype`
 const assert = require('assert')
 
-const { Number, String, Email, JSONString, NumberString, Point, Polygon, ENUM, FK, UNIX_TIMESTAMP, DateTime } = require('../model/Schema').Types
+const { Number, String, Email, JSONString, NumberString, Point, Polygon, ENUM, FK, UNIX_TIMESTAMP, DateTime } = require('../src/Schema').Types
 
 describe('test model Validations', async () => {
 	it('get pk ', async () => {
@@ -109,11 +109,11 @@ describe('test Validations', async () => {
 	})
 
 	it('FK', async () => {
-		const ClassA = FK(require('./model/Trips'), 'trip_id')
+		const ClassA = FK(require('./testModels/Trips'), 'trip_id')
 		assert.equal(ClassA.validate(1), true)
 		assert.equal(ClassA.validate('1'), true)
 
-		const ClassB = FK(require('./model/Trips'), 'start_latlng')
+		const ClassB = FK(require('./testModels/Trips'), 'start_latlng')
 		assert.equal(ClassB.validate('25, 123'), true)
 		assert.equal(ClassB.validate('POINT(25.5, 123)'), true)
 		assert.equal(ClassB.validate('POINT(25.5, 123.5)'), true)
