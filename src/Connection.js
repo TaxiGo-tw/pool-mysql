@@ -54,7 +54,12 @@ module.exports = class Connection {
 		return this
 	}
 
-	async beginTransaction(cb) {
+	async awaitTransaction() {
+		await this.beginTransaction()
+	}
+
+	// AKA awaitTransaction
+	async beginTransaction(cb = () => { }) {
 		try {
 			await this.writer.startTransaction()
 			this._status.isStartedTransaction = true
@@ -62,25 +67,6 @@ module.exports = class Connection {
 		} catch (e) {
 			cb(e)
 		}
-	}
-
-	async awaitTransaction() {
-		await this.writer.beginTransaction()
-	}
-
-	async awaitCommit() {
-		return new Promise((resolve, reject) => {
-			try {
-				this.commit((err) => {
-					if (err) {
-						return reject(err)
-					}
-					resolve()
-				})
-			} catch (e) {
-				reject(e)
-			}
-		})
 	}
 
 	query(sql, bb, cc) {
@@ -265,6 +251,21 @@ module.exports = class Connection {
 
 			if (cb) {
 				cb(e)
+			}
+		})
+	}
+
+	async awaitCommit() {
+		return new Promise((resolve, reject) => {
+			try {
+				this.commit((err) => {
+					if (err) {
+						return reject(err)
+					}
+					resolve()
+				})
+			} catch (e) {
+				reject(e)
 			}
 		})
 	}
