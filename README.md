@@ -24,8 +24,10 @@ See the test [Examples](https://github.com/TaxiGo-tw/pool-mysql/tree/master/test
 ```
 
 ## Usage
+</details>
 
-### Settings
+<details>
+  <summary>Settings</summary>
 
 pool-mysql loads settings from process.env
 There is a helpful package [dotenv](https://github.com/motdotla/dotenv)
@@ -38,8 +40,10 @@ SQL_USER={{user}}
 SQL_PASSWORD={{passwd}}
 SQL_TABLE={{table name}}
 ```
+</details>
 
-### Normal Query
+<details>
+  <summary>Normal Query</summary>
 
 Require `pool-mysql`
 
@@ -50,8 +54,10 @@ pool.query(sql, value, (err, data) => {
 
 })
 ```
+</details>
 
-### Create connection
+<details>
+  <summary>Create connection</summary>
 
 ```js
 const connection = await pool.createConnection()
@@ -79,8 +85,10 @@ limit max connection amount with same tag_name
 // if equal or more than 5 connections which tagged `foo`, wait for releasing
 const connection = await pool.createConnection({ tag_name: 'foo', limit: 5 })
 ```
+</details>
 
-### Model setting
+<details>
+  <summary>Model setting</summary>
 
 ```js
 const Schema = require('pool-mysql').Schema
@@ -107,8 +115,10 @@ const User = class user extends Schema {
     }
 }
 ```
+</details>
 
-### Query
+<details>
+  <summary>Query</summary>
 
 ```js
 await Posts
@@ -133,8 +143,10 @@ const result = await Drivers
     .FIRST()
     .exec()
 ```
+</details>
 
-### Nested Query
+<details>
+  <summary>Nested Query</summary>
 
 ```js
 const results = Trips.SELECT(Trips.KEYS, Users.KEYS)
@@ -159,8 +171,10 @@ results.should.have.property('user')
 results.user.should.have.property('uid')
 assert(results instanceof Trips)
 ```
+</details>
 
-### Insert
+<details>
+  <summary>Insert</summary>
 
 ```js
 // single
@@ -175,8 +189,10 @@ await FOO.INSERT()
   .VALUES(array)
   .exec(connection)
 ```
+</details>
 
-### Updated
+<details>
+  <summary>Updated</summary>
 
 return value after updated
 
@@ -196,8 +212,10 @@ for (const result of results) {
     result.should.have.property('blocker')
 }
 ```
+</details>
 
-### cache
+<details>
+  <summary>cache</summary>
 
 ```js
 const redis = require('redis')
@@ -227,8 +245,10 @@ await connection.q('SELECT id FROM user WHERE uid = ?', userID, { EX: 60})
 
 User.SELECT().FROM().WHERE('uid = ?',id).EX(60, { forceUpdate: true }).exec()
 ```
+</details>
 
-### custom error message
+<details>
+  <summary>custom error message</summary>
 
 ```js
 await Trips.UPDATE('user_info')
@@ -247,8 +267,10 @@ await Trips.UPDATE('user_info')
     })
     .exec()
 ```
+</details>
 
-### Combine queries
+<details>
+  <summary>Combine queries</summary>
 
 mass queries in the same time, combined queries will query once only (scope in instance)
 
@@ -259,14 +281,18 @@ Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
 Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
 // the second ... latest query will wait result from first one
 ```
+</details>
 
-### Auto Free Connections
+<details>
+  <summary>Auto Free Connections</summary>
 
 Every 300 seconds free half reader&writer connections
 
 But will keep at least 10 reader&writer connections
+</details>
 
-### Events
+<details>
+  <summary>Events</summary>
 
 * `get` called when connection got from pool
 
@@ -293,8 +319,10 @@ pool.event.on('get', connection => {
     console.log(connection.id)
 })
 ```
+</details>
 
-### Validation
+<details>
+  <summary>Validation</summary>
 
 Triggered on UPDATE()..SET(object) and INSERT()...SET(object)
 
@@ -357,24 +385,30 @@ module.exports = class driver_review_status extends Scheme {
   }
 }
 ```
+</details>
 
-### Mock response
+<details>
+  <summary>Mock response</summary>
 
 * [Usage](https://github.com/TaxiGo-tw/pool-mysql/blob/master/test/testConnection.js)
 
 * every query return response from mock() and increase index
 
 * assign mock() to pool will reset index to 0
+</details>
 
-### Dry Run
+<details>
+  <summary>Dry Run</summary>
 
 * rollback after execute
 
 ```js
 await Table.INSERT().INTO().rollback()
 ```
+</details>
 
-### Log level
+<details>
+  <summary>Log level</summary>
 
 * `all` print logs anywhere
 
