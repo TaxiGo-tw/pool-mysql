@@ -7,7 +7,11 @@ class Logger {
 		this._logger = LogLevel.error
 
 		// (err, toPrint)
-		Event.on('log', this._logger)
+		Event.on('log', (err, toPrint) => {
+			if (this._logger(err, toPrint)) {
+				Event.emit('logged', err, toPrint)
+			}
+		})
 	}
 
 	current() {
