@@ -47,17 +47,32 @@ module.exports = class MySQLConnectionPool {
 	}
 
 	async createConnection(option, role, connection) {
+		const tag = connection.tag
+
 		let mysqlConnection = this.waiting.shift()
 
-		if (!mysqlConnection) {
-			mysqlConnection = mysql.createConnection(option)
-			mysqlConnection.role = role
-			mysqlConnection.connectionID = this._connectionID++
-
-			this._decorator(mysqlConnection, connection)
-
-			await mysqlConnection.awaitConnect()
+		if (mysqlConnection) {
+			mysqlConnection.tag = connection.tag
+			this.setUsing(mysqlConnection)
+			return mysqlConnection
 		}
+
+		const isOnTotalLimit = this.numberOfConnections >= this.option.connectionLimit
+		const isOnTagLimit = Object.keys(this.using[tag.name]).length >= tag.limit
+
+		// 排隊
+		if (isOnTotalLimit || isOnTagLimit) {
+
+		}
+
+
+		mysqlConnection = mysql.createConnection(option)
+		mysqlConnection.role = role
+		mysqlConnection.connectionID = this._connectionID++
+
+		this._decorator(mysqlConnection, connection)
+
+		await mysqlConnection.awaitConnect()
 
 		mysqlConnection.tag = connection.tag
 		this.setUsing(mysqlConnection)
