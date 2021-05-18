@@ -1,6 +1,7 @@
 const assert = require('assert')
 const Event = require('./Logger/Event')
 const mysql = require('mysql')
+const { promisify } = require('util')
 module.exports = class MySQLConnectionPool {
 	constructor(option) {
 		this.option = option
@@ -46,7 +47,8 @@ module.exports = class MySQLConnectionPool {
 		}
 	}
 
-	async createConnection(option, role, connection) {
+
+	_createConnection(option, role, connection, callback) {
 		const tag = connection.tag
 
 		let mysqlConnection = this.waiting.shift()
@@ -54,15 +56,17 @@ module.exports = class MySQLConnectionPool {
 		if (mysqlConnection) {
 			mysqlConnection.tag = connection.tag
 			this.setUsing(mysqlConnection)
-			return mysqlConnection
+			return callback(undefined, mysqlConnection)
 		}
 
 		const isOnTotalLimit = this.numberOfConnections >= this.option.connectionLimit
 		const isOnTagLimit = Object.keys(this.using[tag.name]).length >= tag.limit
-
 		// 排隊
 		if (isOnTotalLimit || isOnTagLimit) {
-
+			callback.requestTime = new Date()
+			callback.tag = tag
+			this.connectionRequests.push(callback)
+			return
 		}
 
 
@@ -70,14 +74,26 @@ module.exports = class MySQLConnectionPool {
 		mysqlConnection.role = role
 		mysqlConnection.connectionID = this._connectionID++
 
+		mysqlConnection.tag = connection.tag
 		this._decorator(mysqlConnection, connection)
 
-		await mysqlConnection.awaitConnect()
-
-		mysqlConnection.tag = connection.tag
 		this.setUsing(mysqlConnection)
 
-		return mysqlConnection
+		mysqlConnection.connect(err => {
+			if (err) {
+				Event.emit('log', err)
+				return callback(err, undefined)
+			}
+
+			mysqlConnection.logPrefix = `[${(mysqlConnection.connectionID || 'default')}] ${mysqlConnection.role}`
+
+			return callback(undefined, mysqlConnection)
+		})
+	}
+
+	async createConnection(option, role, connection) {
+		const createConnection = promisify(this._createConnection).bind(this)
+		return await createConnection(option, role, connection)
 	}
 
 	_decorator(mysqlConnection, connection) {

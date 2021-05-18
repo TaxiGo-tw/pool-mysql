@@ -8,6 +8,8 @@ const Connection = require('./Connection')
 
 const extendRedis = require('./Extension/RedisExtend')
 
+let poolID = 0
+
 class Pool {
 
 	/* for create second or more pool */
@@ -25,13 +27,15 @@ class Pool {
 		if (instance._pools[key]) {
 			return instance._pools[key]
 		} else {
-			const pool = new Pool({ options, redisClient })
+			const pool = new Pool({ options, redisClient, id: ++poolID })
 			instance._pools[key] = pool
 			return pool
 		}
 	}
 
-	constructor({ options, redisClient } = {}) {
+	constructor({ options, redisClient, id } = {}) {
+		this.id = id
+
 		this.options = require('./Options')(options)
 
 		this._mysqlConnectionManager = new MySQLConnectionManager(this.options)
@@ -283,5 +287,5 @@ class Pool {
 }
 
 
-const instance = new Pool()
+const instance = new Pool({ id: ++poolID })
 module.exports = instance
