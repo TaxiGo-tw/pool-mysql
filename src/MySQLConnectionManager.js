@@ -9,8 +9,8 @@ module.exports = class MySQLConnectionManager {
 	constructor(options) {
 		this._options = options
 
-		this._writerPool = new MySQLConnectionPool()
-		this._readerPool = new MySQLConnectionPool()
+		this._writerPool = new MySQLConnectionPool(options.writer)
+		this._readerPool = new MySQLConnectionPool(options.reader)
 	}
 
 	async _getConnection({ connection, connectionPool, options, role }) {

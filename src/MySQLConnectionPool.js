@@ -1,12 +1,27 @@
 const assert = require('assert')
 
 module.exports = class MySQLConnectionPool {
-	constructor() {
+	constructor(options) {
+		this._options = options
+
 		this.connectionRequests = []
 		this.waiting = []
 		this.using = {
-			default: {}
+			default: {
+				12: {}
+			}
 		}
+	}
+
+	count() {
+		const waiting = this.waiting.length
+		const using = Object.values(this.using)
+			.map(o => Object.keys(o).length)
+			.reduce((a, b) => { a + b }, 0)
+
+		const total = waiting + using
+
+		return total
 	}
 
 	shift() {
@@ -14,12 +29,13 @@ module.exports = class MySQLConnectionPool {
 	}
 
 	setUsing(mysqlConnection) {
-		if (!this.using[mysqlConnection.tag]) {
-			this.using[mysqlConnection.tag] = {}
+		console.log(mysqlConnection.tag)
+		if (!this.using[mysqlConnection.tag.name]) {
+			this.using[mysqlConnection.tag.name] = {}
 		}
 
-		if (!this.using[mysqlConnection.tag][mysqlConnection.connectionID]) {
-			this.using[mysqlConnection.tag][mysqlConnection.connectionID] = mysqlConnection
+		if (!this.using[mysqlConnection.tag.name][mysqlConnection.connectionID]) {
+			this.using[mysqlConnection.tag.name][mysqlConnection.connectionID] = mysqlConnection
 		} else {
 			assert.fail(`get ${mysqlConnection.role} duplicated connection`)
 		}
