@@ -1,41 +1,24 @@
-const defaultOptions = {
-	connectionLimit: process.env.CONNECTION_LIMIT || 30,
-	writer: {
-		host: process.env.SQL_HOST || '127.0.0.1',
-		user: process.env.SQL_USER || 'root',
-		password: process.env.SQL_PASSWORD || '123',
-		database: process.env.SQL_DB || process.env.SQL_TABLE || 'test',
-		multipleStatements: process.env.SQL_MULTIPLE_STATEMENTS || true,
-		charset: 'utf8mb4'
-	},
-	reader: {
-		host: process.env.SQL_HOST_READER || process.env.SQL_HOST || '127.0.0.1',
-		user: process.env.SQL_USER_READER || process.env.SQL_USER || 'root',
-		password: process.env.SQL_PASSWORD_READER || process.env.SQL_PASSWORD || '123',
-		database: process.env.SQL_DB || process.env.SQL_TABLE || 'test',
-		multipleStatements: process.env.SQL_MULTIPLE_STATEMENTS || true,
-		charset: 'utf8mb4'
-	}
+const defaultWriter = {
+	host: process.env.SQL_HOST || '127.0.0.1',
+	user: process.env.SQL_USER || 'root',
+	password: process.env.SQL_PASSWORD || '123',
+	database: process.env.SQL_DB || process.env.SQL_TABLE || 'test',
+	multipleStatements: process.env.SQL_MULTIPLE_STATEMENTS || true,
+	charset: 'utf8mb4'
+}
+
+const defaultReader = {
+	host: process.env.SQL_HOST_READER || process.env.SQL_HOST || '127.0.0.1',
+	user: process.env.SQL_USER_READER || process.env.SQL_USER || 'root',
+	password: process.env.SQL_PASSWORD_READER || process.env.SQL_PASSWORD || '123',
+	database: process.env.SQL_DB || process.env.SQL_TABLE || 'test',
+	multipleStatements: process.env.SQL_MULTIPLE_STATEMENTS || true,
+	charset: 'utf8mb4'
+
 }
 
 module.exports = (options = {}) => {
-
-	const writer = {
-		...JSON.parse(JSON.stringify(defaultOptions.writer)),
-		...options.writer,
-		role: 'Writer'
-	}
-
-	const reader = {
-		...JSON.parse(JSON.stringify(defaultOptions.reader)),
-		...options.reader,
-		role: 'Reader'
-	}
-
-
 	const result = {
-		...JSON.parse(JSON.stringify(defaultOptions)),
-
 		SQL_FREE_CONNECTIONS: process.env.SQL_FREE_CONNECTIONS || 10,
 		QUERY_THRESHOLD_START: process.env.QUERY_THRESHOLD_START || 60 * 1000,
 		QUERY_THRESHOLD_MS: process.env.QUERY_THRESHOLD_MS || 500,
@@ -49,10 +32,18 @@ module.exports = (options = {}) => {
 		maxRequesting: process.env.MAX_REQUESTING || 1000,
 
 		...options,
-	}
 
-	result.writer = writer
-	result.reader = reader
+		writer: {
+			...defaultWriter,
+			...options.writer,
+			role: 'Writer'
+		},
+		reader: {
+			...defaultReader,
+			...options.reader,
+			role: 'Reader'
+		},
+	}
 
 	return result
 }
