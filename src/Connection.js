@@ -35,18 +35,18 @@ module.exports = class Connection {
 	async toConnect(type = 'All') {
 		switch (type) {
 			case 'All':
-				this.writer = await this._pool._mysqlConnectionManager.getReader(this)
+				this.writer = await this._pool._mysqlConnectionManager.getWriter(this)
 				await this.writer.awaitConnect()
 
-				this.reader = await this._pool._mysqlConnectionManager.getWriter(this)
+				this.reader = await this._pool._mysqlConnectionManager.getReader(this)
 				await this.reader.awaitConnect()
 				break
 			case 'Writer':
-				this.writer = await this._pool._mysqlConnectionManager.getReader(this)
+				this.writer = await this._pool._mysqlConnectionManager.getWriter(this)
 				await this.writer.awaitConnect()
 				break
 			case 'Reader':
-				this.reader = await this._pool._mysqlConnectionManager.getWriter(this)
+				this.reader = await this._pool._mysqlConnectionManager.getReader(this)
 				await this.reader.awaitConnect()
 				break
 		}
