@@ -91,12 +91,12 @@ module.exports = class MySQLConnectionManager {
 		const callback = this._getNextWaitingCallback(connectionPool)
 
 		if (callback) {
-			Event.emit('recycle', mysqlConnection)
+			Event.emit('recycle', mysqlConnection, connectionPool._options.role)
 			mysqlConnection.gotAt = new Date()
 
 			this._moveConnectionToCallback({ connection: mysqlConnection, callback })
 
-			Event.emit('log', undefined, `_recycle ${this.connectionID} ${JSON.stringify(mysqlConnection.tag)}`)
+			Event.emit('log', undefined, `_recycle ${mysqlConnection.connectionID} ${JSON.stringify(mysqlConnection.tag)}`)
 			return callback(null, mysqlConnection)
 		}
 

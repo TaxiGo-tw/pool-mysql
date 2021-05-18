@@ -22,12 +22,14 @@ module.exports = (options = {}) => {
 
 	const writer = {
 		...JSON.parse(JSON.stringify(defaultOptions.writer)),
-		...options.writer
+		...options.writer,
+		role: 'Writer'
 	}
 
 	const reader = {
 		...JSON.parse(JSON.stringify(defaultOptions.reader)),
-		...options.reader
+		...options.reader,
+		role: 'Reader'
 	}
 
 

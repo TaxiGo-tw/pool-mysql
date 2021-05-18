@@ -23,7 +23,7 @@ module.exports = class MySQLConnectionPool {
 		const amount = usingCount + waitingCount
 
 		if (amount != this._numberOfConnections) {
-			Event.emit('amount', amount)
+			Event.emit('amount', amount, this._options.role)
 			this._numberOfConnections = amount
 		}
 
