@@ -2,8 +2,8 @@ const assert = require('assert')
 const Event = require('./Logger/Event')
 const mysql = require('mysql')
 module.exports = class MySQLConnectionPool {
-	constructor(options) {
-		this._options = options
+	constructor(option) {
+		this.option = option
 
 		this.connectionRequests = []
 		this.waiting = []
@@ -23,7 +23,7 @@ module.exports = class MySQLConnectionPool {
 		const amount = usingCount + waitingCount
 
 		if (amount != this._numberOfConnections) {
-			Event.emit('amount', amount, this._options.role)
+			Event.emit('amount', amount, this.option.role)
 			this._numberOfConnections = amount
 		}
 
@@ -139,7 +139,7 @@ module.exports = class MySQLConnectionPool {
 
 	//結束一半的waiting connections, 至少留10個
 	_endFreeConnections() {
-		const atLeast = this._options.SQL_FREE_CONNECTIONS || 10
+		const atLeast = this.option.SQL_FREE_CONNECTIONS || 10
 		const stayAmount = Math.ceil(this.waiting.length / 2)
 
 		while (stayAmount > atLeast && this.waiting.length > stayAmount) {

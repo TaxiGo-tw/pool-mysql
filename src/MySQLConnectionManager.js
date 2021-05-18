@@ -15,15 +15,15 @@ module.exports = class MySQLConnectionManager {
 		this._readerPool = new MySQLConnectionPool(reader)
 	}
 
-	async _getConnection({ connection, connectionPool, options, role }) {
+	async _getConnection({ connection, options, role }) {
 		const mysqlPool = this._connectionPool(role)
 
-		const mysqlConnection = connectionPool.shift()
+		const mysqlConnection = mysqlPool.shift()
 			|| await mysqlPool.createConnection(options, role, connection)
 
 		mysqlConnection.tag = connection.tag
 
-		connectionPool.setUsing(mysqlConnection)
+		mysqlPool.setUsing(mysqlConnection)
 
 		return mysqlConnection
 	}
@@ -31,7 +31,6 @@ module.exports = class MySQLConnectionManager {
 	async getWriter(connection) {
 		return await this._getConnection({
 			connection,
-			connectionPool: this._writerPool,
 			options: this._options.writer,
 			role: 'Writer'
 		})
@@ -40,7 +39,6 @@ module.exports = class MySQLConnectionManager {
 	async getReader(connection) {
 		return await this._getConnection({
 			connection,
-			connectionPool: this._readerPool,
 			options: this._options.reader,
 			role: 'Reader'
 		})
@@ -91,7 +89,7 @@ module.exports = class MySQLConnectionManager {
 		const callback = this._getNextWaitingCallback(connectionPool)
 
 		if (callback) {
-			Event.emit('recycle', mysqlConnection, connectionPool._options.role)
+			Event.emit('recycle', mysqlConnection, connectionPool.option.role)
 			mysqlConnection.gotAt = new Date()
 
 			this._moveConnectionToCallback({ connection: mysqlConnection, callback })
