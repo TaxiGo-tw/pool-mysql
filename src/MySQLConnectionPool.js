@@ -1,5 +1,5 @@
 const assert = require('assert')
-const Event = require('./Event')
+const Event = require('./Logger/Event')
 const mysql = require('mysql')
 module.exports = class MySQLConnectionPool {
 	constructor(options) {
@@ -41,15 +41,16 @@ module.exports = class MySQLConnectionPool {
 		}
 	}
 
-	setWaiting(mysqlConnection) { }
-
-
 	createConnection(option, role, connection) {
 		const mysqlConnection = mysql.createConnection(option)
 		mysqlConnection.role = role
 
-		// mysqlConnection decorator
+		this._decorator(mysqlConnection, connection)
 
+		return mysqlConnection
+	}
+
+	_decorator(mysqlConnection, connection) {
 		mysqlConnection.on('error', err => {
 			Event.emit('log', err, `connection error: ${(err && err.message) ? err.message : err}`)
 			connection.end()
@@ -126,7 +127,5 @@ module.exports = class MySQLConnectionPool {
 				})
 			})
 		}
-
-		return mysqlConnection
 	}
 }

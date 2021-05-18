@@ -1,5 +1,5 @@
 const mysql = require('mysql')
-const throwError = require('./Helper/throwError')
+const throwError = require('../Helper/throwError')
 
 class Base {
 	// eslint-disable-next-line no-unused-vars

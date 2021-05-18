@@ -6,7 +6,7 @@ const ZZZPoolMysqlTesting = require('./testModels/zzz_pool_mysql_testing')
 
 describe('test Encryption', async () => {
 	it('should decrypt back', async () => {
-		const Encryption = require('../src/Encryption')
+		const Encryption = require('../src/Schema/Encryption')
 		const string = 'abc'
 
 

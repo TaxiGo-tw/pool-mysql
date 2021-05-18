@@ -1,4 +1,4 @@
-const Event = require('../Event')
+const Event = require('./Event')
 const LogLevel = require('./LogLevel')
 
 class Logger {

@@ -1,7 +1,7 @@
 const assert = require('assert')
 const mysql = require('mysql')
 
-const Event = require('./Event')
+const Event = require('./Logger/Event')
 
 const MySQLConnectionPool = require('./MySQLConnectionPool')
 

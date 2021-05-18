@@ -1,11 +1,11 @@
-const Types = require('./Types')
-const Encryption = require('./Encryption')
+const Types = require('./Schema/Types')
+const Encryption = require('./Schema/Encryption')
 const mysql = require('mysql')
 
 const { Validator, throwError } = require('./Helper')
 const { Type, Nested, Populate, Updated } = require('./Schema/')
 
-const Event = require('./Event')
+const Event = require('./Logger/Event')
 
 module.exports = class Schema {
 	constructor(dict) {

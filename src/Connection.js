@@ -1,9 +1,9 @@
 const launchTme = new Date()
 
 const mysql = require('mysql')
-const Event = require('./Event')
+const Event = require('./Logger/Event')
 
-const Combine = require('./Combine')
+const Combine = require('./Schema/Combine')
 
 module.exports = class Connection {
 	constructor(pool) {

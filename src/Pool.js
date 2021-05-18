@@ -1,12 +1,12 @@
-require('./Misc')
+require('./Helper/Misc')
 const logger = require('./Logger/Logger')
 const LogLevel = require('./Logger/LogLevel')
-const Event = require('./Event')
+const Event = require('./Logger/Event')
 
 const MySQLConnectionManager = require('./MySQLConnectionManager')
 const Connection = require('./Connection')
 
-const extendRedis = require('./RedisExtend')
+const extendRedis = require('./Extension/RedisExtend')
 
 class Pool {
 
@@ -77,7 +77,7 @@ class Pool {
 	}
 
 	get Encryption() {
-		return require('./Encryption')
+		return require('./Schema/Encryption')
 	}
 
 	get logger() {
