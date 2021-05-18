@@ -47,13 +47,20 @@ module.exports = class MySQLConnectionPool {
 	}
 
 	async createConnection(option, role, connection) {
-		const mysqlConnection = mysql.createConnection(option)
-		mysqlConnection.role = role
-		mysqlConnection.connectionID = this._connectionID++
+		let mysqlConnection = this.waiting.shift()
 
-		this._decorator(mysqlConnection, connection)
+		if (!mysqlConnection) {
+			mysqlConnection = mysql.createConnection(option)
+			mysqlConnection.role = role
+			mysqlConnection.connectionID = this._connectionID++
 
-		await mysqlConnection.awaitConnect()
+			this._decorator(mysqlConnection, connection)
+
+			await mysqlConnection.awaitConnect()
+		}
+
+		mysqlConnection.tag = connection.tag
+		this.setUsing(mysqlConnection)
 
 		return mysqlConnection
 	}

@@ -15,21 +15,14 @@ module.exports = class MySQLConnectionManager {
 		this._readerPool = new MySQLConnectionPool(reader)
 	}
 
-	async _getConnection({ connection, options, role }) {
-		const mysqlPool = this._connectionPool(role)
-
-		const mysqlConnection = mysqlPool.shift()
-			|| await mysqlPool.createConnection(options, role, connection)
-
-		mysqlConnection.tag = connection.tag
-
-		mysqlPool.setUsing(mysqlConnection)
-
-		return mysqlConnection
+	async _getMysqlConnection({ connection, options, role }) {
+		return await this
+			._connectionPool(role)
+			.createConnection(options, role, connection)
 	}
 
 	async getWriter(connection) {
-		return await this._getConnection({
+		return await this._getMysqlConnection({
 			connection,
 			options: this._options.writer,
 			role: 'Writer'
@@ -37,7 +30,7 @@ module.exports = class MySQLConnectionManager {
 	}
 
 	async getReader(connection) {
-		return await this._getConnection({
+		return await this._getMysqlConnection({
 			connection,
 			options: this._options.reader,
 			role: 'Reader'
