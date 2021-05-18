@@ -1,5 +1,6 @@
 const assert = require('assert')
 const mysql = require('mysql')
+const throwError = require('./Helper/throwError')
 
 const Event = require('./Logger/Event')
 
@@ -9,12 +10,15 @@ module.exports = class MySQLConnectionManager {
 	constructor(options) {
 		this._options = options
 
-		this._writerPool = new MySQLConnectionPool(options.writer)
-		this._readerPool = new MySQLConnectionPool(options.reader)
+		const { writer, reader } = options
+		this._writerPool = new MySQLConnectionPool(writer)
+		this._readerPool = new MySQLConnectionPool(reader)
 	}
 
 	async _getConnection({ connection, connectionPool, options, role }) {
-		const mysqlConnection = connectionPool.shift() || this._connectionPool(role).createConnection(options, role, connection)
+		const pool = this._connectionPool(role)
+
+		const mysqlConnection = connectionPool.shift() || pool.createConnection(options, role, connection)
 
 		mysqlConnection.connectionID = connection.id
 		mysqlConnection.tag = connection.tag
@@ -45,19 +49,26 @@ module.exports = class MySQLConnectionManager {
 	//////////////////////////////////////////////////////////////
 
 	_connectionPool(role) {
-		return role == 'Writer' ? this._writerPool : this._readerPool
+		switch (role) {
+			case 'Writer':
+				return this._writerPool
+			case 'Reader':
+				return this._readerPool
+			default:
+				throwError(`Wrong Role: ${role}`)
+		}
 	}
 
 	_getNextWaitingCallback(connectionPool) {
-		const [callback] = this._connectionRequests.filter((callback) => {
+		const [callback] = connectionPool.connectionRequests.filter((callback) => {
 			const callback_tag_name = callback.tag.name
 			const callback_tag_limit = parseInt(callback.tag.limit, 10)
 			const isUnderTagLimit = Object.keys(connectionPool.using[callback_tag_name]).length < callback_tag_limit
 			return isUnderTagLimit
 		})
 
-		const callback_index = this._connectionRequests.indexOf(callback)
-		delete this._connectionRequests[callback_index]
+		const callback_index = connectionPool.connectionRequests.indexOf(callback)
+		delete connectionPool.connectionRequests[callback_index]
 
 		return callback
 	}
@@ -75,6 +86,7 @@ module.exports = class MySQLConnectionManager {
 	}
 
 	_recycle(mysqlConnection) {
+		console.log('recycle')
 		const connectionPool = this._connectionPool(mysqlConnection.role)
 
 		const callback = this._getNextWaitingCallback(connectionPool)

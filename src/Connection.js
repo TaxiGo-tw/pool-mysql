@@ -278,10 +278,12 @@ module.exports = class Connection {
 
 		if (this.reader) {
 			this.reader.returnToPool()
+			// delete this.reader
 		}
 
 		if (this.writer) {
 			this.writer.returnToPool()
+			// delete this.writer
 		}
 
 		this._pool._recycle(this)
