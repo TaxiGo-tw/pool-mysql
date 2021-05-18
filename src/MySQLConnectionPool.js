@@ -10,6 +10,8 @@ module.exports = class MySQLConnectionPool {
 		this.using = {
 			default: {}
 		}
+
+		this._connectionID = 0
 	}
 
 	get numberOfConnections() {
@@ -47,6 +49,7 @@ module.exports = class MySQLConnectionPool {
 	async createConnection(option, role, connection) {
 		const mysqlConnection = mysql.createConnection(option)
 		mysqlConnection.role = role
+		mysqlConnection.connectionID = this._connectionID++
 
 		this._decorator(mysqlConnection, connection)
 

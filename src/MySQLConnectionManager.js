@@ -18,9 +18,9 @@ module.exports = class MySQLConnectionManager {
 	async _getConnection({ connection, connectionPool, options, role }) {
 		const mysqlPool = this._connectionPool(role)
 
-		const mysqlConnection = connectionPool.shift() || await mysqlPool.createConnection(options, role, connection)
+		const mysqlConnection = connectionPool.shift()
+			|| await mysqlPool.createConnection(options, role, connection)
 
-		mysqlConnection.connectionID = connection.id
 		mysqlConnection.tag = connection.tag
 
 		connectionPool.setUsing(mysqlConnection)
