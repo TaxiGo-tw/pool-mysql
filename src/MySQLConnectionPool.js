@@ -44,11 +44,13 @@ module.exports = class MySQLConnectionPool {
 		}
 	}
 
-	createConnection(option, role, connection) {
+	async createConnection(option, role, connection) {
 		const mysqlConnection = mysql.createConnection(option)
 		mysqlConnection.role = role
 
 		this._decorator(mysqlConnection, connection)
+
+		await mysqlConnection.awaitConnect()
 
 		return mysqlConnection
 	}

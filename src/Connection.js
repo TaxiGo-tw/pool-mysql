@@ -36,18 +36,13 @@ module.exports = class Connection {
 		switch (type) {
 			case 'All':
 				this.writer = await this._pool._mysqlConnectionManager.getWriter(this)
-				await this.writer.awaitConnect()
-
 				this.reader = await this._pool._mysqlConnectionManager.getReader(this)
-				await this.reader.awaitConnect()
 				break
 			case 'Writer':
 				this.writer = await this._pool._mysqlConnectionManager.getWriter(this)
-				await this.writer.awaitConnect()
 				break
 			case 'Reader':
 				this.reader = await this._pool._mysqlConnectionManager.getReader(this)
-				await this.reader.awaitConnect()
 				break
 		}
 
@@ -78,7 +73,9 @@ module.exports = class Connection {
 			cb = bb
 		}
 
-		this._q(sql, values).then(data => cb(undefined, data)).catch(err => cb(err, undefined))
+		this._q(sql, values)
+			.then(data => cb(undefined, data))
+			.catch(err => cb(err, undefined))
 	}
 
 	async _q(sql, values) {

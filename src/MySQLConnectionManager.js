@@ -16,9 +16,9 @@ module.exports = class MySQLConnectionManager {
 	}
 
 	async _getConnection({ connection, connectionPool, options, role }) {
-		const pool = this._connectionPool(role)
+		const mysqlPool = this._connectionPool(role)
 
-		const mysqlConnection = connectionPool.shift() || pool.createConnection(options, role, connection)
+		const mysqlConnection = connectionPool.shift() || await mysqlPool.createConnection(options, role, connection)
 
 		mysqlConnection.connectionID = connection.id
 		mysqlConnection.tag = connection.tag
@@ -86,7 +86,6 @@ module.exports = class MySQLConnectionManager {
 	}
 
 	_recycle(mysqlConnection) {
-		console.log('recycle')
 		const connectionPool = this._connectionPool(mysqlConnection.role)
 
 		const callback = this._getNextWaitingCallback(connectionPool)
