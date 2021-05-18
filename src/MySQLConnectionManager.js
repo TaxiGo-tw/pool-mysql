@@ -14,7 +14,7 @@ module.exports = class MySQLConnectionManager {
 	}
 
 	async _getConnection({ connection, connectionPool, options, role }) {
-		const mysqlConnection = connectionPool.shift() || this._createConnection(options, role, connection)
+		const mysqlConnection = connectionPool.shift() || this._connectionPool(role).createConnection(options, role, connection)
 
 		mysqlConnection.connectionID = connection.id
 		mysqlConnection.tag = connection.tag
@@ -44,8 +44,8 @@ module.exports = class MySQLConnectionManager {
 
 	//////////////////////////////////////////////////////////////
 
-	_connectionPool(mysqlConnection) {
-		return mysqlConnection.role == 'Writer' ? this._writerPool : this._readerPool
+	_connectionPool(role) {
+		return role == 'Writer' ? this._writerPool : this._readerPool
 	}
 
 	_getNextWaitingCallback(connectionPool) {
@@ -63,7 +63,7 @@ module.exports = class MySQLConnectionManager {
 	}
 
 	_moveConnectionToCallback({ mysqlConnection, callback }) {
-		const connectionPool = this._connectionPool(mysqlConnection)
+		const connectionPool = this._connectionPool(mysqlConnection.role)
 
 		delete connectionPool.using[mysqlConnection.tag.name][mysqlConnection.id]
 		if (callback) {
@@ -75,7 +75,7 @@ module.exports = class MySQLConnectionManager {
 	}
 
 	_recycle(mysqlConnection) {
-		const connectionPool = this._connectionPool(mysqlConnection)
+		const connectionPool = this._connectionPool(mysqlConnection.role)
 
 		const callback = this._getNextWaitingCallback(connectionPool)
 
@@ -94,97 +94,5 @@ module.exports = class MySQLConnectionManager {
 		mysqlConnection._resetStatus()
 		connectionPool.waiting.push(mysqlConnection)
 		Event.emit('release', mysqlConnection)
-	}
-
-	//////////////////////////////////////////////////////////////
-
-	// mysqlConnection decorator
-	_createConnection(option, role, connection) {
-		const mysqlConnection = mysql.createConnection(option)
-		mysqlConnection.role = role
-
-		mysqlConnection.on('error', err => {
-			Event.emit('log', err, `connection error: ${(err && err.message) ? err.message : err}`)
-			connection.end()
-		})
-
-		// 向下相容 ex: connection.writer.q()
-		// 所以留著不動
-		mysqlConnection.q = (sql, values) => {
-			return new Promise((resolve, reject) => {
-				mysqlConnection.query(sql, values, (err, result) => {
-					if (err) {
-						reject(err)
-					} else {
-						resolve(result)
-					}
-				})
-			})
-		}
-
-		mysqlConnection.qV2 = (sql, values) => {
-			return new Promise((resolve, reject) => {
-				mysqlConnection.query(sql, values, (err, result, fields) => {
-					if (err) {
-						reject(err)
-					} else {
-						resolve({ result, fields })
-					}
-				})
-			})
-		}
-
-		mysqlConnection.startTransaction = () => {
-			return new Promise((resolve, reject) => {
-				mysqlConnection.beginTransaction((err) => {
-					Event.emit('log', err, `${mysqlConnection.logPrefix} : Start Transaction`)
-					if (err) {
-						reject(err)
-					} else {
-						resolve(mysqlConnection)
-					}
-				})
-			})
-		}
-
-		mysqlConnection.commitChange = () => {
-			return new Promise((resolve, reject) => {
-				mysqlConnection.commit((err) => {
-					Event.emit('log', err, `${mysqlConnection.logPrefix} : COMMIT`)
-					if (err) {
-						reject(err)
-					} else {
-						resolve(mysqlConnection)
-					}
-				})
-			})
-		}
-
-		mysqlConnection.returnToPool = () => {
-			if (mysqlConnection.role == 'Writer') {
-				delete this._writerPool.using[mysqlConnection.tag][mysqlConnection.connectionID]
-				this._writerPool.waiting.push(mysqlConnection)
-			} else if (mysqlConnection.role == 'Reader') {
-				delete this._readerPool.using[mysqlConnection.tag][mysqlConnection.connectionID]
-				this._readerPool.waiting.push(mysqlConnection)
-			}
-		}
-
-		mysqlConnection.awaitConnect = () => {
-			return new Promise((resolve, reject) => {
-				mysqlConnection.connect(err => {
-					if (err) {
-						Event.emit('log', err)
-						return reject(err)
-					}
-
-					mysqlConnection.logPrefix = `[${(mysqlConnection.connectionID || 'default')}] ${mysqlConnection.role}`
-
-					resolve(mysqlConnection)
-				})
-			})
-		}
-
-		return mysqlConnection
 	}
 }
