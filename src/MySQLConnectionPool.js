@@ -8,21 +8,24 @@ module.exports = class MySQLConnectionPool {
 		this.connectionRequests = []
 		this.waiting = []
 		this.using = {
-			default: {
-				12: {}
-			}
+			default: {}
 		}
 	}
 
-	count() {
-		const waiting = this.waiting.length
-		const using = Object.values(this.using)
+	get numberOfConnections() {
+		const usingCount = Object.keys(this.using)
 			.map(o => Object.keys(o).length)
-			.reduce((a, b) => { a + b }, 0)
+			.reduce((a, b) => a + b, 0)
 
-		const total = waiting + using
+		const waitingCount = this.waiting.length
+		const amount = usingCount + waitingCount
 
-		return total
+		if (amount != this._numberOfConnections) {
+			Event.emit('amount', amount)
+			this._numberOfConnections = amount
+		}
+
+		return amount
 	}
 
 	shift() {
@@ -127,5 +130,38 @@ module.exports = class MySQLConnectionPool {
 				})
 			})
 		}
+	}
+
+	//結束一半的waiting connections, 至少留10個
+	_endFreeConnections() {
+		const atLeast = this._options.SQL_FREE_CONNECTIONS || 10
+		const stayAmount = Math.ceil(this.waiting.length / 2)
+
+		while (stayAmount > atLeast && this.waiting.length > stayAmount) {
+			const mysqlConnection = this.waiting.shift()
+			if (!mysqlConnection) {
+				continue
+			}
+
+			this.numberOfConnections
+			mysqlConnection.end()
+		}
+	}
+
+	_runSchedulers() {
+		//自動清多餘connection
+		setInterval(this._endFreeConnections.bind(this), 5 * 60 * 1000)
+
+		//清掉timeout的get connection requests
+		setInterval(() => {
+			const now = new Date()
+			const requestTimeOut = 10000
+
+			while (this.connectionRequests[0] && now - this.connectionRequests[0].requestTime > requestTimeOut) {
+				const callback = this.connectionRequests.shift()
+				const err = Error('get connection request timeout')
+				callback(err, null)
+			}
+		}, 1000)
 	}
 }

@@ -42,6 +42,10 @@ module.exports = (options = {}) => {
 		REDIS_HOST: process.env.REDIS_HOST,
 		REDIS_PORT: process.env.REDIS_PORT,
 		connectionLimit: process.env.CONNECTION_LIMIT || 30,
+
+		//有多少在排隊時, 拿 connection會直接fail
+		maxRequesting: process.env.MAX_REQUESTING || 1000,
+
 		...options,
 	}
 
