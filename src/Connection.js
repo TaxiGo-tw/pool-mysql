@@ -1,6 +1,7 @@
 const launchTme = new Date()
 
 const mysql = require('mysql')
+const throwError = require('./Helper/throwError')
 const Event = require('./Logger/Event')
 
 const Combine = require('./Schema/Combine')
@@ -90,6 +91,8 @@ module.exports = class Connection {
 	pool-mysql: connection is not using, might released too early
 	Query: ${sqlStatement}
 			`)
+
+			throwError('connection is not using, might released too early, fix it or rollback')
 		}
 
 		// is pool.mock available

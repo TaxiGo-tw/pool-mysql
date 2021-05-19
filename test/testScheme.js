@@ -804,8 +804,12 @@ describe('test release before query warning', () => {
 		connection.release()
 		assert.equal(connection.isUsing, false)
 
-		await connection.q('SELECT * FROM trips LIMIT 5')
-
+		try {
+			await connection.q('SELECT * FROM trips LIMIT 5')
+			assert.fail('...')
+		} catch (error) {
+			assert.equal(error.message, 'connection is not using, might released too early, fix it or rollback')
+		}
 	})
 })
 
