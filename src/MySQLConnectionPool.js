@@ -34,8 +34,14 @@ module.exports = class MySQLConnectionPool {
 	}
 
 	async createConnection(option, role, connection) {
-		const createConnection = promisify(this._createConnection).bind(this)
-		return await createConnection(option, role, connection)
+		return new Promise((resolve, reject) => {
+			this._createConnection(option, role, connection, (err, mysqlConnection) => {
+				if (err) {
+					return reject(err)
+				}
+				resolve(mysqlConnection)
+			})
+		})
 	}
 
 	/////////////////////////////////
@@ -99,9 +105,10 @@ module.exports = class MySQLConnectionPool {
 
 	_getNextWaitingCallback() {
 		const [callback] = this.connectionRequests.filter((callback) => {
-			const callback_tag_name = callback.tag.name
-			const callback_tag_limit = parseInt(callback.tag.limit, 10)
-			const isUnderTagLimit = Object.keys(this.using[callback_tag_name]).length < callback_tag_limit
+			const tagName = callback.tag.name
+			const tagLimit = parseInt(callback.tag.limit, 10)
+			const usingCount = Object.keys(this.using[tagName]).length
+			const isUnderTagLimit = usingCount < tagLimit
 			return isUnderTagLimit
 		})
 
@@ -111,34 +118,27 @@ module.exports = class MySQLConnectionPool {
 		return callback
 	}
 
-	_moveConnectionToCallback({ connection, callback }) {
-		delete this.using[connection.tag.name][connection.id]
-		if (callback) {
-			connection.tag = callback.tag
-			this.using[callback.tag.name][connection.id] = connection
-		} else {
-			delete connection.tag
-		}
-	}
-
-	_recycle(connection) {
+	_recycle(mysqlConnection) {
 		const callback = this._getNextWaitingCallback()
 
 		if (callback) {
-			Event.emit('recycle', connection)
-			connection.gotAt = new Date()
+			Event.emit('recycle', mysqlConnection)
+			mysqlConnection.gotAt = new Date()
 
-			this._moveConnectionToCallback({ connection, callback })
+			delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
+			mysqlConnection.tag = callback.tag
+			this.using[callback.tag.name][mysqlConnection.id] = mysqlConnection
 
-			Event.emit('log', undefined, `_recycle ${this.connectionID} ${JSON.stringify(connection.tag)}`)
-			return callback(null, connection)
+			Event.emit('log', undefined, `_recycle ${this.connectionID} ${JSON.stringify(mysqlConnection.tag)}`)
+			return callback(null, mysqlConnection)
 		}
 
-		this._moveConnectionToCallback({ connection })
+		delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
+		delete mysqlConnection.tag
 
-		connection._resetStatus()
-		this.connectionPool.waiting.push(connection)
-		Event.emit('release', connection)
+		mysqlConnection._resetStatus()
+		this.waiting.push(mysqlConnection)
+		Event.emit('release', mysqlConnection)
 	}
 
 	//////////////////////////////////////////////////
