@@ -13,6 +13,8 @@ module.exports = class MySQLConnectionPool {
 		}
 
 		this._connectionID = 0
+
+		this._runSchedulers()
 	}
 
 	get numberOfConnections() {
@@ -31,31 +33,33 @@ module.exports = class MySQLConnectionPool {
 		return amount
 	}
 
-	shift() {
-		return this.waiting.shift()
+	async createConnection(option, role, connection) {
+		const createConnection = promisify(this._createConnection).bind(this)
+		return await createConnection(option, role, connection)
 	}
 
-	setUsing(mysqlConnection) {
-		if (!this.using[mysqlConnection.tag.name]) {
-			this.using[mysqlConnection.tag.name] = {}
-		}
-
-		if (!this.using[mysqlConnection.tag.name][mysqlConnection.connectionID]) {
-			this.using[mysqlConnection.tag.name][mysqlConnection.connectionID] = mysqlConnection
-		} else {
-			assert.fail(`get ${mysqlConnection.role} duplicated connection`)
-		}
-	}
-
+	/////////////////////////////////
 
 	_createConnection(option, role, connection, callback) {
+		function setUsing(mysqlConnection) {
+			if (!this.using[mysqlConnection.tag.name]) {
+				this.using[mysqlConnection.tag.name] = {}
+			}
+
+			if (!this.using[mysqlConnection.tag.name][mysqlConnection.connectionID]) {
+				this.using[mysqlConnection.tag.name][mysqlConnection.connectionID] = mysqlConnection
+			} else {
+				assert.fail(`get ${mysqlConnection.role} duplicated connection`)
+			}
+		}
+
 		const tag = connection.tag
 
 		let mysqlConnection = this.waiting.shift()
 
 		if (mysqlConnection) {
 			mysqlConnection.tag = connection.tag
-			this.setUsing(mysqlConnection)
+			setUsing(mysqlConnection)
 			return callback(undefined, mysqlConnection)
 		}
 
@@ -77,7 +81,7 @@ module.exports = class MySQLConnectionPool {
 		mysqlConnection.tag = connection.tag
 		this._decorator(mysqlConnection, connection)
 
-		this.setUsing(mysqlConnection)
+		setUsing(mysqlConnection)
 
 		mysqlConnection.connect(err => {
 			if (err) {
@@ -89,11 +93,6 @@ module.exports = class MySQLConnectionPool {
 
 			return callback(undefined, mysqlConnection)
 		})
-	}
-
-	async createConnection(option, role, connection) {
-		const createConnection = promisify(this._createConnection).bind(this)
-		return await createConnection(option, role, connection)
 	}
 
 	_decorator(mysqlConnection, connection) {
@@ -175,25 +174,23 @@ module.exports = class MySQLConnectionPool {
 		}
 	}
 
-	//結束一半的waiting connections, 至少留10個
-	_endFreeConnections() {
-		const atLeast = this.option.SQL_FREE_CONNECTIONS || 10
-		const stayAmount = Math.ceil(this.waiting.length / 2)
-
-		while (stayAmount > atLeast && this.waiting.length > stayAmount) {
-			const mysqlConnection = this.waiting.shift()
-			if (!mysqlConnection) {
-				continue
-			}
-
-			this.numberOfConnections
-			mysqlConnection.end()
-		}
-	}
-
 	_runSchedulers() {
 		//自動清多餘connection
-		setInterval(this._endFreeConnections.bind(this), 5 * 60 * 1000)
+		//結束一半的waiting connections, 至少留10個
+		setInterval(() => {
+			const atLeast = this.option.SQL_FREE_CONNECTIONS || 10
+			const stayAmount = Math.ceil(this.waiting.length / 2)
+
+			while (stayAmount > atLeast && this.waiting.length > stayAmount) {
+				const mysqlConnection = this.waiting.shift()
+				if (!mysqlConnection) {
+					continue
+				}
+
+				this.numberOfConnections
+				mysqlConnection.end()
+			}
+		}, 5 * 60 * 1000)
 
 		//清掉timeout的get connection requests
 		setInterval(() => {
