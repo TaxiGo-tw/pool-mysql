@@ -56,6 +56,10 @@ module.exports = class Connection {
 	// AKA awaitTransaction
 	async beginTransaction(cb = () => { }) {
 		try {
+			if (!this.writer) {
+				this.writer = await this._pool._mysqlConnectionManager.getWriter(this)
+			}
+
 			await this.writer.startTransaction()
 			this._status.isStartedTransaction = true
 			cb(undefined)
@@ -275,20 +279,25 @@ module.exports = class Connection {
 
 		if (this.reader) {
 			this.reader.returnToPool()
-			// delete this.reader
+			delete this.reader
 		}
 
 		if (this.writer) {
 			this.writer.returnToPool()
-			// delete this.writer
+			delete this.writer
 		}
 
 		this._pool._recycle(this)
 	}
 
 	end() {
-		this.reader.end()
-		this.writer.end()
+		if (this.reader) {
+			this.reader.end()
+		}
+		if (this.writer) {
+			this.writer.end()
+		}
+
 		Event.emit('end', this)
 
 		delete this._pool
