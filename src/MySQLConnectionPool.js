@@ -41,7 +41,7 @@ module.exports = class MySQLConnectionPool {
 	/////////////////////////////////
 
 	_createConnection(option, role, connection, callback) {
-		function setUsing(mysqlConnection) {
+		const setUsing = (mysqlConnection) => {
 			if (!this.using[mysqlConnection.tag.name]) {
 				this.using[mysqlConnection.tag.name] = {}
 			}
@@ -94,6 +94,54 @@ module.exports = class MySQLConnectionPool {
 			return callback(undefined, mysqlConnection)
 		})
 	}
+
+	////////////////////////////////////////////////////
+
+	_getNextWaitingCallback() {
+		const [callback] = this.connectionRequests.filter((callback) => {
+			const callback_tag_name = callback.tag.name
+			const callback_tag_limit = parseInt(callback.tag.limit, 10)
+			const isUnderTagLimit = Object.keys(this.using[callback_tag_name]).length < callback_tag_limit
+			return isUnderTagLimit
+		})
+
+		const callback_index = this.connectionRequests.indexOf(callback)
+		delete this.connectionRequests[callback_index]
+
+		return callback
+	}
+
+	_moveConnectionToCallback({ connection, callback }) {
+		delete this.using[connection.tag.name][connection.id]
+		if (callback) {
+			connection.tag = callback.tag
+			this.using[callback.tag.name][connection.id] = connection
+		} else {
+			delete connection.tag
+		}
+	}
+
+	_recycle(connection) {
+		const callback = this._getNextWaitingCallback()
+
+		if (callback) {
+			Event.emit('recycle', connection)
+			connection.gotAt = new Date()
+
+			this._moveConnectionToCallback({ connection, callback })
+
+			Event.emit('log', undefined, `_recycle ${this.connectionID} ${JSON.stringify(connection.tag)}`)
+			return callback(null, connection)
+		}
+
+		this._moveConnectionToCallback({ connection })
+
+		connection._resetStatus()
+		this.connectionPool.waiting.push(connection)
+		Event.emit('release', connection)
+	}
+
+	//////////////////////////////////////////////////
 
 	_decorator(mysqlConnection, connection) {
 		mysqlConnection.on('error', err => {
@@ -151,6 +199,10 @@ module.exports = class MySQLConnectionPool {
 					}
 				})
 			})
+		}
+
+		mysqlConnection._resetStatus = () => {
+			delete mysqlConnection.tag
 		}
 
 		mysqlConnection.returnToPool = () => {
