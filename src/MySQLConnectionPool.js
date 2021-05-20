@@ -58,8 +58,6 @@ module.exports = class MySQLConnectionPool {
 
 			if (!this.using[mysqlConnection.tag.name][mysqlConnection.connectionID]) {
 				this.using[mysqlConnection.tag.name][mysqlConnection.connectionID] = mysqlConnection
-			} else {
-				assert.fail(`get ${mysqlConnection.role} duplicated connection`)
 			}
 		}
 
@@ -112,10 +110,10 @@ module.exports = class MySQLConnectionPool {
 
 	_getNextWaitingCallback() {
 		const [callback] = this.connectionRequests.filter((callback) => {
-			const tagName = callback.tag.name
-			const tagLimit = parseInt(callback.tag.limit, 10)
-			const usingCount = Object.keys(this.using[tagName]).length
-			const isUnderTagLimit = usingCount < tagLimit
+			const { name, limit } = callback.tag
+			const tagLimit = parseInt(limit, 10)
+			const usingCount = Object.keys(this.using[name]).length
+			const isUnderTagLimit = usingCount <= tagLimit
 			return isUnderTagLimit
 		})
 
@@ -123,29 +121,6 @@ module.exports = class MySQLConnectionPool {
 		delete this.connectionRequests[callback_index]
 
 		return callback
-	}
-
-	_recycle(mysqlConnection) {
-		const callback = this._getNextWaitingCallback()
-
-		if (callback) {
-			Event.emit('recycle', mysqlConnection)
-			mysqlConnection.gotAt = new Date()
-
-			delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
-			mysqlConnection.tag = callback.tag
-			this.using[callback.tag.name][mysqlConnection.id] = mysqlConnection
-
-			Event.emit('log', undefined, `_recycle ${this.connectionID} ${JSON.stringify(mysqlConnection.tag)}`)
-			return callback(null, mysqlConnection)
-		}
-
-		delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
-		delete mysqlConnection.tag
-
-		mysqlConnection._resetStatus()
-		this.waiting.push(mysqlConnection)
-		Event.emit('release', mysqlConnection)
 	}
 
 	//////////////////////////////////////////////////
@@ -213,8 +188,26 @@ module.exports = class MySQLConnectionPool {
 		}
 
 		mysqlConnection.returnToPool = () => {
-			delete this.using[mysqlConnection.tag.name][mysqlConnection.connectionID]
+			const callback = this._getNextWaitingCallback()
+
+			if (callback) {
+				Event.emit('recycle', mysqlConnection)
+				mysqlConnection.gotAt = new Date()
+
+				delete this.using[mysqlConnection.tag.name][mysqlConnection.connectionID]
+				mysqlConnection.tag = callback.tag
+				this.using[mysqlConnection.tag.name][mysqlConnection.connectionID] = mysqlConnection
+
+				Event.emit('log', undefined, `_recycle ${this.connectionID} ${JSON.stringify(mysqlConnection.tag)}`)
+				return callback(null, mysqlConnection)
+			}
+
+			delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
+			delete mysqlConnection.tag
+
+			mysqlConnection._resetStatus()
 			this.waiting.push(mysqlConnection)
+			Event.emit('release', mysqlConnection)
 		}
 
 		mysqlConnection.awaitConnect = () => {
@@ -248,6 +241,10 @@ module.exports = class MySQLConnectionPool {
 				delete this.using[mysqlConnection.tag.name][mysqlConnection.connectionID]
 			}
 		}
+
+		mysqlConnection.on('error', function (err) {
+			console.log(333, err.code)
+		})
 	}
 
 	_runSchedulers() {
