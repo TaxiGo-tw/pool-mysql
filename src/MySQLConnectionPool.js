@@ -76,6 +76,7 @@ module.exports = class MySQLConnectionPool {
 			callback.requestTime = new Date()
 			callback.tag = tag
 			this.connectionRequests.push(callback)
+			Event.emit('request', this.connectionRequests.length, this.option.role)
 			return
 		}
 
@@ -94,8 +95,10 @@ module.exports = class MySQLConnectionPool {
 				Event.emit('log', err)
 				return callback(err, undefined)
 			}
-
 			mysqlConnection.logPrefix = `[${(mysqlConnection.connectionID || 'default')}] ${mysqlConnection.role}`
+
+			Event.emit('create', mysqlConnection, this.option.role)
+			this.numberOfConnections
 
 			return callback(undefined, mysqlConnection)
 		})
