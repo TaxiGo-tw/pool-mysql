@@ -763,18 +763,18 @@ describe('test LIMIT OFFSET', () => {
 
 describe('test connection.query()', () => {
 	it('3', (done) => {
-		pool.createConnection().then(connection => {
-			return connection.query('SELECT * FROM trips LIMIT 5', (e, r) => {
-				connection.release()
-				done()
-			})
-		}).catch(console.error)
+		const connection = pool.connection()
+
+		connection.query('SELECT * FROM trips LIMIT 5', (_, r) => {
+			connection.release()
+			done()
+		})
 	})
 })
 
 describe('test get connection', () => {
 	it('1', (done) => {
-		pool.getConnection((err, connection) => {
+		pool.getConnection((_, connection) => {
 			connection.release()
 			done()
 		})
@@ -790,7 +790,7 @@ describe('test get connection', () => {
 
 describe('test pool.query()', () => {
 	it('1', (done) => {
-		pool.query('SELECT * FROM trips LIMIT 5', (e, r) => {
+		pool.query('SELECT * FROM trips LIMIT 5', (_, r) => {
 			done()
 		})
 	})

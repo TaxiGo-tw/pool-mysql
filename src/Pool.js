@@ -118,12 +118,17 @@ class Pool {
 		this._mock = callback
 	}
 
+	/**
+	* @deprecated use `connection()`
+	*/
 	getConnection(cb) {
-		this.createConnection()
-			.then(c => cb(undefined, c))
-			.catch(cb)
+		const connection = this.connection()
+		cb(undefined, connection)
 	}
 
+	/**
+		* @deprecated use `connection()`
+		*/
 	async createConnection({ tag_name = 'default', limit = this.options.connectionLimit } = {}) {
 		const tag = { name: tag_name, limit: limit }
 
@@ -134,24 +139,39 @@ class Pool {
 		return connection
 	}
 
+	connection({ tag_name = 'default', limit = this.options.connectionLimit } = {}) {
+		const tag = { name: tag_name, limit: limit }
+
+		const connection = new Connection(this)
+		connection.tag = tag
+		connection.id = ++this.connectionID
+
+		return connection
+	}
+
+	/**
+	* @deprecated use `connection()`
+	*/
 	query(sql, b, c) {
-		this.createConnection().then(connection => {
-			const callback = c || b
+		const connection = this.connection()
+		const callback = c || b
 
-			const cb = (a, b, c) => {
-				callback(a, b, c)
-			}
+		const cb = (a, b, c) => {
+			callback(a, b, c)
+		}
 
-			if (c) {
-				connection.query(sql, b, cb)
-			} else {
-				connection.query(sql, cb)
-			}
-			return
-		}).catch(c || b)
+		if (c) {
+			connection.query(sql, b, cb)
+		} else {
+			connection.query(sql, cb)
+		}
+
 		return {}
 	}
 
+	/**
+	* @deprecated use `connection()`
+	*/
 	release() { }
 }
 

@@ -1,7 +1,6 @@
-const assert = require('assert')
 const Event = require('./Logger/Event')
 const mysql = require('mysql')
-const { promisify } = require('util')
+
 module.exports = class MySQLConnectionPool {
 	constructor(option) {
 		this.option = option
@@ -131,8 +130,10 @@ module.exports = class MySQLConnectionPool {
 			connection.end()
 		})
 
-		// 向下相容 ex: connection.writer.q()
-		// 所以留著不動
+
+		/**
+			* @deprecated use `qV2`
+			*/
 		mysqlConnection.q = (sql, values) => {
 			return new Promise((resolve, reject) => {
 				mysqlConnection.query(sql, values, (err, result) => {
@@ -157,27 +158,14 @@ module.exports = class MySQLConnectionPool {
 			})
 		}
 
-		mysqlConnection.startTransaction = () => {
+		mysqlConnection.beginTransactionAsync = () => {
 			return new Promise((resolve, reject) => {
 				mysqlConnection.beginTransaction((err) => {
 					Event.emit('log', err, `${mysqlConnection.logPrefix} : Start Transaction`)
 					if (err) {
 						reject(err)
 					} else {
-						resolve(mysqlConnection)
-					}
-				})
-			})
-		}
-
-		mysqlConnection.commitChange = () => {
-			return new Promise((resolve, reject) => {
-				mysqlConnection.commit((err) => {
-					Event.emit('log', err, `${mysqlConnection.logPrefix} : COMMIT`)
-					if (err) {
-						reject(err)
-					} else {
-						resolve(mysqlConnection)
+						resolve()
 					}
 				})
 			})
@@ -210,21 +198,6 @@ module.exports = class MySQLConnectionPool {
 			Event.emit('release', mysqlConnection)
 		}
 
-		mysqlConnection.awaitConnect = () => {
-			return new Promise((resolve, reject) => {
-				mysqlConnection.connect(err => {
-					if (err) {
-						Event.emit('log', err)
-						return reject(err)
-					}
-
-					mysqlConnection.logPrefix = `[${(mysqlConnection.connectionID || 'default')}] ${mysqlConnection.role}`
-
-					resolve(mysqlConnection)
-				})
-			})
-		}
-
 		mysqlConnection.close = () => {
 			Event.emit('log', undefined, `[${mysqlConnection.connectionID}] END`)
 
@@ -246,6 +219,8 @@ module.exports = class MySQLConnectionPool {
 			console.log(333, err.code)
 		})
 	}
+
+	//////////////////////////////////////
 
 	_runSchedulers() {
 		//自動清多餘connection

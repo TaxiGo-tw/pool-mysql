@@ -21,8 +21,8 @@ describe('test Encryption', async () => {
 	})
 
 	it('should encrypt with Schema', async () => {
-		const connection = await pool.createConnection()
-		await connection.awaitTransaction()
+		const connection = pool.connection()
+		await connection.beginTransaction()
 
 		const email = 'test@g.com'
 

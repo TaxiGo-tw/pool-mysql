@@ -21,7 +21,7 @@ module.exports = class Connection {
 		this._status = {}
 	}
 
-	async toConnect(type = 'All') {
+	async connect(type = 'All') {
 		const manager = this._pool._mysqlConnectionManager
 
 		switch (type) {
@@ -40,25 +40,32 @@ module.exports = class Connection {
 		return this
 	}
 
+
+	/**
+		* @deprecated use `beginTransaction`
+		*/
 	async awaitTransaction() {
 		await this.beginTransaction()
 	}
 
-	// AKA awaitTransaction
 	async beginTransaction(cb = () => { }) {
 		try {
 			if (!this.writer) {
 				this.writer = await this._pool._mysqlConnectionManager.getWriter(this)
 			}
 
-			await this.writer.startTransaction()
+			await this.writer.beginTransactionAsync()
 			this._status.isStartedTransaction = true
 			cb(undefined)
 		} catch (e) {
+			console.log(e)
 			cb(e)
 		}
 	}
 
+	/**
+	* @deprecated use `q()`
+	*/
 	query(sql, bb, cc) {
 		let values = bb
 		let cb = cc
@@ -224,15 +231,25 @@ module.exports = class Connection {
 		}
 	}
 
+	/**
+	* @deprecated use `commitAsync()`
+	*/
 	commit(cb = () => { }) {
 		this.awaitCommit().then(cb).catch(cb)
 	}
 
+	/**
+	* @deprecated use `commitAsync()`
+	*/
 	async awaitCommit() {
-		const awaitCommit = require('util').promisify(this.writer.commit)
+		await this.commitAsync()
+	}
+
+	async commitAsync() {
+		const commitAsync = require('util').promisify(this.writer.commit)
 
 		try {
-			await awaitCommit()
+			await commitAsync()
 			Event.emit('log', undefined, `${this.writer.logPrefix} : COMMIT`)
 		} catch (error) {
 			Event.emit('log', error, `${this.writer.logPrefix} : COMMIT`)
@@ -255,7 +272,7 @@ module.exports = class Connection {
 		Event.emit('log', undefined, `[${this.id}] RELEASE`)
 
 		if (this._status.isStartedTransaction && !this._status.isCommitted) {
-			Event.emit('log', undefined, 'pool-mysql: Transaction started, should be Committed')
+			Event.emit('log', Error('Transaction started, should be Committed before commit'))
 		}
 
 		if (this.reader) {
@@ -294,12 +311,12 @@ module.exports = class Connection {
 	async getReaderOrWriter(sql, useWriter) {
 		if (this.isSelect(sql) && !useWriter) {
 			if (!this.reader) {
-				await this.toConnect('Reader')
+				await this.connect('Reader')
 			}
 			return this.reader
 		} else {
 			if (!this.writer) {
-				await this.toConnect('Writer')
+				await this.connect('Writer')
 			}
 			return this.writer
 		}

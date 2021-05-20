@@ -301,9 +301,9 @@ module.exports = class Schema {
 	}
 
 	async rollback(outSideConnection = null) {
-		const connection = outSideConnection || await Schema._pool.createConnection()
+		const connection = outSideConnection || Schema._pool.connection()
 		try {
-			await connection.awaitTransaction()
+			await connection.beginTransaction()
 			return await this.exec(connection)
 		} catch (error) {
 			throwError(error)

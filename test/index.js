@@ -1,4 +1,9 @@
 require('dotenv').config({ path: '.env' })
+process.env.NODE_ENV = 'TESTING'
+
+
+
+require('dotenv').config({ path: '.env' })
 const { assert } = require('chai')
 const Event = require('../src/Logger/Event')
 Event.on('amount', (amount, role) => console.log('pool-mysql connections amount :', amount, role))
