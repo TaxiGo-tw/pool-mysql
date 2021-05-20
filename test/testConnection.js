@@ -43,7 +43,7 @@ describe('test data mock', async () => {
 	})
 })
 
-describe('test connection', () => {
+describe('test connection end', () => {
 	it('end', async () => {
 
 		const c = await pool.createConnection()

@@ -10,7 +10,10 @@
 	const pool = require('../src/Pool')
 	for (let i = 0; i < 50; i++) {
 		pool.createConnection()
-			.then(c => setTimeout(() => c.release(), 500))
+			.then(c => setTimeout(async () => {
+				await c.q('select 1')
+				c.release()
+			}, 500))
 			.catch(e => console.log('get timeout'))
 	}
 })()
