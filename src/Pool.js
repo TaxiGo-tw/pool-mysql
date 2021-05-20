@@ -49,7 +49,7 @@ class Pool {
 
 		this.redisClient = redisClient
 
-		this.connectionID = 0
+		this.connectionID = 1
 
 		this._connectionRequests = []
 

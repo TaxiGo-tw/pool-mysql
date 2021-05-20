@@ -34,6 +34,8 @@ describe('test data mock', async () => {
 		mocked = await connection.q(sql)
 		mocked['a'].should.equal(3)
 		mocked['sql'].should.equal(sql)
+
+		connection.release()
 	})
 
 	after(() => {
