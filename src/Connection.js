@@ -1,7 +1,6 @@
 const launchTme = new Date()
 
 const mysql = require('mysql')
-const throwError = require('./Helper/throwError')
 const Event = require('./Logger/Event')
 
 const Combine = require('./Schema/Combine')
@@ -28,16 +27,18 @@ module.exports = class Connection {
 	}
 
 	async toConnect(type = 'All') {
+		const manager = this._pool._mysqlConnectionManager
+
 		switch (type) {
 			case 'All':
-				this.writer = await this._pool._mysqlConnectionManager.getWriter(this)
-				this.reader = await this._pool._mysqlConnectionManager.getReader(this)
+				this.writer = await manager.getWriter(this)
+				this.reader = await manager.getReader(this)
 				break
 			case 'Writer':
-				this.writer = await this._pool._mysqlConnectionManager.getWriter(this)
+				this.writer = await manager.getWriter(this)
 				break
 			case 'Reader':
-				this.reader = await this._pool._mysqlConnectionManager.getReader(this)
+				this.reader = await manager.getReader(this)
 				break
 		}
 

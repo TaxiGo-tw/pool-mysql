@@ -1,5 +1,3 @@
-const assert = require('assert')
-const mysql = require('mysql')
 const throwError = require('./Helper/throwError')
 
 const Event = require('./Logger/Event')

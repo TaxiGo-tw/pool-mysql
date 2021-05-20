@@ -823,8 +823,9 @@ describe('test update multi table', () => {
 })
 
 describe('test onErr', () => {
+	const errMessage = 'test message on error'
+
 	it('string', async () => {
-		const errMessage = 'yoyoyoyoyoyo'
 		try {
 
 			await Trips.UPDATE('user_info')
@@ -836,37 +837,35 @@ describe('test onErr', () => {
 
 			assert(false)
 		} catch (err) {
-			assert.equal(err.message, 'yoyoyoyoyoyo')
+			assert.equal(err.message, errMessage)
 		}
 	})
 
 	it('callback', async () => {
-		const errMessage = 'yoyoyoyoyoyo'
 		try {
 			await Trips.UPDATE('user_info')
 				.SET({ uid: 31 })
 				.WHERE({ uid: 31 })
 				.CHANGED_ROWS(1)
-				.ON_ERR(err => {
+				.ON_ERR(_ => {
 					return errMessage
 				})
 				.exec()
 
 			assert(false)
 		} catch (err) {
-			assert.equal(err.message, 'yoyoyoyoyoyo')
+			assert.equal(err.message, errMessage)
 		}
 	})
 
 	it('connection', async () => {
-		const errMessage = 'yoyoyoyoyoyo'
 		try {
 			const connection = await pool.createConnection()
 			await connection.onErr(errMessage).q('...')
 
 			assert(false)
 		} catch (err) {
-			assert.equal(err.message, 'yoyoyoyoyoyo')
+			assert.equal(err.message, errMessage)
 		}
 	})
 })
