@@ -227,6 +227,23 @@ module.exports = class MySQLConnectionPool {
 				})
 			})
 		}
+
+		mysqlConnection.close = () => {
+			Event.emit('log', undefined, `[${mysqlConnection.connectionID}] END`)
+
+			mysqlConnection.end()
+
+			// remove from pool
+
+			const index = this.waiting.indexOf(mysqlConnection)
+			if (index > -1) {
+				this.waiting.splice(index, 1)
+			}
+
+			if (mysqlConnection.tag) {
+				delete this.using[mysqlConnection.tag.name][mysqlConnection.connectionID]
+			}
+		}
 	}
 
 	_runSchedulers() {

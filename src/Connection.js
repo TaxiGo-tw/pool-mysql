@@ -16,13 +16,8 @@ module.exports = class Connection {
 			limit: this._pool.options.connectionLimit
 		}
 
-		this.createdAt = new Date()
 		this.gotAt = new Date()
 
-		this._resetStatus()
-	}
-
-	_resetStatus() {
 		this._status = {}
 	}
 
@@ -218,11 +213,9 @@ module.exports = class Connection {
 
 			switch (true) {
 				case typeof onErr == 'string':
-					// eslint-disable-next-line no-console
 					Event.emit('log', error)
 					throw Error(onErr)
 				case typeof onErr == 'function':
-					// eslint-disable-next-line no-console
 					Event.emit('log', error)
 					throw Error(onErr(error))
 				default:
@@ -259,12 +252,11 @@ module.exports = class Connection {
 	}
 
 	release() {
-		Event.emit('log', null, `[${this.id}] RELEASE`)
+		Event.emit('log', undefined, `[${this.id}] RELEASE`)
 
 		if (this._status.isStartedTransaction && !this._status.isCommitted) {
 			Event.emit('log', undefined, 'pool-mysql: Transaction started, should be Committed')
 		}
-		this._resetStatus()
 
 		if (this.reader) {
 			this.reader.returnToPool()
@@ -275,23 +267,22 @@ module.exports = class Connection {
 			this.writer.returnToPool()
 			delete this.writer
 		}
-
-		// this._pool._recycle(this)
 	}
 
 	end() {
-		if (this.reader) {
-			this.reader.end()
-		}
-		if (this.writer) {
-			this.writer.end()
-		}
-
 		Event.emit('end', this)
 
+		if (this.reader) {
+			this.reader.close()
+			delete this.reader
+		}
+
+		if (this.writer) {
+			this.writer.close()
+			delete this.writer
+		}
+
 		delete this._pool
-		delete this.reader
-		delete this.writer
 	}
 
 	isSelect(sql) {
