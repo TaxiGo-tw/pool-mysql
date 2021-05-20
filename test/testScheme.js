@@ -796,23 +796,6 @@ describe('test pool.query()', () => {
 	})
 })
 
-
-describe('test release before query warning', () => {
-	it('1', async () => {
-		const connection = await pool.createConnection()
-		assert.equal(connection.isUsing, true)
-		connection.release()
-		assert.equal(connection.isUsing, false)
-
-		try {
-			await connection.q('SELECT * FROM trips LIMIT 5')
-			assert.fail('...')
-		} catch (error) {
-			assert.equal(error.message, 'connection is not using, might released too early, fix it or rollback')
-		}
-	})
-})
-
 describe('test insert values', async () => {
 	it('5', async () => {
 		const query = Block

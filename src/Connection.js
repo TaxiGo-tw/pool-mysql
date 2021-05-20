@@ -12,8 +12,6 @@ module.exports = class Connection {
 
 		this.useWriter = false
 
-		this.id = pool.connectionID
-
 		this.tag = {
 			name: 'default',
 			limit: this._pool.options.connectionLimit
@@ -27,10 +25,6 @@ module.exports = class Connection {
 
 	_resetStatus() {
 		this._status = {}
-	}
-
-	get isUsing() {
-		return !!this.tag && this._pool.connectionPool.using[this.tag.name][this.id] != undefined
 	}
 
 	async toConnect(type = 'All') {
@@ -85,15 +79,6 @@ module.exports = class Connection {
 
 	async _q(sql, values) {
 		let sqlStatement = sql.sql || sql
-
-		if (!this.isUsing) {
-			Event.emit('log', `
-	pool-mysql: connection is not using, might released too early
-	Query: ${sqlStatement}
-			`)
-
-			throwError('connection is not using, might released too early, fix it or rollback')
-		}
 
 		// is pool.mock available
 		if (process.env.NODE_ENV !== 'production' && this._pool.mock && !isNaN(this._pool._mockCounter)) {
@@ -290,7 +275,7 @@ module.exports = class Connection {
 			delete this.writer
 		}
 
-		this._pool._recycle(this)
+		// this._pool._recycle(this)
 	}
 
 	end() {
