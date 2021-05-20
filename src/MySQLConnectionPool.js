@@ -17,13 +17,17 @@ module.exports = class MySQLConnectionPool {
 		this._runSchedulers()
 	}
 
-	get numberOfConnections() {
-		const usingCount = Object.keys(this.using)
-			.map(o => Object.keys(o).length)
-			.reduce((a, b) => a + b, 0)
+	get _waitingCount() {
+		return this.waiting.length
+	}
 
-		const waitingCount = this.waiting.length
-		const amount = usingCount + waitingCount
+	get _usingCount() {
+		return Object.values(this.using)
+			.reduce((a, b) => a + Object.keys(b).length, 0)
+	}
+
+	get numberOfConnections() {
+		const amount = this._waitingCount + this._usingCount
 
 		if (amount != this._numberOfConnections) {
 			Event.emit('amount', amount, this.option.role)

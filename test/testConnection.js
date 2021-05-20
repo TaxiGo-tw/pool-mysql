@@ -20,7 +20,7 @@ describe('test data mock', async () => {
 	it('test1', async () => {
 		const connection = await pool.createConnection()
 
-		let sql = 'kerker'
+		let sql = 'ker ker'
 		let mocked = await connection.q(sql)
 		mocked['a'].should.equal(1)
 		mocked['sql'].should.equal(sql)
@@ -40,5 +40,26 @@ describe('test data mock', async () => {
 
 	after(() => {
 		pool.mock = undefined
+	})
+})
+
+describe('test connection', () => {
+	it('end', async () => {
+
+		const c = await pool.createConnection()
+		await c.q('select 1')
+
+		const readerPool = pool._mysqlConnectionManager._readerPool
+
+		const waitingA = readerPool._waitingCount
+		const usingA = readerPool._usingCount
+
+		c.end()
+
+		const waitingB = readerPool._waitingCount
+		const usingB = readerPool._usingCount
+
+		assert.strictEqual(waitingA, waitingB)
+		assert.strictEqual(usingA, usingB + 1)
 	})
 })
