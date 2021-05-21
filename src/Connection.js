@@ -26,6 +26,7 @@ module.exports = class Connection {
 			useWriter: this._pool.options.forceWriter,
 			print: false,
 			mustUpdateOneRow: false,
+			onErr: undefined
 		}
 	}
 
@@ -148,12 +149,10 @@ module.exports = class Connection {
 	}
 
 	async q(sql, values, { key, EX, shouldRefreshInCache, redisPrint, combine } = {}) {
-		const onErr = this._onErr
-		delete this._onErr
-
 
 		const queryString = mysql.format((sql.sql || sql), values).split('\n').join(' ')
 		const queryKey = key || queryString
+		const onErr = this._status.onErr
 
 		try {
 			if (!EX) {
@@ -307,7 +306,7 @@ module.exports = class Connection {
 		return (/^select/i).test(command) && command.indexOf('for update') == -1
 	}
 
-	async getReaderOrWriter(sql, useWriter = this.useWriter) {
+	async getReaderOrWriter(sql, useWriter) {
 		if (this.isSelect(sql) && !useWriter) {
 			if (!this.reader) {
 				await this.connect('Reader')
@@ -337,7 +336,7 @@ module.exports = class Connection {
 	}
 
 	onErr(callbackOrString) {
-		this._onErr = callbackOrString
+		this._status.onErr = callbackOrString
 		return this
 	}
 }

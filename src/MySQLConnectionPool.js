@@ -140,11 +140,9 @@ module.exports = class MySQLConnectionPool {
 
 	_decorator(mysqlConnection, connection) {
 		mysqlConnection.on('error', err => {
-			console.log('eeeerror')
 			Event.emit('log', err, `connection error: ${(err && err.message) ? err.message : err}`)
 			connection.end()
 		})
-
 
 		/**
 			* @deprecated use `qV2`
