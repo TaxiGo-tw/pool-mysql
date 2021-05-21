@@ -9,8 +9,6 @@ module.exports = class Connection {
 	constructor(pool) {
 		this._pool = pool
 
-		this.useWriter = pool.options.forceWriter
-
 		this.tag = {
 			name: 'default',
 			limit: this._pool.options.connectionLimit
@@ -29,7 +27,6 @@ module.exports = class Connection {
 			onErr: undefined
 		}
 	}
-
 
 	async genWriter() {
 		const manager = this._pool._mysqlConnectionManager
