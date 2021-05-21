@@ -30,19 +30,34 @@ module.exports = class Connection {
 		}
 	}
 
-	async connect(type = 'All') {
+
+	async genWriter() {
 		const manager = this._pool._mysqlConnectionManager
 
+		if (!this.writer) {
+			this.writer = await manager.getWriter(this)
+		}
+	}
+
+	async genReader() {
+		const manager = this._pool._mysqlConnectionManager
+
+		if (!this.reader) {
+			this.reader = await manager.getReader(this)
+		}
+	}
+
+	async connect(type = 'All') {
 		switch (type) {
 			case 'All':
-				this.writer = await manager.getWriter(this)
-				this.reader = await manager.getReader(this)
+				await this.genWriter(this)
+				await this.genReader(this)
 				break
 			case 'Writer':
-				this.writer = await manager.getWriter(this)
+				await this.genWriter(this)
 				break
 			case 'Reader':
-				this.reader = await manager.getReader(this)
+				await this.genReader(this)
 				break
 		}
 
@@ -59,9 +74,7 @@ module.exports = class Connection {
 
 	async beginTransaction(cb = () => { }) {
 		try {
-			if (!this.writer) {
-				this.writer = await this._pool._mysqlConnectionManager.getWriter(this)
-			}
+			await this.genWriter()
 
 			await this.writer.beginTransactionAsync()
 			this._status.isStartedTransaction = true
@@ -100,7 +113,7 @@ module.exports = class Connection {
 		const { useWriter, print, mustUpdateOneRow } = this._status
 		this.resetStatus()
 
-		const mysqlConnection = await this.getReaderOrWriter(sql, useWriter)
+		const mysqlConnection = await this._getReaderOrWriter(sql, useWriter)
 
 		const query = {
 			sql: mysql.format(sqlStatement.trim(), values),
@@ -308,7 +321,7 @@ module.exports = class Connection {
 		return (/^select/i).test(command) && command.indexOf('for update') == -1
 	}
 
-	async getReaderOrWriter(sql, useWriter) {
+	async _getReaderOrWriter(sql, useWriter) {
 		if (this.isSelect(sql) && !useWriter) {
 			if (!this.reader) {
 				await this.connect('Reader')

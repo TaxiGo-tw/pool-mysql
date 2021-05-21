@@ -119,7 +119,7 @@ class Pool {
 	}
 
 	connection({ tag_name = 'default', limit = this.options.connectionLimit } = {}) {
-		const tag = { name: tag_name, limit: limit }
+		const tag = { name: tag_name, limit }
 
 		const connection = new Connection(this)
 		connection.tag = tag
