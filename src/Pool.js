@@ -156,18 +156,14 @@ class Pool {
 		const connection = this.connection()
 		const callback = c || b
 
-		const cb = (a, b, c) => {
-			callback(a, b, c)
-		}
-
 		if (c) {
 			connection.query(sql, b, (...args) => {
-				cb(...args)
+				callback(...args)
 				connection.release()
 			})
 		} else {
 			connection.query(sql, (...args) => {
-				cb(...args)
+				callback(...args)
 				connection.release()
 			})
 		}
