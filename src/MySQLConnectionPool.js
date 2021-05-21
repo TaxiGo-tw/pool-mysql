@@ -50,6 +50,14 @@ module.exports = class MySQLConnectionPool {
 	/////////////////////////////////
 
 	_createConnection(option, role, connection, callback) {
+
+		const enqueue = (callback, tag) => {
+			callback.requestTime = new Date()
+			callback.tag = tag
+			this.connectionRequests.push(callback)
+			Event.emit('request', this.connectionRequests.length, option.role)
+		}
+
 		const setUsing = (mysqlConnection) => {
 			if (!this.using[mysqlConnection.tag.name]) {
 				this.using[mysqlConnection.tag.name] = {}
@@ -74,13 +82,8 @@ module.exports = class MySQLConnectionPool {
 		const isOnTagLimit = Object.keys(this.using[tag.name]).length >= tag.limit
 		// 排隊
 		if (isOnTotalLimit || isOnTagLimit) {
-			callback.requestTime = new Date()
-			callback.tag = tag
-			this.connectionRequests.push(callback)
-			Event.emit('request', this.connectionRequests.length, this.option.role)
-			return
+			return enqueue(callback, tag)
 		}
-
 
 		mysqlConnection = mysql.createConnection(option)
 		mysqlConnection.role = role
@@ -93,8 +96,14 @@ module.exports = class MySQLConnectionPool {
 
 		mysqlConnection.connect(err => {
 			if (err) {
-				Event.emit('log', err)
-				return callback(err, undefined)
+				switch (err.message) {
+					case 'ER_CON_COUNT_ERROR: Too many connections':
+						mysqlConnection.close()
+						return enqueue(callback, tag)
+					default:
+						Event.emit('log', err)
+						return callback(err, undefined)
+				}
 			}
 			mysqlConnection.logPrefix = `[${(mysqlConnection.connectionID || 'default')}] ${mysqlConnection.role}`
 
@@ -104,6 +113,8 @@ module.exports = class MySQLConnectionPool {
 			return callback(undefined, mysqlConnection)
 		})
 	}
+
+
 
 	////////////////////////////////////////////////////
 
@@ -126,6 +137,7 @@ module.exports = class MySQLConnectionPool {
 
 	_decorator(mysqlConnection, connection) {
 		mysqlConnection.on('error', err => {
+			console.log('eeeerror')
 			Event.emit('log', err, `connection error: ${(err && err.message) ? err.message : err}`)
 			connection.end()
 		})
@@ -214,10 +226,6 @@ module.exports = class MySQLConnectionPool {
 				delete this.using[mysqlConnection.tag.name][mysqlConnection.connectionID]
 			}
 		}
-
-		mysqlConnection.on('error', function (err) {
-			console.log(333, err.code)
-		})
 	}
 
 	//////////////////////////////////////

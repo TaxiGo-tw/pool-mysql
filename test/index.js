@@ -14,7 +14,9 @@ const pool = require('../src/Pool')
 
 describe('test recycle', () => {
 	it('recycle', (done) => {
-		for (let i = 1; i <= 50; i++) {
+		const count = 50
+
+		for (let i = 1; i <= count; i++) {
 			setTimeout(async () => {
 				pool.createConnection({ limit: 10 })
 					.then(c => {
@@ -24,7 +26,7 @@ describe('test recycle', () => {
 							console.timeEnd(i)
 							c.release()
 
-							if (i == 50) {
+							if (i == count) {
 								done()
 							}
 						}, 300)
