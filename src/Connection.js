@@ -18,7 +18,15 @@ module.exports = class Connection {
 
 		this.gotAt = new Date()
 
-		this._status = {}
+		this.resetStatus()
+	}
+
+	resetStatus() {
+		this._status = {
+			useWriter: this._pool.options.forceWriter,
+			print: false,
+			mustUpdateOneRow: false,
+		}
 	}
 
 	async connect(type = 'All') {
@@ -81,26 +89,17 @@ module.exports = class Connection {
 	}
 
 	async _q(sql, values) {
-		let sqlStatement = sql.sql || sql
+		const sqlStatement = sql.sql || sql
 
 		// is pool.mock available
 		if (process.env.NODE_ENV !== 'production' && this._pool.mock && !isNaN(this._pool._mockCounter)) {
 			return this._pool.mock(this._pool._mockCounter++, sqlStatement)
 		}
 
-		const mysqlConnection = await this.getReaderOrWriter(sql, this.useWriter)
-		this.useWriter = false
+		const { useWriter, print, mustUpdateOneRow } = this._status
+		this.resetStatus()
 
-		if (this.isSelect(sqlStatement) && this._noCache) {
-			sqlStatement = sqlStatement.replace(/^select/gi, 'SELECT SQL_NO_CACHE ')
-		}
-		this._noCache = false
-
-		const mustUpdateOneRow = this._mustUpdateOneRow
-		this._mustUpdateOneRow = false
-
-		const print = this._print
-		this._print = false
+		const mysqlConnection = await this.getReaderOrWriter(sql, useWriter)
 
 		const query = {
 			sql: mysql.format(sqlStatement.trim(), values),
@@ -323,42 +322,17 @@ module.exports = class Connection {
 	}
 
 	get forceWriter() {
-		this.useWriter = true
+		this._status.useWriter = true
 		return this
 	}
 
 	get print() {
-		this._print = true
-		return this
-	}
-
-	get noCache() {
-		this._noCache = true
+		this._status.print = true
 		return this
 	}
 
 	get mustUpdateOneRow() {
-		this._mustUpdateOneRow = true
-		return this
-	}
-
-	get mustAffected() {
-		this._mustAffected = true
-		return this
-	}
-
-	get mustAffectedOneRow() {
-		this._mustAffectedOne = true
-		return this
-	}
-
-	get mustChanged() {
-		this._mustChanged = true
-		return this
-	}
-
-	get mustChangedOneRow() {
-		this._mustChangedOneRow = true
+		this._status.mustUpdateOneRow = true
 		return this
 	}
 
