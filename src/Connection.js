@@ -94,7 +94,7 @@ module.exports = class Connection {
 			cb = bb
 		}
 
-		this._q(sql, values)
+		this.q(sql, values)
 			.then(data => cb(undefined, data))
 			.catch(err => cb(err, undefined))
 	}
@@ -156,6 +156,24 @@ module.exports = class Connection {
 		return result
 	}
 
+	_queryMode({ EX, combine, queryKey }) {
+		if (!EX) {
+			if (!combine) {
+				return { Normal: true }
+			} else if (Combine.isQuerying(queryKey)) { //查詢中則等結果
+				return { WaitingCombine: true }
+			}
+			return { Combining: true }
+		} else {
+			//想要redis cache 卻沒有client
+			if (!this._pool.redisClient) {
+				return { Normal: true }
+			}
+
+			return { Caching: true }
+		}
+	}
+
 	async q(sql, values, { key, EX, shouldRefreshInCache, redisPrint, combine } = {}) {
 
 		const queryString = mysql.format((sql.sql || sql), values).replace(/\n/g, '')
@@ -163,66 +181,66 @@ module.exports = class Connection {
 		const onErr = this._status.onErr
 
 		try {
-			if (!EX) {
-				if (combine && Combine.isQuerying(queryKey)) {
+			const QueryMode = this._queryMode({ EX, combine, queryKey })
+
+			switch (true) {
+				case QueryMode.Normal: {
+					return await this._q(sql, values)
+				} case QueryMode.WaitingCombine: {
 					return await Combine.subscribe(queryKey)
-				} else if (combine) {
+				} case QueryMode.Combining: {	//帶頭查
+
 					Combine.bind(queryKey)
 					const result = await this._q(sql, values)
 					Combine.publish(queryKey, undefined, result)
 					return result
+				} case QueryMode.Caching: {
+
+					//以下想要redis cache 且有client
+
+					const someThing = await this._pool.redisClient.getJSONAsync(queryKey)
+
+					//if cached
+					const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
+					if (someThing && keepCache) {
+						if (redisPrint) {
+							Event.emit('log', undefined, 'Cached in redis: true')
+						}
+
+						if (someThing.isNull) {
+							return null
+						}
+
+						return someThing
+					}
+
+					// always combine
+					if (Combine.isQuerying(queryKey)) {
+						return await Combine.subscribe(queryKey)
+					} else {
+						Combine.bind(queryKey)
+					}
+
+					const result = await this._q(sql, values)
+
+					if (redisPrint) {
+						Event.emit('log', undefined, 'Cached in redis: false ')
+					}
+
+					let toCache = result
+
+					if (toCache === null) {
+						toCache = { isNull: true }
+					}
+
+					await this._pool.redisClient.setJSONAsync(queryKey, toCache, 'EX', EX)
+
+					Combine.publish(queryKey, undefined, result)
+					return result
 				}
-
-				//一般查詢, 不需要redis cache
-				return await this._q(sql, values)
+				default:
+					throw Error('wrong QueryMode')
 			}
-			//想要redis cache 卻沒有client
-			else if (EX && !this._pool.redisClient) {
-				Event.emit('log', 'should assign redis client to this._pool.redisClient')
-				return await this._q(sql, values)
-			}
-
-			//以下想要redis cache 且有client
-
-			const someThing = await this._pool.redisClient.getJSONAsync(queryKey)
-
-			//if cached
-			const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
-			if (someThing && keepCache) {
-				if (redisPrint) {
-					Event.emit('log', undefined, 'Cached in redis: true')
-				}
-
-				if (someThing.isNull) {
-					return null
-				}
-
-				return someThing
-			}
-
-			// always combine
-			if (Combine.isQuerying(queryKey)) {
-				return await Combine.subscribe(queryKey)
-			} else {
-				Combine.bind(queryKey)
-			}
-
-			const result = await this._q(sql, values)
-
-			if (redisPrint) {
-				Event.emit('log', undefined, 'Cached in redis: false ')
-			}
-
-			let toCache = result
-
-			if (toCache === null) {
-				toCache = { isNull: true }
-			}
-
-			await this._pool.redisClient.setJSONAsync(queryKey, toCache, 'EX', EX)
-
-			Combine.publish(queryKey, undefined, result)
-			return result
 		} catch (error) {
 			Combine.publish(queryKey, error, undefined)
 
