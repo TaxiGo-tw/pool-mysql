@@ -13,7 +13,7 @@ const options = require('../src/Options')({
 		host: process.env.HOST2,
 		database: process.env.DB2
 	},
-	useWriter: true
+	forceWriter: true
 })
 
 const pool2 = pool.createPool({ options })

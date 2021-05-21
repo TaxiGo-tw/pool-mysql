@@ -9,7 +9,7 @@ module.exports = class Connection {
 	constructor(pool) {
 		this._pool = pool
 
-		this.useWriter = pool.options.useWriter
+		this.useWriter = pool.options.forceWriter
 
 		this.tag = {
 			name: 'default',

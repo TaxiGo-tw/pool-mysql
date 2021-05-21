@@ -31,6 +31,8 @@ module.exports = (options = {}) => {
 		//有多少在排隊時, 拿 connection會直接fail
 		maxRequesting: process.env.MAX_REQUESTING || 1000,
 
+		forceWriter: false,
+
 		...options,
 
 		writer: {
