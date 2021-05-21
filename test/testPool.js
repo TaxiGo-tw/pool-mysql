@@ -12,7 +12,8 @@ const options = require('../src/Options')({
 	reader: {
 		host: process.env.HOST2,
 		database: process.env.DB2
-	}
+	},
+	useWriter: true
 })
 
 const pool2 = pool.createPool({ options })
@@ -22,7 +23,15 @@ describe('test pool2', async () => {
 		const connection = await pool2.createConnection()
 
 		const [obj] = await connection.q('select * from town limit 1')
+
+
+		connection.should.have.property('writer')
+		connection.should.not.have.property('reader')
+
 		connection.release()
+
+		connection.should.not.have.property('writer')
+		connection.should.not.have.property('reader')
 
 		obj.should.have.property('id')
 	})

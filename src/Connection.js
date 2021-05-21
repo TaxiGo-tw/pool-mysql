@@ -9,7 +9,7 @@ module.exports = class Connection {
 	constructor(pool) {
 		this._pool = pool
 
-		this.useWriter = false
+		this.useWriter = pool.options.useWriter
 
 		this.tag = {
 			name: 'default',
@@ -308,7 +308,7 @@ module.exports = class Connection {
 		return (/^select/i).test(command) && command.indexOf('for update') == -1
 	}
 
-	async getReaderOrWriter(sql, useWriter) {
+	async getReaderOrWriter(sql, useWriter = this.useWriter) {
 		if (this.isSelect(sql) && !useWriter) {
 			if (!this.reader) {
 				await this.connect('Reader')
