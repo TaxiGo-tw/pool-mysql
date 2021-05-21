@@ -115,13 +115,7 @@ class Pool {
 		* @deprecated use `connection()`
 		*/
 	async createConnection({ tag_name = 'default', limit = this.options.connectionLimit } = {}) {
-		const tag = { name: tag_name, limit: limit }
-
-		const connection = new Connection(this)
-		connection.tag = tag
-		connection.id = ++this.connectionID
-
-		return connection
+		return this.connection({ tag_name, limit })
 	}
 
 	connection({ tag_name = 'default', limit = this.options.connectionLimit } = {}) {
