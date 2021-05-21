@@ -63,3 +63,20 @@ describe('test connection end', () => {
 		assert.strictEqual(usingA, usingB + 1)
 	})
 })
+
+describe('connection status', () => {
+	it('will reset', async () => {
+		const connection = pool.connection()
+
+		const s = JSON.parse(JSON.stringify(connection._status))
+		connection.print
+		const s2 = JSON.parse(JSON.stringify(connection._status))
+		await connection.q('select 1')
+		const s3 = JSON.parse(JSON.stringify(connection._status))
+
+		s.should.not.deep.equal(s2)
+		s.should.deep.equal(s3)
+
+		connection.release()
+	})
+})
