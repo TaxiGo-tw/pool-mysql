@@ -103,12 +103,11 @@ module.exports = class Connection {
 		const sqlStatement = sql.sql || sql
 
 		// is pool.mock available
-		if (process.env.NODE_ENV !== 'production' && this._pool.mock && !isNaN(this._pool._mockCounter)) {
+		if (this._pool.mockable) {
 			return this._pool.mock(this._pool._mockCounter++, sqlStatement)
 		}
 
 		const { useWriter, print, mustUpdateOneRow } = this._status
-		this.resetStatus()
 
 		const mysqlConnection = await this._getReaderOrWriter(sql, useWriter)
 
@@ -117,8 +116,7 @@ module.exports = class Connection {
 			nestTables: sql.nestTables
 		}
 
-		this.querying = query.sql
-		this.latestQuery = query.sql
+		this._status.querying = query.sql
 
 		Event.emit('will_query', query.sql)
 
@@ -129,7 +127,6 @@ module.exports = class Connection {
 
 		const endTime = new Date()
 
-		delete this.querying
 		//log
 		const optionsString = [
 			mustUpdateOneRow ? 'mustUpdateOneRow' : ''
@@ -148,12 +145,13 @@ module.exports = class Connection {
 		}
 
 		//emit
-		Event.emit('query', printString)
 		Event.emit('did_query', query.sql)
 
 		if (mustUpdateOneRow && result && result.affectedRows != 1) {
 			throw Error(`MUST_UPDATE_ONE_ROW: ${query.sql}`)
 		}
+
+		this.resetStatus()
 
 		return result
 	}

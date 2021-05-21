@@ -94,6 +94,10 @@ class Pool {
 		extendRedis(this._redisClient)
 	}
 
+	get mockable() {
+		return process.env.NODE_ENV !== 'production' && this.mock && !isNaN(this._mockCounter)
+	}
+
 	get mock() {
 		return this._mock
 	}
