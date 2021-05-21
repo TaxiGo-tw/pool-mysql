@@ -168,11 +168,13 @@ module.exports = class Connection {
 				//一般查詢, 不需要redis cache
 				return await this._q(sql, values)
 			}
-
-			if (EX && !this._pool.redisClient) {
+			//想要redis cache 卻沒有client
+			else if (EX && !this._pool.redisClient) {
 				Event.emit('log', 'should assign redis client to this._pool.redisClient')
 				return await this._q(sql, values)
 			}
+
+			//以下想要redis cache 且有client
 
 			const someThing = await this._pool.redisClient.getJSONAsync(queryKey)
 
@@ -233,7 +235,7 @@ module.exports = class Connection {
 	* @deprecated use `commitAsync()`
 	*/
 	commit(cb = () => { }) {
-		this.awaitCommit().then(cb).catch(cb)
+		this.commitAsync().then(cb).catch(cb)
 	}
 
 	/**
