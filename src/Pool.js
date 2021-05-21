@@ -161,9 +161,15 @@ class Pool {
 		}
 
 		if (c) {
-			connection.query(sql, b, cb)
+			connection.query(sql, b, (...args) => {
+				cb(...args)
+				connection.release()
+			})
 		} else {
-			connection.query(sql, cb)
+			connection.query(sql, (...args) => {
+				cb(...args)
+				connection.release()
+			})
 		}
 
 		return {}
