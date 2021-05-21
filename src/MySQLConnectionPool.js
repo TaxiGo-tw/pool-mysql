@@ -51,7 +51,7 @@ module.exports = class MySQLConnectionPool {
 
 	_createConnection(option, role, connection, callback) {
 
-		const enqueue = (callback, tag) => {
+		const enqueue = (tag, callback) => {
 			callback.requestTime = new Date()
 			callback.tag = tag
 			this.connectionRequests.push(callback)
@@ -72,6 +72,7 @@ module.exports = class MySQLConnectionPool {
 
 		let mysqlConnection = this.waiting.shift()
 
+		// 重用舊的connection
 		if (mysqlConnection) {
 			mysqlConnection.tag = connection.tag
 			setUsing(mysqlConnection)
@@ -80,11 +81,13 @@ module.exports = class MySQLConnectionPool {
 
 		const isOnTotalLimit = this.numberOfConnections >= this.option.connectionLimit
 		const isOnTagLimit = Object.keys(this.using[tag.name]).length >= tag.limit
+
 		// 排隊
 		if (isOnTotalLimit || isOnTagLimit) {
-			return enqueue(callback, tag)
+			return enqueue(tag, callback)
 		}
 
+		// 產生新的connection
 		mysqlConnection = mysql.createConnection(option)
 		mysqlConnection.role = role
 		mysqlConnection.connectionID = this._connectionID++
@@ -99,7 +102,7 @@ module.exports = class MySQLConnectionPool {
 				switch (err.message) {
 					case 'ER_CON_COUNT_ERROR: Too many connections':
 						mysqlConnection.close()
-						return enqueue(callback, tag)
+						return enqueue(tag, callback)
 					default:
 						Event.emit('log', err)
 						return callback(err, undefined)
