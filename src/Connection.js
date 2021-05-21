@@ -150,7 +150,7 @@ module.exports = class Connection {
 
 	async q(sql, values, { key, EX, shouldRefreshInCache, redisPrint, combine } = {}) {
 
-		const queryString = mysql.format((sql.sql || sql), values).split('\n').join(' ')
+		const queryString = mysql.format((sql.sql || sql), values).replace(/\n/g, '')
 		const queryKey = key || queryString
 		const onErr = this._status.onErr
 
