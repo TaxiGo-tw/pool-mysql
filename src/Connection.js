@@ -19,7 +19,7 @@ module.exports = class Connection {
 		this.resetStatus()
 	}
 
-	get identity() {
+	identity(mysqlConnection) {
 		return `Pool:${this._pool.options.poolID} [Connection:${this.id}] `
 	}
 
@@ -122,7 +122,7 @@ module.exports = class Connection {
 
 		this._status.querying = query.sql
 
-		Event.emit('will_query', this.identity, query.sql)
+		Event.emit('will_query', this.identity(), query.sql)
 
 		const startTime = new Date()
 
@@ -138,18 +138,18 @@ module.exports = class Connection {
 
 		const costTime = endTime - startTime
 		const isLongQuery = endTime - launchTme > this._pool.options.QUERY_THRESHOLD_START && costTime > this._pool.options.QUERY_THRESHOLD_MS
-		const printString = `${mysqlConnection.identity} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
+		const printString = `${mysqlConnection.identity()} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
 
 		if (isLongQuery) {
-			Event.emit('log', 'Long Query', this.identity + printString)
+			Event.emit('log', 'Long Query', this.identity() + printString)
 		} else if (print) {
-			Event.emit('log', 'PRINT()', this.identity + printString)
+			Event.emit('log', 'PRINT()', this.identity() + printString)
 		} else {
-			Event.emit('log', undefined, this.identity + printString)
+			Event.emit('log', undefined, this.identity() + printString)
 		}
 
 		//emit
-		Event.emit('did_query', this.identity, query.sql)
+		Event.emit('did_query', this.identity(), query.sql)
 
 		if (mustUpdateOneRow && result && result.affectedRows != 1) {
 			throw Error(`MUST_UPDATE_ONE_ROW: ${query.sql}`)
@@ -208,7 +208,7 @@ module.exports = class Connection {
 					const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
 					if (someThing && keepCache) {
 						if (redisPrint) {
-							Event.emit('log', undefined, this.identity + 'Cached in redis: true')
+							Event.emit('log', undefined, this.identity() + 'Cached in redis: true')
 						}
 
 						if (someThing.isNull) {
@@ -228,7 +228,7 @@ module.exports = class Connection {
 					const result = await this._q(sql, values)
 
 					if (redisPrint) {
-						Event.emit('log', undefined, this.identity + 'Cached in redis: false ')
+						Event.emit('log', undefined, this.identity() + 'Cached in redis: false ')
 					}
 
 					const toCache = (result === null) ? result : { isNull: true }
@@ -246,10 +246,10 @@ module.exports = class Connection {
 
 			switch (true) {
 				case typeof onErr == 'string':
-					Event.emit('log', error, this.identity)
+					Event.emit('log', error, this.identity())
 					throw Error(onErr)
 				case typeof onErr == 'function':
-					Event.emit('log', error, this.identity)
+					Event.emit('log', error, this.identity())
 					throw Error(onErr(error))
 				default:
 					throw error
@@ -274,15 +274,15 @@ module.exports = class Connection {
 	async commitAsync() {
 		try {
 			if (!this.writer) {
-				Event.emit('log', undefined, this.identity + `nothing : COMMIT`)
+				Event.emit('log', undefined, this.identity() + `nothing : COMMIT`)
 				return
 			}
 
 			const commitAsync = require('util').promisify(this.writer.commit)
 			await commitAsync()
-			Event.emit('log', undefined, this.identity + `${this.writer.identity} : COMMIT`)
+			Event.emit('log', undefined, this.identity() + `${this.writer.identity} : COMMIT`)
 		} catch (error) {
-			Event.emit('log', error, this.identity + `${this.writer.identity} : COMMIT`)
+			Event.emit('log', error, this.identity() + `${this.writer.identity} : COMMIT`)
 		} finally {
 			this._status.isCommitted = true
 		}
@@ -290,24 +290,24 @@ module.exports = class Connection {
 
 	async rollback() {
 		if (!this.writer) {
-			Event.emit('log', undefined, this.identity + `nothing : ROLLBACK`)
+			Event.emit('log', undefined, this.identity() + `nothing : ROLLBACK`)
 			return
 		}
 
 		return new Promise(resolve => {
 			const y = this.writer.rollback(() => {
 				this._status.isCommitted = true
-				Event.emit('log', undefined, this.identity + `[${y._connection.threadId || 'default'}]  : ${y.sql}`)
+				Event.emit('log', undefined, this.identity() + `[${y._connection.threadId || 'default'}]  : ${y.sql}`)
 				resolve()
 			})
 		})
 	}
 
 	release() {
-		Event.emit('log', undefined, this.identity + `RELEASE`)
+		Event.emit('log', undefined, this.identity() + `RELEASE`)
 
 		if (this._status.isStartedTransaction && !this._status.isCommitted) {
-			Event.emit('log', Error('Transaction started, should be Committed before commit', this.identity))
+			Event.emit('log', Error('Transaction started, should be Committed before commit', this.identity()))
 		}
 
 		if (this.reader) {
@@ -322,7 +322,7 @@ module.exports = class Connection {
 	}
 
 	end() {
-		Event.emit('end', this.identity, this)
+		Event.emit('end', this.identity(), this)
 
 		if (this.reader) {
 			this.reader.close()

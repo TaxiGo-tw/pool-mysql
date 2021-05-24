@@ -16,8 +16,8 @@ module.exports = class MySQLConnectionPool {
 		this._runSchedulers()
 	}
 
-	get identity() {
-		return `Pool:${this.option.poolID} [${this.option.role}:${this.connectionID || ''}] `
+	identity(mysqlConnection = {}) {
+		return `Pool:${this.option.poolID} [${this.option.role}:${mysqlConnection.connectionID || ''}] `
 	}
 
 	get _waitingCount() {
@@ -33,7 +33,7 @@ module.exports = class MySQLConnectionPool {
 		const amount = this._waitingCount + this._usingCount
 
 		if (amount != this._numberOfConnections) {
-			Event.emit('amount', amount, this.identity)
+			Event.emit('amount', amount, this.identity())
 			this._numberOfConnections = amount
 		}
 
@@ -118,7 +118,7 @@ module.exports = class MySQLConnectionPool {
 				}
 			}
 
-			Event.emit('create', this.identity, mysqlConnection)
+			Event.emit('create', this.identity(mysqlConnection), mysqlConnection)
 			this.numberOfConnections
 
 			return callback(undefined, mysqlConnection)
@@ -148,7 +148,7 @@ module.exports = class MySQLConnectionPool {
 
 	_decorator(mysqlConnection, connection) {
 		mysqlConnection.on('error', err => {
-			Event.emit('log', err, this.identity + `connection error: ${(err && err.message) ? err.message : err}`)
+			Event.emit('log', err, this.identity(mysqlConnection) + `connection error: ${(err && err.message) ? err.message : err}`)
 			connection.end()
 		})
 
@@ -182,7 +182,7 @@ module.exports = class MySQLConnectionPool {
 		mysqlConnection.beginTransactionAsync = () => {
 			return new Promise((resolve, reject) => {
 				mysqlConnection.beginTransaction((err) => {
-					Event.emit('log', err, this.identity + `Start Transaction`)
+					Event.emit('log', err, this.identity(mysqlConnection) + `Start Transaction`)
 					if (err) {
 						reject(err)
 					} else {
@@ -200,18 +200,18 @@ module.exports = class MySQLConnectionPool {
 			const callback = this._getNextWaitingCallback()
 
 			if (callback) {
-				Event.emit('recycle', this.identity, mysqlConnection)
+				Event.emit('recycle', this.identity(mysqlConnection), mysqlConnection)
 				mysqlConnection.gotAt = new Date()
 
 				delete this.using[mysqlConnection.tag.name][mysqlConnection.connectionID]
 				mysqlConnection.tag = callback.tag
 				this.using[mysqlConnection.tag.name][mysqlConnection.connectionID] = mysqlConnection
 
-				Event.emit('log', undefined, this.identity + `RECYCLE ${JSON.stringify(mysqlConnection.tag)}`)
+				Event.emit('log', undefined, this.identity(mysqlConnection) + `RECYCLE ${JSON.stringify(mysqlConnection.tag)}`)
 				return callback(null, mysqlConnection)
 			}
 
-			Event.emit('log', undefined, this.identity + `RELEASE ${JSON.stringify(mysqlConnection.tag)}`)
+			Event.emit('log', undefined, this.identity(mysqlConnection) + `RELEASE ${JSON.stringify(mysqlConnection.tag)}`)
 			Event.emit('release', this.identity, mysqlConnection)
 
 			delete this.using[mysqlConnection.tag.name][mysqlConnection.connectionID]
@@ -222,7 +222,7 @@ module.exports = class MySQLConnectionPool {
 		}
 
 		mysqlConnection.close = () => {
-			Event.emit('log', undefined, this.identity + ` END`)
+			Event.emit('log', undefined, this.identity(mysqlConnection) + ` END`)
 
 			mysqlConnection.end()
 
@@ -236,6 +236,10 @@ module.exports = class MySQLConnectionPool {
 			if (mysqlConnection.tag) {
 				delete this.using[mysqlConnection.tag.name][mysqlConnection.connectionID]
 			}
+		}
+
+		mysqlConnection.identity = () => {
+			return `Pool:${this.option.poolID} [${this.option.role}:${mysqlConnection.connectionID || ''}] `
 		}
 	}
 
