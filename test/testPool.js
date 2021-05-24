@@ -17,6 +17,7 @@ const options = require('../src/Options')({
 })
 
 const pool2 = pool.createPool({ options })
+const pool3 = pool.createPool({ options })
 
 describe('test pool2', async () => {
 	it('should finish a query', async () => {
@@ -37,4 +38,8 @@ describe('test pool2', async () => {
 	})
 
 
+	it('test createPool, should be same object', async () => {
+		assert.notDeepStrictEqual(pool, pool2)
+		assert.deepStrictEqual(pool2, pool3)
+	})
 })
