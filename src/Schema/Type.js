@@ -1,22 +1,15 @@
-function isInherit(type, type2) {
+module.exports.isInherit = (type, type2) => {
 	return type == type2 || type.prototype instanceof type2
 }
 
-function realType(type) {
+module.exports.realType = (type) => {
 	return type.type || type
 }
 
-function isRealColumn(column) {
-	const type = realType(column)
+module.exports.isRealColumn = (column) => {
+	const type = this.realType(column)
 
 	return type
 		&& (type instanceof Array === false)
 		&& typeof type !== 'object'
-}
-
-
-module.exports = {
-	isInherit,
-	realType,
-	isRealColumn
 }

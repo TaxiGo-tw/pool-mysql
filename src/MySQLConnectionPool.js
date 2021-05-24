@@ -51,6 +51,7 @@ module.exports = class MySQLConnectionPool {
 
 	_createConnection(option, role, connection, callback) {
 
+		//去排隊
 		const enqueue = (tag, callback) => {
 			callback.requestTime = new Date()
 			callback.tag = tag
@@ -99,12 +100,19 @@ module.exports = class MySQLConnectionPool {
 
 		mysqlConnection.connect(err => {
 			if (err) {
-				switch (err.message) {
-					case 'ER_CON_COUNT_ERROR: Too many connections':
+				switch (true) {
+					case err.message.startsWith('ER_CON_COUNT_ERROR: Too many connections'): {
 						mysqlConnection.close()
+						const error = Error('ER_CON_COUNT_ERROR: Too many connections')
+						Event.emit('log', error, error)
 						return enqueue(tag, callback)
-					default:
-						Event.emit('log', err)
+					} case err.message.startsWith('Error: connect ECONNREFUSED'): {
+						mysqlConnection.close()
+						const error = Error('Error: connect ECONNREFUSED')
+						Event.emit('log', error, error)
+						return callback(err, undefined)
+					} default:
+						Event.emit('log', err, err)
 						return callback(err, undefined)
 				}
 			}
