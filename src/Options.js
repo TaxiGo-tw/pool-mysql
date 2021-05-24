@@ -17,7 +17,7 @@ const defaultReader = {
 
 }
 
-module.exports = (options = {}) => {
+module.exports = (options = {}, poolID) => {
 	const result = {
 		SQL_FREE_CONNECTIONS: process.env.SQL_FREE_CONNECTIONS || 10,
 		QUERY_THRESHOLD_START: process.env.QUERY_THRESHOLD_START || 60 * 1000,
@@ -38,13 +38,16 @@ module.exports = (options = {}) => {
 		writer: {
 			...defaultWriter,
 			...options.writer,
-			role: 'Writer'
+			role: 'Writer',
+			poolID
 		},
 		reader: {
 			...defaultReader,
 			...options.reader,
-			role: 'Reader'
+			role: 'Reader',
+			poolID
 		},
+		poolID
 	}
 
 	return result

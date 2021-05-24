@@ -38,7 +38,12 @@ describe('test pool2', async () => {
 	})
 
 
-	it('test createPool, should be same object', async () => {
+	it('test pool id', () => {
+		assert.strictEqual(pool.id, 1)
+		assert.strictEqual(pool2.id, 2)
+	})
+
+	it('test createPool, should be same object', () => {
 		assert.notDeepStrictEqual(pool, pool2)
 		assert.deepStrictEqual(pool2, pool3)
 	})

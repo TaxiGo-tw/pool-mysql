@@ -1,17 +1,14 @@
 module.exports = {
 	all: (err, toPrint) => {
-		if (err) {
-			console.log(err)
-		}
-		console.log(toPrint)
+		console.log(err, toPrint)
 	},
-	error: (err, toPrint) => {
+	error: (identity, err, toPrint) => {
 		if (!err) {
 			return
 		}
-		console.log(err || toPrint)
+		console.log(err, toPrint)
 	},
-	none: (err, toPrint) => {
+	none: (identity, { err, toPrint }) => {
 
 	}
 }

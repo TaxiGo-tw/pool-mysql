@@ -36,7 +36,7 @@ class Pool {
 	constructor({ options, redisClient, id } = {}) {
 		this.id = id
 
-		this.options = require('./Options')(options)
+		this.options = require('./Options')(options, id)
 
 		this._mysqlConnectionManager = new MySQLConnectionManager(this.options)
 
