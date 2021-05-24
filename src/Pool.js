@@ -108,7 +108,7 @@ class Pool {
 	}
 
 	/**
-	* @deprecated use `connection()`
+	* @deprecated use `connection()` for [Function]
 	*/
 	getConnection(cb) {
 		const connection = this.connection()
@@ -116,7 +116,7 @@ class Pool {
 	}
 
 	/**
-		* @deprecated use `connection()`
+		* @deprecated use `connection()` for [Function]
 		*/
 	async createConnection({ tag_name = 'default', limit = this.options.connectionLimit } = {}) {
 		return this.connection({ tag_name, limit })
@@ -133,7 +133,7 @@ class Pool {
 	}
 
 	/**
-	* @deprecated use `connection()`
+	* @deprecated use `connection()` for [Function]
 	*/
 	query(sql, b, c) {
 		const connection = this.connection()
@@ -155,7 +155,7 @@ class Pool {
 	}
 
 	/**
-	* @deprecated use `connection()`
+	* @deprecated use `not really do anything`
 	*/
 	release() { }
 }

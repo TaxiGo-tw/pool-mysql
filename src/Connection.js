@@ -63,7 +63,7 @@ module.exports = class Connection {
 
 
 	/**
-		* @deprecated use `beginTransaction`
+		* @deprecated use `beginTransaction` for naming style
 		*/
 	async awaitTransaction() {
 		await this.beginTransaction()
@@ -83,7 +83,7 @@ module.exports = class Connection {
 	}
 
 	/**
-	* @deprecated use `q()`
+	* @deprecated use `q()` for async/await
 	*/
 	query(sql, bb, cc) {
 		let values = bb
@@ -254,23 +254,27 @@ module.exports = class Connection {
 	}
 
 	/**
-	* @deprecated use `commitAsync()`
+	* @deprecated use `commitAsync()` for async/await
 	*/
 	commit(cb = () => { }) {
-		this.commitAsync().then(cb).catch(cb)
+		this.commitAsync().then(r => cb(undefined, r)).catch(e => cb(e))
 	}
 
 	/**
-	* @deprecated use `commitAsync()`
+	* @deprecated use `commitAsync()` for naming style
 	*/
 	async awaitCommit() {
 		await this.commitAsync()
 	}
 
 	async commitAsync() {
-		const commitAsync = require('util').promisify(this.writer.commit)
-
 		try {
+			if (!this.writer) {
+				Event.emit('log', undefined, `nothing : COMMIT`)
+				return
+			}
+
+			const commitAsync = require('util').promisify(this.writer.commit)
 			await commitAsync()
 			Event.emit('log', undefined, `${this.writer.logPrefix} : COMMIT`)
 		} catch (error) {
@@ -281,6 +285,11 @@ module.exports = class Connection {
 	}
 
 	async rollback() {
+		if (!this.writer) {
+			Event.emit('log', undefined, `nothing : ROLLBACK`)
+			return
+		}
+
 		return new Promise(resolve => {
 			const y = this.writer.rollback(() => {
 				this._status.isCommitted = true
