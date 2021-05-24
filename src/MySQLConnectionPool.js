@@ -60,7 +60,7 @@ module.exports = class MySQLConnectionPool {
 			callback.requestTime = new Date()
 			callback.tag = tag
 			this.connectionRequests.push(callback)
-			Event.emit('request', this.identity, this.connectionRequests.length)
+			Event.emit('request', this.identity(), this.connectionRequests.length)
 		}
 
 		const setUsing = (mysqlConnection) => {
@@ -212,7 +212,7 @@ module.exports = class MySQLConnectionPool {
 			}
 
 			Event.emit('log', undefined, this.identity(mysqlConnection) + `RELEASE ${JSON.stringify(mysqlConnection.tag)}`)
-			Event.emit('release', this.identity, mysqlConnection)
+			Event.emit('release', this.identity(mysqlConnection), mysqlConnection)
 
 			delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
 			delete mysqlConnection.tag
