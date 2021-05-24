@@ -242,10 +242,10 @@ module.exports = class Connection {
 
 			switch (true) {
 				case typeof onErr == 'string':
-					Event.emit('log', error, error)
+					Event.emit('log', error)
 					throw Error(onErr)
 				case typeof onErr == 'function':
-					Event.emit('log', error, error)
+					Event.emit('log', error)
 					throw Error(onErr(error))
 				default:
 					throw error
@@ -293,7 +293,7 @@ module.exports = class Connection {
 		return new Promise(resolve => {
 			const y = this.writer.rollback(() => {
 				this._status.isCommitted = true
-				Event.emit('log', null, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
+				Event.emit('log', undefined, '[' + (y._connection.threadId || 'default') + ']  : ' + y.sql)
 				resolve()
 			})
 		})
