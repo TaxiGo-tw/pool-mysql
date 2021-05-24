@@ -242,10 +242,10 @@ module.exports = class Connection {
 
 			switch (true) {
 				case typeof onErr == 'string':
-					Event.emit('log', error)
+					Event.emit('log', error, error)
 					throw Error(onErr)
 				case typeof onErr == 'function':
-					Event.emit('log', error)
+					Event.emit('log', error, error)
 					throw Error(onErr(error))
 				default:
 					throw error
