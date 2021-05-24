@@ -138,7 +138,7 @@ module.exports = class Connection {
 
 		const costTime = endTime - startTime
 		const isLongQuery = endTime - launchTme > this._pool.options.QUERY_THRESHOLD_START && costTime > this._pool.options.QUERY_THRESHOLD_MS
-		const printString = `${mysqlConnection.logPrefix} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
+		const printString = `${mysqlConnection.identity} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
 
 		if (isLongQuery) {
 			Event.emit('log', 'Long Query', this.identity + printString)
@@ -280,9 +280,9 @@ module.exports = class Connection {
 
 			const commitAsync = require('util').promisify(this.writer.commit)
 			await commitAsync()
-			Event.emit('log', undefined, this.identity + `${this.writer.logPrefix} : COMMIT`)
+			Event.emit('log', undefined, this.identity + `${this.writer.identity} : COMMIT`)
 		} catch (error) {
-			Event.emit('log', error, this.identity + `${this.writer.logPrefix} : COMMIT`)
+			Event.emit('log', error, this.identity + `${this.writer.identity} : COMMIT`)
 		} finally {
 			this._status.isCommitted = true
 		}

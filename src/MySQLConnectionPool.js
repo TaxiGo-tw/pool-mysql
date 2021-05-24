@@ -118,8 +118,6 @@ module.exports = class MySQLConnectionPool {
 				}
 			}
 
-			mysqlConnection.logPrefix = `[${(mysqlConnection.connectionID || 'default')}] ${mysqlConnection.role}`
-
 			Event.emit('create', this.identity, mysqlConnection)
 			this.numberOfConnections
 
@@ -209,14 +207,14 @@ module.exports = class MySQLConnectionPool {
 				mysqlConnection.tag = callback.tag
 				this.using[mysqlConnection.tag.name][mysqlConnection.connectionID] = mysqlConnection
 
-				Event.emit('log', undefined, this.identity + `_recycle ${JSON.stringify(mysqlConnection.tag)}`)
+				Event.emit('log', undefined, this.identity + `RECYCLE ${JSON.stringify(mysqlConnection.tag)}`)
 				return callback(null, mysqlConnection)
 			}
 
-			Event.emit('log', undefined, this.identity + `release ${JSON.stringify(mysqlConnection.tag)}`)
+			Event.emit('log', undefined, this.identity + `RELEASE ${JSON.stringify(mysqlConnection.tag)}`)
 			Event.emit('release', this.identity, mysqlConnection)
 
-			delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
+			delete this.using[mysqlConnection.tag.name][mysqlConnection.connectionID]
 			delete mysqlConnection.tag
 
 			mysqlConnection._resetStatus()
