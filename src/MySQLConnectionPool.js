@@ -17,7 +17,7 @@ module.exports = class MySQLConnectionPool {
 	}
 
 	get identity() {
-		return `Pool:${this.option.poolID} [${this.option.role}:${this.connectionID || ''}]`
+		return `Pool:${this.option.poolID} [${this.option.role}:${this.connectionID || ''}] `
 	}
 
 	get _waitingCount() {
@@ -213,12 +213,14 @@ module.exports = class MySQLConnectionPool {
 				return callback(null, mysqlConnection)
 			}
 
+			Event.emit('log', undefined, this.identity + `release ${JSON.stringify(mysqlConnection.tag)}`)
+			Event.emit('release', this.identity, mysqlConnection)
+
 			delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
 			delete mysqlConnection.tag
 
 			mysqlConnection._resetStatus()
 			this.waiting.push(mysqlConnection)
-			Event.emit('release', this.identity, mysqlConnection)
 		}
 
 		mysqlConnection.close = () => {

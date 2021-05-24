@@ -304,7 +304,7 @@ module.exports = class Connection {
 	}
 
 	release() {
-		Event.emit('log', undefined, this.identity + `[${this.id}] RELEASE`)
+		Event.emit('log', undefined, this.identity + `RELEASE`)
 
 		if (this._status.isStartedTransaction && !this._status.isCommitted) {
 			Event.emit('log', Error('Transaction started, should be Committed before commit', this.identity))
