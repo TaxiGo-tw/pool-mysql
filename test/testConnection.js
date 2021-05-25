@@ -79,4 +79,9 @@ describe('connection status', () => {
 
 		connection.release()
 	})
+
+	it('should ', () => {
+		const queryMode = pool.connection()._queryMode
+
+	})
 })

@@ -19,7 +19,7 @@ module.exports = class Connection {
 		this.resetStatus()
 	}
 
-	identity(mysqlConnection) {
+	identity() {
 		return `Pool:${this._pool.options.poolID} [Connection:${this.id}] `
 	}
 
