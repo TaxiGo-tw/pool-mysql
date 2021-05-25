@@ -11,7 +11,7 @@ module.exports = class MySQLConnectionPool {
 			default: {}
 		}
 
-		this.connectionID = 0
+		this.connectionID = 1
 
 		this._runSchedulers()
 	}
@@ -29,11 +29,11 @@ module.exports = class MySQLConnectionPool {
 			.reduce((a, b) => a + Object.keys(b).length, 0)
 	}
 
-	get numberOfConnections() {
+	numberOfConnections(mysqlConnection) {
 		const amount = this._waitingCount + this._usingCount
 
 		if (amount != this._numberOfConnections) {
-			Event.emit('amount', amount, this.identity())
+			Event.emit('amount', this.identity(mysqlConnection), amount)
 			this._numberOfConnections = amount
 		}
 
@@ -60,7 +60,7 @@ module.exports = class MySQLConnectionPool {
 			callback.requestTime = new Date()
 			callback.tag = tag
 			this.connectionRequests.push(callback)
-			Event.emit('request', this.identity(), this.connectionRequests.length)
+			Event.emit('request', this.identity({ id: '_' }), this.connectionRequests.length)
 		}
 
 		const setUsing = (mysqlConnection) => {
@@ -84,7 +84,7 @@ module.exports = class MySQLConnectionPool {
 			return callback(undefined, mysqlConnection)
 		}
 
-		const isOnTotalLimit = this.numberOfConnections >= this.option.connectionLimit
+		const isOnTotalLimit = this.numberOfConnections({ id: '_' }) >= this.option.connectionLimit
 		const isOnTagLimit = Object.keys(this.using[tag.name]).length >= tag.limit
 
 		// 排隊
@@ -119,7 +119,7 @@ module.exports = class MySQLConnectionPool {
 			}
 
 			Event.emit('create', this.identity(mysqlConnection), mysqlConnection)
-			this.numberOfConnections
+			this.numberOfConnections(mysqlConnection)
 
 			return callback(undefined, mysqlConnection)
 		})
@@ -200,7 +200,7 @@ module.exports = class MySQLConnectionPool {
 			const callback = this._getNextWaitingCallback()
 
 			if (callback) {
-				Event.emit('recycle', this.identity(mysqlConnection), mysqlConnection)
+				Event.emit('recycle', this.identity(mysqlConnection))
 				mysqlConnection.gotAt = new Date()
 
 				delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
@@ -258,7 +258,7 @@ module.exports = class MySQLConnectionPool {
 					continue
 				}
 
-				this.numberOfConnections
+				this.numberOfConnections(mysqlConnection)
 				mysqlConnection.end()
 			}
 		}, 5 * 60 * 1000)

@@ -6,9 +6,9 @@ process.env.NODE_ENV = 'TESTING'
 require('dotenv').config({ path: '.env' })
 const { assert } = require('chai')
 const Event = require('../src/Logger/Event')
-Event.on('amount', (role, amount) => console.log('pool-mysql connections amount :', role, amount))
-Event.on('request', (role, amount) => console.log('pool-mysql connection 額滿使用中', role, amount))
-Event.on('recycle', (mysqlConnection) => console.log(`pool-mysql connection 排隊解除`))
+Event.on('amount', (role, amount) => console.log(role, 'connections amount', amount))
+Event.on('request', (role, amount) => console.log(role, 'connection 額滿使用中', amount))
+Event.on('recycle', (role) => console.log(role, `connection 排隊解除`))
 
 const pool = require('../src/Pool')
 

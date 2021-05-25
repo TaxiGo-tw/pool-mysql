@@ -81,7 +81,6 @@ module.exports = class Connection {
 			this._status.isStartedTransaction = true
 			cb(undefined)
 		} catch (e) {
-			console.log(e)
 			cb(e)
 		}
 	}
