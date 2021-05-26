@@ -106,7 +106,7 @@ module.exports = class MySQLConnectionPool {
 
 		mysqlConnection.connect(err => {
 			if (err) {
-				Event.emit('log', err, this.identity(mysqlConnection))
+				Event.emit('err', this.identity(mysqlConnection), err)
 
 				switch (true) {
 					case err.message.startsWith('ER_CON_COUNT_ERROR: Too many connections'): {
@@ -150,7 +150,10 @@ module.exports = class MySQLConnectionPool {
 
 	_decorator(mysqlConnection, connection) {
 		mysqlConnection.on('error', err => {
-			Event.emit('log', err, this.identity(mysqlConnection) + `connection error: ${(err && err.message) ? err.message : err}`)
+			if (err) {
+				Event.emit('err', this.identity(mysqlConnection), err)
+			}
+
 			connection.end()
 		})
 
@@ -169,10 +172,12 @@ module.exports = class MySQLConnectionPool {
 		mysqlConnection.beginTransactionAsync = () => {
 			return new Promise((resolve, reject) => {
 				mysqlConnection.beginTransaction((err) => {
-					Event.emit('log', err, this.identity(mysqlConnection) + `Start Transaction`)
 					if (err) {
+						Event.emit('err', this.identity(mysqlConnection) + `Start Transaction`, err)
 						reject(err)
 					} else {
+						Event.emit('log', undefined, this.identity(mysqlConnection) + `Start Transaction`)
+
 						resolve()
 					}
 				})
@@ -279,7 +284,7 @@ module.exports = class MySQLConnectionPool {
 							Event.emit('warn', this.identity(mysqlConnection), `leaked time:${queryTime}ms, should release it`)
 						}
 					} catch (error) {
-						Event.emit('error', this.identity(mysqlConnection), error)
+						Event.emit('err', this.identity(mysqlConnection), error)
 					}
 				})
 		}, 10 * 1000)

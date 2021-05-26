@@ -139,14 +139,14 @@ module.exports = class Connection {
 
 		const costTime = endTime - startTime
 		const isLongQuery = endTime - launchTme > this._pool.options.QUERY_THRESHOLD_START && costTime > this._pool.options.QUERY_THRESHOLD_MS
-		const printString = `${mysqlConnection.identity()} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
+		const printString = this.identity() + `${mysqlConnection.identity()} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
 
 		if (isLongQuery) {
-			Event.emit('longQuery', this.identity() + printString)
+			Event.emit('longQuery', printString)
 		} else if (print) {
-			Event.emit('print', this.identity() + printString)
+			Event.emit('print', printString)
 		} else {
-			Event.emit('log', undefined, this.identity() + printString)
+			Event.emit('log', undefined, printString)
 		}
 
 		//emit
@@ -246,11 +246,13 @@ module.exports = class Connection {
 			Combine.publish(queryKey, error, undefined)
 
 			switch (true) {
-				case typeof onErr == 'string':
-					Event.emit('log', error, this.identity())
-					throw Error(onErr)
-				case typeof onErr == 'function':
-					Event.emit('log', error, this.identity())
+				case typeof onErr == 'string': {
+					const err = Error(onErr)
+					Event.emit('err', this.identity(), err)
+
+					throw err
+				} case typeof onErr == 'function':
+					Event.emit('err', this.identity(), Error(onErr(error)))
 					throw Error(onErr(error))
 				default:
 					throw error
@@ -283,7 +285,7 @@ module.exports = class Connection {
 			await commitAsync()
 			Event.emit('log', undefined, this.identity() + `${this.writer.identity} : COMMIT`)
 		} catch (error) {
-			Event.emit('log', error, this.identity() + `${this.writer.identity} : COMMIT`)
+			Event.emit('err', this.identity() + `${this.writer.identity} : COMMIT`, error)
 		} finally {
 			this._status.isCommitted = true
 		}
@@ -308,7 +310,7 @@ module.exports = class Connection {
 		Event.emit('log', undefined, this.identity() + `RELEASE`)
 
 		if (this._status.isStartedTransaction && !this._status.isCommitted) {
-			Event.emit('log', Error('Transaction started, should be Committed before commit', this.identity()))
+			Event.emit('warn', this.identity(), Error('Transaction started, should be Committed before commit', this.identity()))
 		}
 
 		if (this.reader) {
