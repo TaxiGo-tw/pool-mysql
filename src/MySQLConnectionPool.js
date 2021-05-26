@@ -234,6 +234,15 @@ module.exports = class MySQLConnectionPool {
 		mysqlConnection.identity = () => {
 			return `Pool:${this.option.poolID} [${this.option.role}:${mysqlConnection.id || ''}] `
 		}
+
+		mysqlConnection.commitAsync = async () => {
+			if (mysqlConnection.role !== 'Writer') {
+				return
+			}
+
+			const commitAsync = require('util').promisify(mysqlConnection.commit)
+			await commitAsync()
+		}
 	}
 
 	//////////////////////////////////////

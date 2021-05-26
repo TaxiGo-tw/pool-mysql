@@ -281,8 +281,7 @@ module.exports = class Connection {
 				return
 			}
 
-			const commitAsync = require('util').promisify(this.writer.commit)
-			await commitAsync()
+			await this.writer.commitAsync()
 			Event.emit('log', this.identity() + `${this.writer.identity} : COMMIT`)
 		} catch (error) {
 			Event.emit('err', this.identity() + `${this.writer.identity} : COMMIT`, error)

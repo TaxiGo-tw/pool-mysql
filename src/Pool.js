@@ -53,10 +53,14 @@ class Pool {
 
 		this._connectionRequests = []
 
-		Event.emit('log', undefined, `pool-mysql writer host: ${this.options.writer.host}`)
-		Event.emit('log', undefined, `pool-mysql reader host: ${this.options.reader.host}`)
+		Event.emit('warn', this.identity(), `pool-mysql writer host: ${this.options.writer.host}`)
+		Event.emit('warn', this.identity(), `pool-mysql reader host: ${this.options.reader.host}`)
 
 		this.Schema = require('./Schema')
+	}
+
+	identity() {
+		return `Pool:${this.options.poolID} `
 	}
 
 	get event() {

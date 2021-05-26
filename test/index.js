@@ -10,6 +10,12 @@ const Event = require('../src/Logger/Event')
 Event.on('amount', (role, amount) => console.log(role, 'connections amount', amount))
 Event.on('request', (role, amount) => console.log(role, 'connection 額滿使用中', amount))
 Event.on('recycle', (role) => console.log(role, `connection 排隊解除`))
+Event.on('end', (role, mysqlConnection) => console.log(role, 'connection'))
+
+Event.on('warn', (role, warn) => console.log(role, warn))
+Event.on('err', (role, err) => console.log(role, err))
+
+// Event.on('log', console.log)
 
 const pool = require('../src/Pool')
 
