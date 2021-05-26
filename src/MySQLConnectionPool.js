@@ -17,7 +17,7 @@ module.exports = class MySQLConnectionPool {
 	}
 
 	identity(mysqlConnection = {}) {
-		return `Pool:${this.option.poolID} [${this.option.role}:${mysqlConnection.id || ''}] `
+		return `Pool:${this.option.poolID} [${this.option.role}:${mysqlConnection.id || ''}]`
 	}
 
 	get _waitingCount() {

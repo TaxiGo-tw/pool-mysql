@@ -20,7 +20,7 @@ module.exports = class Connection {
 	}
 
 	identity() {
-		return `Pool:${this._pool.options.poolID} [Connection:${this.id}] `
+		return `Pool:${this._pool.options.poolID} [Connection:${this.id}]`
 	}
 
 	resetStatus() {
