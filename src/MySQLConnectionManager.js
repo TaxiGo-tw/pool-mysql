@@ -1,7 +1,5 @@
 const throwError = require('./Helper/throwError')
 
-const Event = require('./Logger/Event')
-
 const MySQLConnectionPool = require('./MySQLConnectionPool')
 
 module.exports = class MySQLConnectionManager {
@@ -13,29 +11,29 @@ module.exports = class MySQLConnectionManager {
 		this._readerPool = new MySQLConnectionPool(reader)
 	}
 
-	async _getMysqlConnection({ connection, options, role }) {
-		return await this
-			._connectionPool(role)
-			.createConnection(options, role, connection)
-	}
-
 	async getWriter(connection) {
 		return await this._getMysqlConnection({
-			connection,
 			options: this._options.writer,
-			role: 'Writer'
+			role: 'Writer',
+			connection
 		})
 	}
 
 	async getReader(connection) {
 		return await this._getMysqlConnection({
-			connection,
 			options: this._options.reader,
-			role: 'Reader'
+			role: 'Reader',
+			connection
 		})
 	}
 
 	//////////////////////////////////////////////////////////////
+
+	async _getMysqlConnection({ options, role, connection }) {
+		return await this
+			._connectionPool(role)
+			.createConnection(options, role, connection)
+	}
 
 	_connectionPool(role) {
 		switch (role) {
