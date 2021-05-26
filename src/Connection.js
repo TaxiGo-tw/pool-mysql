@@ -94,13 +94,13 @@ module.exports = class Connection {
 		let cb = cc
 
 		if (bb instanceof Function) {
-			values = null
+			values = undefined
 			cb = bb
 		}
 
 		this.q(sql, values)
-			.then(data => cb(undefined, data.result, data.fields))
-			.catch(err => cb(err, undefined))
+			.then(data => cb(undefined, data))
+			.catch(cb)
 	}
 
 	async _q(sql, values) {

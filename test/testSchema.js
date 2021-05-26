@@ -760,42 +760,6 @@ describe('test LIMIT OFFSET', () => {
 })
 
 
-
-describe('test connection.query()', () => {
-	it('3', (done) => {
-		const connection = pool.connection()
-
-		connection.query('SELECT * FROM trips LIMIT 5', (_, r) => {
-			connection.release()
-			done()
-		})
-	})
-})
-
-describe('test get connection', () => {
-	it('1', (done) => {
-		pool.getConnection((_, connection) => {
-			connection.release()
-			done()
-		})
-	})
-
-	it('2', async () => {
-		for (let i = 0; i < 10000; i++) {
-			const connection = await pool.createConnection()
-			connection.release()
-		}
-	})
-})
-
-describe('test pool.query()', () => {
-	it('1', (done) => {
-		pool.query('SELECT * FROM trips LIMIT 5', (_, r) => {
-			done()
-		})
-	})
-})
-
 describe('test insert values', async () => {
 	it('5', async () => {
 		const query = Block

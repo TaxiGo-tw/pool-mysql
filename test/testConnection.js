@@ -116,3 +116,49 @@ describe('test same time query', async () => {
 		}
 	})
 })
+
+describe('test get connection', () => {
+	it('1', (done) => {
+		pool.getConnection((_, connection) => {
+			connection.release()
+			done()
+		})
+	})
+
+	it('2', async () => {
+		for (let i = 0; i < 10000; i++) {
+			const connection = await pool.createConnection()
+			connection.release()
+		}
+	})
+})
+
+describe('test pool.query()', () => {
+	it('1', (done) => {
+		pool.query('SELECT * FROM trips LIMIT 5', (err, r) => {
+			assert(!err)
+			r.length.should.equal(5)
+			done()
+		})
+	})
+
+	it('2', (done) => {
+		pool.query('SELECT * FROM trips LIMIT ?', 5, (err, r) => {
+			assert(!err)
+			r.length.should.equal(5)
+			done()
+		})
+	})
+})
+
+
+describe('test connection.query()', () => {
+	it('3', (done) => {
+		const connection = pool.connection()
+
+		connection.query('SELECT * FROM trips LIMIT 5', (_, r) => {
+			connection.release()
+			done()
+		})
+	})
+})
