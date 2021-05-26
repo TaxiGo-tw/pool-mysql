@@ -142,9 +142,9 @@ module.exports = class Connection {
 		const printString = `${mysqlConnection.identity()} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
 
 		if (isLongQuery) {
-			Event.emit('log', 'Long Query', this.identity() + printString)
+			Event.emit('longQuery', this.identity() + printString)
 		} else if (print) {
-			Event.emit('log', 'PRINT()', this.identity() + printString)
+			Event.emit('print', this.identity() + printString)
 		} else {
 			Event.emit('log', undefined, this.identity() + printString)
 		}

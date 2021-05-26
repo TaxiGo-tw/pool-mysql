@@ -106,7 +106,7 @@ module.exports = class MySQLConnectionPool {
 
 		mysqlConnection.connect(err => {
 			if (err) {
-				Event.emit('log', err)
+				Event.emit('log', err, this.identity(mysqlConnection))
 
 				switch (true) {
 					case err.message.startsWith('ER_CON_COUNT_ERROR: Too many connections'): {
@@ -293,9 +293,9 @@ module.exports = class MySQLConnectionPool {
 							Event.emit('warn', this.identity(mysqlConnection), `leaked time:${queryTime}ms, should release it`)
 						}
 					} catch (error) {
-						Event.emit('log', this.identity(mysqlConnection), error)
+						Event.emit('error', this.identity(mysqlConnection), error)
 					}
 				})
-		}, 1)
+		}, 10 * 1000)
 	}
 }
