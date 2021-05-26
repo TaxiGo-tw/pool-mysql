@@ -1,4 +1,4 @@
-const { should } = require('chai')
+const { should, expect } = require('chai')
 should()
 const assert = require('assert')
 
@@ -46,5 +46,16 @@ describe('test pool2', async () => {
 	it('test createPool, should be same object', () => {
 		assert.notDeepStrictEqual(pool, pool2)
 		assert.deepStrictEqual(pool2, pool3)
+	})
+
+	it('test schema for pool2', async () => {
+		const ZZZPoolMysqlTesting = require('./testModels/zzz_pool_mysql_testing')
+
+		const connection = pool2.connection()
+
+		const obj = await ZZZPoolMysqlTesting.SELECT('*').FROM().FIRST().exec(connection)
+
+		expect(obj).to.have.property('id')
+		expect(obj).to.not.have.property('email')
 	})
 })
