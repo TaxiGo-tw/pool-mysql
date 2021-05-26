@@ -159,7 +159,7 @@ module.exports = class Connection {
 		return result
 	}
 
-	_queryMode({ EX, combine, queryKey }) {
+	_queryMode({ EX, combine, queryKey } = {}) {
 		if (!EX) {
 			if (!combine) {
 				return { Normal: true }
