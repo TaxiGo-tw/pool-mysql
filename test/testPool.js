@@ -53,9 +53,13 @@ describe('test pool2', async () => {
 
 		const connection = pool2.connection()
 
-		const obj = await ZZZPoolMysqlTesting.SELECT('*').FROM().FIRST().exec(connection)
+		const obj = await ZZZPoolMysqlTesting.SELECT('*').FROM().FIRST().PRINT().exec(connection)
 
 		expect(obj).to.have.property('id')
 		expect(obj).to.not.have.property('email')
+
+		connection.should.have.property('writer')
+
+		connection.release()
 	})
 })

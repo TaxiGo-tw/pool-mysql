@@ -51,14 +51,14 @@ module.exports = class Connection {
 	async connect(type = 'All') {
 		switch (type) {
 			case 'All':
-				await this.genWriter(this)
-				await this.genReader(this)
+				await this.genWriter()
+				await this.genReader()
 				break
 			case 'Writer':
-				await this.genWriter(this)
+				await this.genWriter()
 				break
 			case 'Reader':
-				await this.genReader(this)
+				await this.genReader()
 				break
 		}
 

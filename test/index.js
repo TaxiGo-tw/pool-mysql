@@ -16,6 +16,7 @@ Event.on('warn', (title, warn) => console.warn(title, warn))
 Event.on('err', (title, err) => console.error(title, err))
 
 // Event.on('log', console.log)
+Event.on('print', console.log)
 
 const pool = require('../src/Pool')
 

@@ -348,7 +348,7 @@ module.exports = class Schema {
 			}
 			///////////////////////////////////////////////////////////////////
 
-			this._connection._status.useWriter = useWriter
+			this._connection._status.useWriter = (this._connection._status.useWriter || useWriter)
 
 			// eslint-disable-next-line no-unused-vars
 			let conn = this._connection
