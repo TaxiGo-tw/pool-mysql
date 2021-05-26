@@ -98,7 +98,7 @@ module.exports = class Connection {
 		}
 
 		this.q(sql, values)
-			.then(data => cb(undefined, data))
+			.then(data => cb(undefined, data.result, data.fields))
 			.catch(err => cb(err, undefined))
 	}
 
@@ -127,7 +127,7 @@ module.exports = class Connection {
 
 		// Query
 		mysqlConnection.querying = query.sql
-		const { result, fields: _ } = await mysqlConnection.qV2(query)
+		const { result, fields: _ } = await mysqlConnection.q(query)
 		mysqlConnection.querying = undefined
 
 		const endTime = new Date()

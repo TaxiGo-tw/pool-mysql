@@ -154,22 +154,7 @@ module.exports = class MySQLConnectionPool {
 			connection.end()
 		})
 
-		/**
-			* @deprecated use `qV2`
-			*/
 		mysqlConnection.q = (sql, values) => {
-			return new Promise((resolve, reject) => {
-				mysqlConnection.query(sql, values, (err, result) => {
-					if (err) {
-						reject(err)
-					} else {
-						resolve(result)
-					}
-				})
-			})
-		}
-
-		mysqlConnection.qV2 = (sql, values) => {
 			return new Promise((resolve, reject) => {
 				mysqlConnection.query(sql, values, (err, result, fields) => {
 					if (err) {
@@ -223,6 +208,7 @@ module.exports = class MySQLConnectionPool {
 			this.waiting.push(mysqlConnection)
 		}
 
+		// extends of mysqlConnection.end()
 		mysqlConnection.close = () => {
 			Event.emit('log', undefined, this.identity(mysqlConnection) + ` END`)
 
