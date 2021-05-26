@@ -176,7 +176,7 @@ module.exports = class MySQLConnectionPool {
 						Event.emit('err', this.identity(mysqlConnection) + `Start Transaction`, err)
 						reject(err)
 					} else {
-						Event.emit('log', undefined, this.identity(mysqlConnection) + `Start Transaction`)
+						Event.emit('log', this.identity(mysqlConnection) + `Start Transaction`)
 
 						resolve()
 					}
@@ -199,11 +199,11 @@ module.exports = class MySQLConnectionPool {
 				mysqlConnection.tag = callback.tag
 				this.using[mysqlConnection.tag.name][mysqlConnection.id] = mysqlConnection
 
-				Event.emit('log', undefined, this.identity(mysqlConnection) + `RECYCLE ${JSON.stringify(mysqlConnection.tag)}`)
+				Event.emit('log', this.identity(mysqlConnection) + `RECYCLE ${JSON.stringify(mysqlConnection.tag)}`)
 				return callback(null, mysqlConnection)
 			}
 
-			Event.emit('log', undefined, this.identity(mysqlConnection) + `RELEASE ${JSON.stringify(mysqlConnection.tag)}`)
+			Event.emit('log', this.identity(mysqlConnection) + `RELEASE ${JSON.stringify(mysqlConnection.tag)}`)
 			Event.emit('release', this.identity(mysqlConnection), mysqlConnection)
 
 			delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
@@ -215,7 +215,7 @@ module.exports = class MySQLConnectionPool {
 
 		// extends of mysqlConnection.end()
 		mysqlConnection.close = () => {
-			Event.emit('log', undefined, this.identity(mysqlConnection) + ` END`)
+			Event.emit('log', this.identity(mysqlConnection) + ` END`)
 
 			mysqlConnection.end()
 

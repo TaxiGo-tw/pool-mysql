@@ -146,7 +146,7 @@ module.exports = class Connection {
 		} else if (print) {
 			Event.emit('print', printString)
 		} else {
-			Event.emit('log', undefined, printString)
+			Event.emit('log', this.identity(), printString)
 		}
 
 		//emit
@@ -209,7 +209,7 @@ module.exports = class Connection {
 					const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
 					if (someThing && keepCache) {
 						if (redisPrint) {
-							Event.emit('log', undefined, this.identity() + 'Cached in redis: true')
+							Event.emit('log', this.identity() + 'Cached in redis: true')
 						}
 
 						if (someThing.isNull) {
@@ -229,7 +229,7 @@ module.exports = class Connection {
 					const result = await this._q(sql, values)
 
 					if (redisPrint) {
-						Event.emit('log', undefined, this.identity() + 'Cached in redis: false ')
+						Event.emit('log', this.identity() + 'Cached in redis: false ')
 					}
 
 					const toCache = (result === null) ? result : { isNull: true }
@@ -277,13 +277,13 @@ module.exports = class Connection {
 	async commitAsync() {
 		try {
 			if (!this.writer) {
-				Event.emit('log', undefined, this.identity() + `nothing : COMMIT`)
+				Event.emit('log', this.identity() + `nothing : COMMIT`)
 				return
 			}
 
 			const commitAsync = require('util').promisify(this.writer.commit)
 			await commitAsync()
-			Event.emit('log', undefined, this.identity() + `${this.writer.identity} : COMMIT`)
+			Event.emit('log', this.identity() + `${this.writer.identity} : COMMIT`)
 		} catch (error) {
 			Event.emit('err', this.identity() + `${this.writer.identity} : COMMIT`, error)
 		} finally {
@@ -293,21 +293,21 @@ module.exports = class Connection {
 
 	async rollback() {
 		if (!this.writer) {
-			Event.emit('log', undefined, this.identity() + `nothing : ROLLBACK`)
+			Event.emit('log', this.identity() + `nothing : ROLLBACK`)
 			return
 		}
 
 		return new Promise(resolve => {
 			const y = this.writer.rollback(() => {
 				this._status.isCommitted = true
-				Event.emit('log', undefined, this.identity() + `[${y._connection.threadId || 'default'}]  : ${y.sql}`)
+				Event.emit('log', this.identity() + `[${y._connection.threadId || 'default'}]  : ${y.sql}`)
 				resolve()
 			})
 		})
 	}
 
 	release() {
-		Event.emit('log', undefined, this.identity() + `RELEASE`)
+		Event.emit('log', this.identity() + `RELEASE`)
 
 		if (this._status.isStartedTransaction && !this._status.isCommitted) {
 			Event.emit('warn', this.identity(), Error('Transaction started, should be Committed before commit', this.identity()))
