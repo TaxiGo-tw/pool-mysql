@@ -71,6 +71,8 @@ module.exports = class MySQLConnectionPool {
 			if (!this.using[mysqlConnection.tag.name][mysqlConnection.id]) {
 				this.using[mysqlConnection.tag.name][mysqlConnection.id] = mysqlConnection
 			}
+
+			mysqlConnection.gotAt = new Date()
 		}
 
 		const tag = connection.tag
@@ -274,5 +276,26 @@ module.exports = class MySQLConnectionPool {
 				callback(err, null)
 			}
 		}, 1000)
+
+		//health report
+		setInterval(() => {
+			Object.values(this.using)
+				.map(tagged => Object.values(tagged))
+				.forEach(mysqlConnection => {
+					try {
+						const queryTime = new Date() - mysqlConnection.gotAt
+
+						if (queryTime > 3000) {
+							Event.emit('warn', this.identity(mysqlConnection), `stroked time:${queryTime}ms, name:${mysqlConnection.name}, sql:${mysqlConnection.querying}`)
+						}
+
+						if (queryTime > 1000 * 60 * 30 && !mysqlConnection.querying) {
+							Event.emit('warn', this.identity(mysqlConnection), `leaked time:${queryTime}ms, should release it`)
+						}
+					} catch (error) {
+						Event.emit('log', this.identity(mysqlConnection), error)
+					}
+				})
+		}, 1)
 	}
 }

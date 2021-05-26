@@ -126,7 +126,9 @@ module.exports = class Connection {
 		const startTime = new Date()
 
 		// Query
+		mysqlConnection.querying = query.sql
 		const { result, fields: _ } = await mysqlConnection.qV2(query)
+		mysqlConnection.querying = undefined
 
 		const endTime = new Date()
 
