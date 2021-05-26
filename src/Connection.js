@@ -1,6 +1,7 @@
 const launchTme = new Date()
 
 const mysql = require('mysql')
+const throwError = require('./Helper/throwError')
 const Event = require('./Logger/Event')
 
 const Combine = require('./Schema/Combine')
@@ -119,15 +120,24 @@ module.exports = class Connection {
 			nestTables: sql.nestTables
 		}
 
-		this._status.querying = query.sql
-
 		Event.emit('will_query', this.identity(), query.sql)
 
 		const startTime = new Date()
 
-		// Query
+		if (mysqlConnection.querying) {
+			const message = `${mysqlConnection.identity()} is querying in the same time with "${mysqlConnection.querying}" and "${query.sql}"`
+			Event.emit('warn', this.identity(), message)
+
+			if (process.env.NODE_ENV == 'TESTING') {
+				throwError(message)
+			}
+		}
+
+		this._status.querying = query.sql
 		mysqlConnection.querying = query.sql
+		// Query
 		const { result, fields: _ } = await mysqlConnection.q(query)
+
 		mysqlConnection.querying = undefined
 
 		const endTime = new Date()
