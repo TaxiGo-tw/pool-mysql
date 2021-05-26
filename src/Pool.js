@@ -49,7 +49,7 @@ class Pool {
 
 		this.redisClient = redisClient
 
-		this.connectionID = 1
+		this._connectionID = 1
 
 		this._connectionRequests = []
 
@@ -61,6 +61,10 @@ class Pool {
 
 	identity() {
 		return `Pool:${this.options.poolID} `
+	}
+
+	addedConnectionID() {
+		return ++this._connectionID
 	}
 
 	get event() {
@@ -131,7 +135,7 @@ class Pool {
 
 		const connection = new Connection(this)
 		connection.tag = tag
-		connection.id = ++this.connectionID
+		connection.id = this.addedConnectionID()
 
 		return connection
 	}
