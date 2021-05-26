@@ -49,8 +49,6 @@ class Pool {
 
 		this.redisClient = redisClient
 
-		this._connectionID = 1
-
 		this._connectionRequests = []
 
 		Event.emit('warn', this.identity(), `pool-mysql writer host: ${this.options.writer.host}`)
@@ -63,9 +61,6 @@ class Pool {
 		return `Pool:${this.options.poolID} `
 	}
 
-	addedConnectionID() {
-		return ++this._connectionID
-	}
 
 	get event() {
 		return Event
@@ -135,7 +130,6 @@ class Pool {
 
 		const connection = new Connection(this)
 		connection.tag = tag
-		connection.id = this.addedConnectionID()
 
 		return connection
 	}
