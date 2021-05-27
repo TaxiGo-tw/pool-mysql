@@ -13,6 +13,8 @@ Event.on('request', (title, amount) => console.log(title, 'connection 額滿使�
 Event.on('recycle', (title) => console.log(title, `connection 排隊解除`))
 Event.on('end', (title, _) => console.log(title, 'connection end'))
 
+Event.on('release', (title, connection) => console.log(title, 'connections released'))
+
 Event.on('warn', (title, warn) => console.warn(title, warn))
 Event.on('err', (title, err) => console.error(title, err))
 
@@ -30,9 +32,7 @@ describe('test recycle', () => {
 				pool.createConnection({ limit: 10 })
 					.then(c => {
 						setTimeout(async () => {
-							console.time(i)
 							await c.q('select 1')
-							console.timeEnd(i)
 							c.release()
 
 							if (i == count) {
