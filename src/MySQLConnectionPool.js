@@ -112,7 +112,9 @@ module.exports = class MySQLConnectionPool {
 					case err.message.startsWith('ER_CON_COUNT_ERROR: Too many connections'): {
 						mysqlConnection.close()
 						return enqueue(tag, callback)
-					} case err.message.startsWith('Error: connect ECONNREFUSED'): {
+					}
+					case err.message.includes('PROTOCOL_CONNECTION_LOST'):
+					case err.message.startsWith('Error: connect ECONNREFUSED'): {
 						mysqlConnection.close()
 						return callback(err, undefined)
 					} default:
