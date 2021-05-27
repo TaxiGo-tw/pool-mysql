@@ -128,7 +128,25 @@ const Posts = class posts extends Schema {
       user2: {
         ref: require('./user'), // one to one reference
         column: 'user'
-      }
+      },
+
+			user3: {
+				type: Schema.Types.FK(require('./User.js'), 'id'),
+				required: true,
+				length: { min: 1, max: 20 },
+			},
+
+			user_type: {
+				type: Schema.Types.ENUM('A','B','C')
+			},
+
+			available_area: {
+				type: Schema.Types.Polygon
+			},
+
+			created_at: {
+				type: Schema.Types.DateTime
+			}
     }
 }
 
