@@ -312,7 +312,7 @@ module.exports = class Connection {
 		return new Promise(resolve => {
 			const y = this.writer.rollback(() => {
 				this._status.isCommitted = true
-				Event.emit('log', this.identity(), `[${y._connection.threadId || 'default'}]  : ${y.sql}`)
+				Event.emit('log', this.identity(), `${y.sql}`)
 				resolve()
 			})
 		})
