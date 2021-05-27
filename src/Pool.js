@@ -36,7 +36,7 @@ class Pool {
 	constructor({ options, redisClient, id } = {}) {
 		this.id = id
 
-		this.options = require('./Options')(options, id)
+		this.options = this.genOptionsFrom(options, id)
 
 		this._mysqlConnectionManager = new MySQLConnectionManager(this.options)
 
@@ -55,6 +55,10 @@ class Pool {
 		Event.emit('warn', this.identity(), `pool-mysql reader host: ${this.options.reader.host}`)
 
 		this.Schema = require('./Schema')
+	}
+
+	genOptionsFrom(options) {
+		return require('./Options')(options)
 	}
 
 	identity() {

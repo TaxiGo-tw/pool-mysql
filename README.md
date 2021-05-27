@@ -298,7 +298,7 @@ Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
 <details>
   <summary>Events</summary>
 
-* `log` all logs `not suggested to subscribe`
+* `log` logs `not suggested to subscribe`
 
 * `get` called when connection got from pool
 
@@ -319,6 +319,10 @@ Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
 * `request` request a connection but capped on connection limit
 
 * `recycle` free connection is back
+
+* `warn` warning
+
+* `err` error
 
 ```js
 pool.event.on('get', connection => {

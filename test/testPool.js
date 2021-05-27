@@ -4,7 +4,7 @@ const assert = require('assert')
 
 const pool = require('../src/Pool')
 
-const options = require('../src/Options')({
+const options = pool.genOptionsFrom({
 	writer: {
 		host: process.env.HOST2,
 		database: process.env.DB2
@@ -41,6 +41,7 @@ describe('test pool2', async () => {
 	it('test pool id', () => {
 		assert.strictEqual(pool.id, 1)
 		assert.strictEqual(pool2.id, 2)
+		assert.strictEqual(pool3.id, 2)
 	})
 
 	it('test createPool, should be same object', () => {
