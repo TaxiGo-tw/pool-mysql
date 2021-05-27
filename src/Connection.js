@@ -20,8 +20,11 @@ module.exports = class Connection {
 		this.resetStatus()
 	}
 
-	identity() {
-		return `Pool:${this._pool.options.poolID} [Connection:${this.gotAt.getTime() % 100000}]`
+	identity(mysqlConnection) {
+		if (mysqlConnection) {
+			return `[Pool:${this._pool.options.poolID}] [Connection:${this.gotAt.getTime() % 100000}] [${mysqlConnection.role}:${mysqlConnection.id || ''}]`
+		}
+		return `[Pool:${this._pool.options.poolID}] [Connection:${this.gotAt.getTime() % 100000}]`
 	}
 
 	resetStatus() {
@@ -149,14 +152,14 @@ module.exports = class Connection {
 
 		const costTime = endTime - startTime
 		const isLongQuery = endTime - launchTme > this._pool.options.QUERY_THRESHOLD_START && costTime > this._pool.options.QUERY_THRESHOLD_MS
-		const printString = this.identity() + `${mysqlConnection.identity()} ${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
+		const printString = `${isLongQuery ? 'Long Query' : ''} ${costTime}ms: ${optionsString} ${query.sql}`
 
 		if (isLongQuery) {
 			Event.emit('longQuery', printString)
 		} else if (print) {
 			Event.emit('print', printString)
 		} else {
-			Event.emit('log', this.identity(), printString)
+			Event.emit('log', this.identity(mysqlConnection), printString)
 		}
 
 		//emit
@@ -219,7 +222,7 @@ module.exports = class Connection {
 					const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
 					if (someThing && keepCache) {
 						if (redisPrint) {
-							Event.emit('log', this.identity() + 'Cached in redis: true')
+							Event.emit('log', this.identity(), 'Cached in redis: true')
 						}
 
 						if (someThing.isNull) {
@@ -239,7 +242,7 @@ module.exports = class Connection {
 					const result = await this._q(sql, values)
 
 					if (redisPrint) {
-						Event.emit('log', this.identity() + 'Cached in redis: false ')
+						Event.emit('log', this.identity(), 'Cached in redis: false ')
 					}
 
 					const toCache = (result !== null) ? result : { isNull: true }
@@ -287,12 +290,12 @@ module.exports = class Connection {
 	async commitAsync() {
 		try {
 			if (!this.writer) {
-				Event.emit('log', this.identity() + `nothing : COMMIT`)
+				Event.emit('log', this.identity(), `nothing : COMMIT`)
 				return
 			}
 
 			await this.writer.commitAsync()
-			Event.emit('log', this.identity() + `${this.writer.identity} : COMMIT`)
+			Event.emit('log', this.identity(), `${this.writer.identity} : COMMIT`)
 		} catch (error) {
 			Event.emit('err', this.identity() + `${this.writer.identity} : COMMIT`, error)
 		} finally {
@@ -302,21 +305,21 @@ module.exports = class Connection {
 
 	async rollback() {
 		if (!this.writer) {
-			Event.emit('log', this.identity() + `nothing : ROLLBACK`)
+			Event.emit('log', this.identity(), `nothing : ROLLBACK`)
 			return
 		}
 
 		return new Promise(resolve => {
 			const y = this.writer.rollback(() => {
 				this._status.isCommitted = true
-				Event.emit('log', this.identity() + `[${y._connection.threadId || 'default'}]  : ${y.sql}`)
+				Event.emit('log', this.identity(), `[${y._connection.threadId || 'default'}]  : ${y.sql}`)
 				resolve()
 			})
 		})
 	}
 
 	release() {
-		Event.emit('log', this.identity() + `RELEASE`)
+		Event.emit('log', this.identity(), `RELEASE`)
 
 		if (this._status.isStartedTransaction && !this._status.isCommitted) {
 			Event.emit('warn', this.identity(), Error('Transaction started, should be Committed before commit', this.identity()))
