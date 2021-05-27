@@ -179,9 +179,9 @@ module.exports = class Connection {
 			if (!combine) {
 				return { Normal: true }
 			} else if (Combine.isQuerying(queryKey)) { //查詢中則等結果
-				return { WaitingCombine: true }
+				return { CombineSubscriber: true }
 			}
-			return { Combining: true }
+			return { CombineLeader: true }
 		} else {
 			//想要redis cache 卻沒有client
 			if (!this._pool.redisClient) {
@@ -204,9 +204,9 @@ module.exports = class Connection {
 			switch (true) {
 				case QueryMode.Normal: {
 					return await this._q(sql, values)
-				} case QueryMode.WaitingCombine: {
+				} case QueryMode.CombineSubscriber: { // 等人查好
 					return await Combine.subscribe(queryKey)
-				} case QueryMode.Combining: {	//帶頭查
+				} case QueryMode.CombineLeader: {	//帶頭查
 
 					Combine.bind(queryKey)
 					const result = await this._q(sql, values)
