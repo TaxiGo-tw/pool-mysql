@@ -4,7 +4,7 @@ const assert = require('assert')
 
 const pool = require('../src/Pool')
 
-const options = pool.genOptionsFrom({
+const options = {
 	writer: {
 		host: process.env.HOST2,
 		database: process.env.DB2
@@ -14,7 +14,7 @@ const options = pool.genOptionsFrom({
 		database: process.env.DB2
 	},
 	forceWriter: true
-})
+}
 
 const pool2 = pool.createPool({ options })
 const pool3 = pool.createPool({ options })

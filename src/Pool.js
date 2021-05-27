@@ -13,14 +13,14 @@ let poolID = 0
 class Pool {
 
 	/* for create second or more pool */
-	createPool({ options = {}, redisClient }) {
-		if (!options.writer) {
-			throw Error('need options')
+	createPool({ options: op = {}, redisClient }) {
+		if (!op.writer) {
+			throw Error('option.writer missing')
+		} else if (!op.forceWriter && !op.reader) {
+			throw Error('need forceWriter or reader option')
 		}
 
-		if (!instance._pools) {
-			instance._pools = {}
-		}
+		const options = require('./Options')(op)
 
 		const key = options.writer.host + options.reader.host + options.database
 
@@ -36,7 +36,7 @@ class Pool {
 	constructor({ options, redisClient, id } = {}) {
 		this.id = id
 
-		this.options = this.genOptionsFrom(options, id)
+		this.options = require('./Options')(options, id)
 
 		this._mysqlConnectionManager = new MySQLConnectionManager(this.options)
 
@@ -55,10 +55,8 @@ class Pool {
 		Event.emit('warn', this.identity(), `pool-mysql reader host: ${this.options.reader.host}`)
 
 		this.Schema = require('./Schema')
-	}
 
-	genOptionsFrom(options) {
-		return require('./Options')(options)
+		this._pools = {}
 	}
 
 	identity() {
