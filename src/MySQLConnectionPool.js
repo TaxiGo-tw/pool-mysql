@@ -73,6 +73,8 @@ module.exports = class MySQLConnectionPool {
 			}
 
 			mysqlConnection.gotAt = new Date()
+
+			Event.emit('get', this.identity(mysqlConnection), mysqlConnection)
 		}
 
 		const tag = connection.tag
@@ -122,9 +124,9 @@ module.exports = class MySQLConnectionPool {
 				}
 			}
 
-			Event.emit('create', this.identity(mysqlConnection), mysqlConnection)
 			this.numberOfConnections(mysqlConnection)
 
+			Event.emit('did_create', this.identity(mysqlConnection), mysqlConnection)
 			return callback(undefined, mysqlConnection)
 		})
 	}

@@ -7,7 +7,9 @@ require('dotenv').config({ path: '.env' })
 const { assert } = require('chai')
 const Event = require('../src/Logger/Event')
 
-Event.on('create', (title, connection) => console.log(title, 'connections created'))
+Event.on('did_create', (title, connection) => console.log(title, 'connections created'))
+Event.on('get', (title, connection) => console.log(title, 'connections get'))
+
 Event.on('amount', (title, amount) => console.log(title, 'connections amount', amount))
 Event.on('request', (title, amount) => console.log(title, 'connection 額滿使用中', amount))
 Event.on('recycle', (title) => console.log(title, `connection 排隊解除`))
