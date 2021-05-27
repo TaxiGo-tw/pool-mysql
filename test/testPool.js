@@ -54,7 +54,8 @@ describe('test pool2', async () => {
 
 		const connection = pool2.connection()
 
-		const obj = await ZZZPoolMysqlTesting.SELECT('*').FROM().FIRST().PRINT().exec(connection)
+		const obj = await ZZZPoolMysqlTesting.SELECT('*').FROM().FIRST().EX(5).exec(connection)
+		await ZZZPoolMysqlTesting.SELECT('*').FROM().FIRST().EX(5).exec(connection)
 
 		expect(obj).to.have.property('id')
 		expect(obj).to.not.have.property('email')
