@@ -65,15 +65,15 @@ pool.query(sql, value, (err, data) => {
 
 ```js
 const options = {
-	writer: {
-		host: process.env.HOST2,
-		database: process.env.DB2
-	},
-	reader: {
-		host: process.env.HOST2,
-		database: process.env.DB2
-	},
-	forceWriter: true
+  writer: {
+    host: process.env.HOST2,
+    database: process.env.DB2
+  },
+  reader: {
+    host: process.env.HOST2,
+    database: process.env.DB2
+  },
+  forceWriter: true
 }
 
 const pool2 = pool.createPool({ options })
@@ -130,23 +130,23 @@ const Posts = class posts extends Schema {
         column: 'user'
       },
 
-			user3: {
-				type: Schema.Types.FK(require('./User.js'), 'id'),
-				required: true,
-				length: { min: 1, max: 20 },
-			},
+      user3: {
+        type: Schema.Types.FK(require('./User.js'), 'id'),
+        required: true,
+        length: { min: 1, max: 20 },
+      },
 
-			user_type: {
-				type: Schema.Types.ENUM('A','B','C')
-			},
+      user_type: {
+        type: Schema.Types.ENUM('A','B','C')
+      },
 
-			available_area: {
-				type: Schema.Types.Polygon
-			},
+      available_area: {
+        type: Schema.Types.Polygon
+      },
 
-			created_at: {
-				type: Schema.Types.DateTime
-			}
+      created_at: {
+        type: Schema.Types.DateTime
+      }
     }
 }
 
