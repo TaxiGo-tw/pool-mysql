@@ -242,7 +242,7 @@ module.exports = class Connection {
 						Event.emit('log', this.identity() + 'Cached in redis: false ')
 					}
 
-					const toCache = (result === null) ? result : { isNull: true }
+					const toCache = (result !== null) ? result : { isNull: true }
 
 					await this._pool.redisClient.setJSONAsync(queryKey, toCache, 'EX', EX)
 
