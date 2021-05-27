@@ -2,10 +2,12 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/928cce8dd2ba4fcaa4d857552209fd16)](https://app.codacy.com/gh/TaxiGo-tw/pool-mysql?utm_source=github.com&utm_medium=referral&utm_content=TaxiGo-tw/pool-mysql&utm_campaign=Badge_Grade_Dashboard)
 
+![](./test/resource/UiYBH9U.png)
+
 This is depend on [mysql](https://github.com/mysqljs/mysql)
 which made for migrating to features
 
-* connection pool
+* multiple connection pool
 
 * connection writer/reader
 
@@ -14,6 +16,8 @@ which made for migrating to features
 * model.query
 
 * log print
+
+* events
 
 See the test [Examples](https://github.com/TaxiGo-tw/pool-mysql/tree/master/test)
 
@@ -57,10 +61,30 @@ pool.query(sql, value, (err, data) => {
 </details>
 
 <details>
+  <summary>Multiple Pool</summary>
+
+```js
+const options = {
+	writer: {
+		host: process.env.HOST2,
+		database: process.env.DB2
+	},
+	reader: {
+		host: process.env.HOST2,
+		database: process.env.DB2
+	},
+	forceWriter: true
+}
+
+const pool2 = pool.createPool({ options })
+```
+</details>
+
+<details>
   <summary>Create connection</summary>
 
 ```js
-const connection = await pool.createConnection()
+const connection = pool.connection()
 
 //callback query
 connection.query(sql, values, (err,data) => {
@@ -85,7 +109,7 @@ try {
 
 ```js
 // if equal or more than 5 connections which tagged `foo`, wait for releasing
-const connection = await pool.createConnection({ tag_name: 'foo', limit: 5 })
+const connection = pool.connection({ tag_name: 'foo', limit: 5 })
 ```
 </details>
 
@@ -237,7 +261,7 @@ pool.redisClient = Redis
 
 //...
 
-const connection = await pool.createConnection
+const connection = pool.connection
 
 await connection.q('SELECT id FROM user WHERE uid = ?', userID, {
   key: `api:user:id:${userID}`, //optional , default to queryString
