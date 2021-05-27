@@ -771,6 +771,32 @@ describe('test insert values', async () => {
 	})
 })
 
+describe('test update table', () => {
+	it('1', async () => {
+
+		const trips = await Trips.SELECT().FROM().LIMIT(5).EX(5).exec()
+
+		for (const { trip_id } of trips) {
+			await Trips.UPDATE().SET('start_address = start_address').WHERE({ trip_id }).rollback()
+		}
+	})
+
+	it('1', async () => {
+		const connection = pool.connection()
+
+		await connection.beginTransaction()
+		const trips = await Trips.SELECT().FROM().LIMIT(5).EX(5).exec(connection)
+
+
+		for (const { trip_id } of trips) {
+			await Trips.UPDATE().SET('start_address = start_address').WHERE({ trip_id }).exec(connection)
+		}
+
+		await connection.rollback()
+		connection.release()
+	})
+})
+
 describe('test update multi table', () => {
 	it('1', () => {
 
