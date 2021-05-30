@@ -295,9 +295,9 @@ module.exports = class Connection {
 			}
 
 			await this.writer.commitAsync()
-			Event.emit('log', this.identity(), `${this.writer.identity} : COMMIT`)
+			Event.emit('log', this.identity(this.writer), `COMMIT`)
 		} catch (error) {
-			Event.emit('err', this.identity() + `${this.writer.identity} : COMMIT`, error)
+			Event.emit('err', this.identity(this.writer) + `COMMIT`, error)
 		} finally {
 			this._status.isCommitted = true
 		}

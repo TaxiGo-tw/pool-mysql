@@ -240,12 +240,19 @@ module.exports = class MySQLConnectionPool {
 		}
 
 		mysqlConnection.commitAsync = async () => {
-			if (mysqlConnection.role !== 'Writer') {
-				return
-			}
+			return new Promise((resolve, reject) => {
+				if (mysqlConnection.role !== 'Writer') {
+					return resolve()
+				}
 
-			const commitAsync = require('util').promisify(mysqlConnection.commit)
-			await commitAsync()
+				mysqlConnection.commit((err) => {
+					if (err) {
+						return reject(err)
+					}
+
+					resolve()
+				})
+			})
 		}
 	}
 
