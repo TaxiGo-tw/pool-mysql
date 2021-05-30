@@ -5,10 +5,8 @@ const { assert } = require('chai')
 
 const pool = require('../src/Pool')
 
-describe('test recycle', () => {
-	it('recycle', (done) => {
-
-
+describe('test connect()', () => {
+	it('reader should be only 1', (done) => {
 		const c = pool.connection()
 		c.q('select 1').then(console.log).catch(console.error)
 		c.q('select 2').then(console.log).catch(console.error)
