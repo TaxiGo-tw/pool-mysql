@@ -40,16 +40,7 @@ class Pool {
 
 		this._mysqlConnectionManager = new MySQLConnectionManager(this.options)
 
-		this.connectionPool = {
-			using: {
-				default: {}
-			},
-			waiting: []
-		}
-
 		this.redisClient = redisClient
-
-		this._connectionRequests = []
 
 		Event.emit('warn', this.identity(), `pool-mysql writer host: ${this.options.writer.host}`)
 		Event.emit('warn', this.identity(), `pool-mysql reader host: ${this.options.reader.host}`)
