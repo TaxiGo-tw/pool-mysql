@@ -142,14 +142,15 @@ module.exports = class Connection {
 
 		const startTime = new Date()
 
-		if (mysqlConnection.querying) {
-			const message = `${mysqlConnection.identity()} is querying in the same time with "${mysqlConnection.querying}" and "${query.sql}"`
-			Event.emit('warn', this.identity(), message)
+		// 先拿掉, 有問題再說
+		// if (mysqlConnection.querying) {
+		// 	const message = `${mysqlConnection.identity()} is querying in the same time with "${mysqlConnection.querying}" and "${query.sql}"`
+		// 	Event.emit('warn', this.identity(), message)
 
-			if (process.env.NODE_ENV == 'TESTING') {
-				throwError(message)
-			}
-		}
+		// 	if (process.env.NODE_ENV == 'TESTING') {
+		// 		throwError(message)
+		// 	}
+		// }
 
 		this._status.querying = query.sql
 		mysqlConnection.querying = query.sql

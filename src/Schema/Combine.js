@@ -1,3 +1,5 @@
+const Event = require("../Logger/Event")
+
 module.exports = class Combine {
 	constructor() {
 		this.isQuering = {}
@@ -39,12 +41,21 @@ module.exports = class Combine {
 
 	// offer results to other query which subscribed
 	publish(key, err, result) {
-		const arr = this.waitingCallbacks[key] || []
-		while (arr.length) {
-			const callback = arr.shift()
-			callback(err, result)
-		}
+		return new Promise(resolve => {
+			resolve()
 
-		this.end(key)
+			const arr = this.waitingCallbacks[key] || []
+
+			while (arr.length) {
+				try {
+					const callback = arr.shift()
+					callback(err, result)
+				} catch (error) {
+					Event.emit('err', 'Combine Publish', error)
+				}
+			}
+
+			this.end(key)
+		})
 	}
 }

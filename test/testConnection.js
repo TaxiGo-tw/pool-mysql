@@ -97,26 +97,27 @@ describe('connection status', () => {
 	})
 })
 
-describe('test same time query', async () => {
-	it('1', async () => {
-		const connection = pool.connection()
+// 先拿掉, 有問題再說
+// describe('test same time query', async () => {
+// 	it('1', async () => {
+// 		const connection = pool.connection()
 
-		const q1 = 'select 1'
-		const q2 = 'select 2'
-		try {
-			let a = connection.q(q1)
-			let b = connection.q(q2)
-			a = await a
-			b = await b
+// 		const q1 = 'select 1'
+// 		const q2 = 'select 2'
+// 		try {
+// 			let a = connection.q(q1)
+// 			let b = connection.q(q2)
+// 			a = await a
+// 			b = await b
 
-			assert.fail('should catch, not finish')
-		} catch (error) {
-			error.message.should.include(`is querying in the same time with "${q1}" and "${q2}"`)
-		} finally {
-			connection.release()
-		}
-	})
-})
+// 			assert.fail('should catch, not finish')
+// 		} catch (error) {
+// 			error.message.should.include(`is querying in the same time with "${q1}" and "${q2}"`)
+// 		} finally {
+// 			connection.release()
+// 		}
+// 	})
+// })
 
 describe('test get connection', () => {
 	it('1', (done) => {
