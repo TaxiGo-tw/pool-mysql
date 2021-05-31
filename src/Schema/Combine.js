@@ -1,27 +1,28 @@
-
-const isQuering = {}
-const waitingCallbacks = {}
-
 module.exports = class Combine {
+	constructor() {
+		this.isQuering = {}
+		this.waitingCallbacks = {}
+	}
+
 	// if query is exists
-	static isQuerying(key) {
-		return isQuering[key]
+	isQuerying(key) {
+		return this.isQuering[key]
 	}
 
 	// sign up query
-	static bind(key) {
-		isQuering[key] = true
+	bind(key) {
+		this.isQuering[key] = true
 	}
 
 	// sign off query
-	static end(key) {
-		delete isQuering[key]
+	end(key) {
+		delete this.isQuering[key]
 	}
 
 	// waiting for someone query results
-	static async subscribe(key) {
-		if (!waitingCallbacks[key]) {
-			waitingCallbacks[key] = []
+	async subscribe(key) {
+		if (!this.waitingCallbacks[key]) {
+			this.waitingCallbacks[key] = []
 		}
 
 		return new Promise((resolve, reject) => {
@@ -32,13 +33,13 @@ module.exports = class Combine {
 				resolve(results)
 			}
 
-			waitingCallbacks[key].push(publisher)
+			this.waitingCallbacks[key].push(publisher)
 		})
 	}
 
 	// offer results to other query which subscribed
-	static publish(key, err, result) {
-		const arr = waitingCallbacks[key] || []
+	publish(key, err, result) {
+		const arr = this.waitingCallbacks[key] || []
 		while (arr.length) {
 			const callback = arr.shift()
 			callback(err, result)

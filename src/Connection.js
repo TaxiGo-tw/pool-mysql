@@ -4,8 +4,6 @@ const mysql = require('mysql')
 const throwError = require('./Helper/throwError')
 const Event = require('./Logger/Event')
 
-const Combine = require('./Schema/Combine')
-
 module.exports = class Connection {
 	constructor(pool) {
 		this._pool = pool
@@ -178,7 +176,7 @@ module.exports = class Connection {
 		if (!EX) {
 			if (!combine) {
 				return { Normal: true }
-			} else if (Combine.isQuerying(queryKey)) { //查詢中則等結果
+			} else if (this._pool.combine.isQuerying(queryKey)) { //查詢中則等結果
 				return { CombineSubscriber: true }
 			}
 			return { CombineLeader: true }
@@ -205,12 +203,12 @@ module.exports = class Connection {
 				case QueryMode.Normal: {
 					return await this._q(sql, values)
 				} case QueryMode.CombineSubscriber: { // 等人查好
-					return await Combine.subscribe(queryKey)
+					return await this._pool.combine.subscribe(queryKey)
 				} case QueryMode.CombineLeader: {	//帶頭查
 
-					Combine.bind(queryKey)
+					this._pool.combine.bind(queryKey)
 					const result = await this._q(sql, values)
-					Combine.publish(queryKey, undefined, result)
+					this._pool.combine.publish(queryKey, undefined, result)
 					return result
 				} case QueryMode.Caching: {
 
@@ -233,10 +231,10 @@ module.exports = class Connection {
 					}
 
 					// always combine
-					if (Combine.isQuerying(queryKey)) {
-						return await Combine.subscribe(queryKey)
+					if (this._pool.combine.isQuerying(queryKey)) {
+						return await this._pool.combine.subscribe(queryKey)
 					} else {
-						Combine.bind(queryKey)
+						this._pool.combine.bind(queryKey)
 					}
 
 					const result = await this._q(sql, values)
@@ -249,14 +247,14 @@ module.exports = class Connection {
 
 					await this._pool.redisClient.setJSONAsync(queryKey, toCache, 'EX', EX)
 
-					Combine.publish(queryKey, undefined, result)
+					this._pool.combine.publish(queryKey, undefined, result)
 					return result
 				}
 				default:
 					throw Error('wrong QueryMode')
 			}
 		} catch (error) {
-			Combine.publish(queryKey, error, undefined)
+			this._pool.combine.publish(queryKey, error, undefined)
 
 			switch (true) {
 				case typeof onErr == 'string': {

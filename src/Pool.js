@@ -7,6 +7,7 @@ const MySQLConnectionManager = require('./MySQLConnectionManager')
 const Connection = require('./Connection')
 
 const extendRedis = require('./Extension/RedisExtend')
+const Combine = require('./Schema/Combine')
 
 let poolID = 0
 
@@ -48,6 +49,8 @@ class Pool {
 		this.Schema = require('./Schema')
 
 		this._pools = {}
+
+		this.combine = new Combine()
 	}
 
 	identity() {
