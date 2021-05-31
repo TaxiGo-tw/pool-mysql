@@ -35,18 +35,35 @@ module.exports = class Connection {
 	}
 
 	async genWriter() {
-		const manager = this._pool._mysqlConnectionManager
+		if (this.writer) {
+			return
+		}
 
-		if (!this.writer) {
+		const manager = this._pool._mysqlConnectionManager
+		const writeKey = `connection:writer:${this.identity()}:connect`
+
+		if (this._pool.combine.isQuerying(writeKey)) {
+			return await this._pool.combine.subscribe(writeKey)
+		} else {
+			this._pool.combine.bind(writeKey)
 			this.writer = await manager.getWriter(this)
+			this._pool.combine.publish(writeKey)
 		}
 	}
 
 	async genReader() {
+		if (this.reader) {
+			return
+		}
 		const manager = this._pool._mysqlConnectionManager
+		const readKey = `connection:reader:${this.identity()}:connect`
 
-		if (!this.reader) {
+		if (this._pool.combine.isQuerying(readKey)) {
+			return await this._pool.combine.subscribe(readKey)
+		} else {
+			this._pool.combine.bind(readKey)
 			this.reader = await manager.getReader(this)
+			this._pool.combine.publish(readKey)
 		}
 	}
 

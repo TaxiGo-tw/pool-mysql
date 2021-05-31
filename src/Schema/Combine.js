@@ -45,6 +45,6 @@ module.exports = class Combine {
 			callback(err, result)
 		}
 
-		Combine.end(key)
+		this.end(key)
 	}
 }
