@@ -81,16 +81,15 @@ describe('connection status', () => {
 	})
 
 	it('test query mode', () => {
-		const Combine = require('../src/Schema/Combine')
 		const connection = pool.connection()
 
 		assert.deepStrictEqual(connection._queryMode(), { Normal: true })
 
 		assert.deepStrictEqual(connection._queryMode({ combine: true, queryKey: '123' }), { CombineLeader: true })
 
-		Combine.bind('123')
+		connection._pool.combine.bind('123')
 		assert.deepStrictEqual(connection._queryMode({ combine: true, queryKey: '123' }), { CombineSubscriber: true })
-		Combine.publish('123')
+		connection._pool.combine.publish('123')
 
 		assert.deepStrictEqual(connection._queryMode({ combine: true, queryKey: '123' }), { CombineLeader: true })
 
