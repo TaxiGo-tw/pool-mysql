@@ -1,6 +1,6 @@
 {
 	"name": "pool-mysql",
-	"version": "1.7.15",
+	"version": "2.0.0",
 	"description": "",
 	"url": "https://github.com/vivalalova/pool-mysql",
 	"main": "index.js",
@@ -16,12 +16,12 @@
 	},
 	"devDependencies": {
 		"bluebird": "^3.7.2",
-		"chai": "^4.2.0",
+		"chai": "^4.3.4",
 		"debug": "^4.1.1",
-		"dotenv": "^8.1.0",
+		"dotenv": "^8.6.0",
 		"eslint": "^4.19.1",
 		"eslint-plugin-array-func": "^3.1.0",
-		"eslint-plugin-promise": "^4.2.1",
+		"eslint-plugin-promise": "^4.3.1",
 		"eslint-plugin-require-in-package": "^1.0.3",
 		"expect": "^26.4.2",
 		"jest": "^24.9.0",

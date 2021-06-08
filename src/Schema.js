@@ -1,9 +1,11 @@
-const Types = require('./Types')
-const Encryption = require('./Encryption')
+const Types = require('./Schema/Types')
+const Encryption = require('./Schema/Encryption')
 const mysql = require('mysql')
 
 const { Validator, throwError } = require('./Helper')
 const { Type, Nested, Populate, Updated } = require('./Schema/')
+
+const Event = require('./Logger/Event')
 
 module.exports = class Schema {
 	constructor(dict) {
@@ -13,6 +15,7 @@ module.exports = class Schema {
 			}
 		} else {
 			this._q = []
+			this._resetQueryOptions()
 		}
 	}
 
@@ -86,7 +89,7 @@ module.exports = class Schema {
 					.join(', ')
 				: '*'
 
-			this._q.push({ type: 'SELECT', command: `${keys}`, customed: true })
+			this._q.push({ type: 'SELECT', command: `${keys}`, costumed: true })
 		}
 
 		return this
@@ -97,38 +100,38 @@ module.exports = class Schema {
 		return this
 	}
 
-	JOIN(whereCaluse, whereCaluse2) {
-		const tableName = whereCaluse.split(' ')[0]
+	JOIN(whereClause, whereClause2) {
+		const tableName = whereClause.split(' ')[0]
 		for (const q of this._q) {
 			if (q.type == 'SELECT') {
-				if (q.customed) {
+				if (q.costumed) {
 					q.command += `, ${tableName}.*`
 				}
 				break
 			}
 		}
-		return addQuery.bind(this)('JOIN', whereCaluse, whereCaluse2, false)
+		return addQuery.bind(this)('JOIN', whereClause, whereClause2, false)
 	}
 
-	LEFTJOIN(whereCaluse, whereCaluse2) {
-		const tableName = whereCaluse.split(' ')[0]
+	LEFTJOIN(whereClause, whereClause2) {
+		const tableName = whereClause.split(' ')[0]
 
 		for (const q of this._q) {
 			if (q.type == 'SELECT') {
-				if (q.customed) {
+				if (q.costumed) {
 					q.command += `, ${tableName}.*`
 				}
 				break
 			}
 		}
-		return addQuery.bind(this)('LEFT JOIN', whereCaluse, whereCaluse2, false)
+		return addQuery.bind(this)('LEFT JOIN', whereClause, whereClause2, false)
 	}
 
-	WHERE(whereCaluse, whereCaluse2) { return addQuery.bind(this)('WHERE', whereCaluse, whereCaluse2) }
+	WHERE(whereClause, whereClause2) { return addQuery.bind(this)('WHERE', whereClause, whereClause2) }
 
-	AND(whereCaluse, whereCaluse2, { isExec = true } = {}) {
+	AND(whereClause, whereClause2, { isExec = true } = {}) {
 		if (isExec) {
-			return addQuery.bind(this)('AND', whereCaluse, whereCaluse2)
+			return addQuery.bind(this)('AND', whereClause, whereClause2)
 		}
 		return this
 	}
@@ -146,9 +149,9 @@ module.exports = class Schema {
 		return result
 	}
 
-	OR(whereCaluse, whereCaluse2, { isExec = true } = {}) {
+	OR(whereClause, whereClause2, { isExec = true } = {}) {
 		if (isExec) {
-			return addQuery.bind(this)('OR', whereCaluse, whereCaluse2)
+			return addQuery.bind(this)('OR', whereClause, whereClause2)
 		}
 
 		return this
@@ -175,8 +178,8 @@ module.exports = class Schema {
 		return this
 	}
 
-	POPULATE(...fileds) {
-		this._populadtes = fileds
+	POPULATE(...fields) {
+		this._queryOptions.populates = fields
 		return this
 	}
 
@@ -208,22 +211,22 @@ module.exports = class Schema {
 
 	PRINT(options) {
 		if (options == false) {
-			this._print = false
+			this._queryOptions.print = false
 			return this
 		}
 
-		this._print = true
+		this._queryOptions.print = true
 		return this
 	}
 
 	ON_ERR(callbackOrString) {
-		this._onErr = callbackOrString
+		this._queryOptions.onErr = callbackOrString
 		return this
 	}
 
 
 	WRITER(useWriter = true) {
-		this._useWriter = useWriter
+		this._queryOptions.useWriter = useWriter
 		return this
 	}
 
@@ -233,23 +236,23 @@ module.exports = class Schema {
 	}
 
 	MAP(mapCallback) {
-		this._mapCallback = mapCallback
+		this._queryOptions.mapCallback = mapCallback
 		return this
 	}
 
-	REDUCE(reduceCallback, reduceInitiVal = undefined) {
-		this._reduceCallback = reduceCallback
-		this._reduceInitiVal = reduceInitiVal
+	REDUCE(reduceCallback, reduceInitVal = undefined) {
+		this._queryOptions.reduceCallback = reduceCallback
+		this._queryOptions.reduceInitVal = reduceInitVal
 		return this
 	}
 
 	NESTED() {
-		this._nested = true
+		this._queryOptions.nested = true
 		return this
 	}
 
 	EX(expireSecond, { key, forceUpdate = false, shouldRefreshInCache } = {}) {
-		this._EX = {
+		this._queryOptions.EX = {
 			key,
 			EX: expireSecond,
 			shouldRefreshInCache: forceUpdate ? () => { return forceUpdate } : shouldRefreshInCache,
@@ -268,7 +271,7 @@ module.exports = class Schema {
 
 		const query = {
 			sql: pre + this._q.map(q => `${q.type || ''} ${q.command || ''}`).join(' ') + after,
-			nestTables: this._nestTables || this._nested
+			nestTables: this._nestTables || this._queryOptions.nested
 		}
 
 		const values = this._q
@@ -291,16 +294,16 @@ module.exports = class Schema {
 
 	mocked(formatted) {
 		if (this._print) {
-			Schema._pool.logger('all', `${formatted}`)
+			Event.emit('log', 'all', `${formatted}`)
 		}
 
 		return Schema._pool.mock(Schema._pool._mockCounter++, formatted)
 	}
 
 	async rollback(outSideConnection = null) {
-		const connection = outSideConnection || await Schema._pool.createConnection()
+		const connection = outSideConnection || Schema._pool.connection()
 		try {
-			await connection.awaitTransaction()
+			await connection.beginTransaction()
 			return await this.exec(connection)
 		} catch (error) {
 			throwError(error)
@@ -312,20 +315,19 @@ module.exports = class Schema {
 		}
 	}
 
-	async exec(outSideConnection = null) {
-		this._connection = outSideConnection || await Schema._pool.createConnection()
+	async exec(outSideConnection = null, options) {
+		this._connection = outSideConnection || await Schema._pool.createConnection(options)
 		try {
 			let results
 
 			///////////////////////////////////////////////////////////////////
-
 			const {
 				query,
 				values,
 				formatted,
 				mapCallback,
 				reduceCallback,
-				reduceInitiVal,
+				reduceInitVal,
 				nested,
 				print,
 				filter,
@@ -337,7 +339,8 @@ module.exports = class Schema {
 				decryption,
 				populates,
 				ex,
-				useWriter
+				useWriter,
+				encryption
 			} = this._options()
 			///////////////////////////////////////////////////////////////////
 			if (this.shouldMock()) {
@@ -345,7 +348,7 @@ module.exports = class Schema {
 			}
 			///////////////////////////////////////////////////////////////////
 
-			this._connection.useWriter = useWriter
+			this._connection._status.useWriter = (this._connection._status.useWriter || useWriter)
 
 			// eslint-disable-next-line no-unused-vars
 			let conn = this._connection
@@ -357,12 +360,26 @@ module.exports = class Schema {
 				conn = conn.onErr(onErr)
 			}
 
-			results = await conn.q(query, values, ex)
+			//encryption
+			encryption.forEach(e => {
+				this._q.filter(q => q.type === 'SET' && q.value instanceof Object).forEach(q => {
+					const key = conn._pool.options.DATA_ENCRYPTION_KEY
+					const iv = conn._pool.options.DATA_ENCRYPTION_IV
+					q.value[e] = Encryption.encrypt(q.value[e], { key, iv })
+				})
+			})
 
+			///////////////////////////////////////////////////////////////////
+			results = await conn.q(query, values, ex)
+			///////////////////////////////////////////////////////////////////
+
+			//decryption
 			decryption.forEach(column => {
 				results.forEach((result) => {
 					if (result[column]) {
-						result[column] = Encryption.decrypt(result[column])
+						const key = conn._pool.options.DATA_ENCRYPTION_KEY
+						const iv = conn._pool.options.DATA_ENCRYPTION_IV
+						result[column] = Encryption.decrypt(result[column], { key, iv })
 					}
 				})
 			})
@@ -388,7 +405,7 @@ module.exports = class Schema {
 				}
 
 				if (reduceCallback) {
-					results = results.reduce(reduceCallback, reduceInitiVal)
+					results = results.reduce(reduceCallback, reduceInitVal)
 				}
 
 				if (nested) {
@@ -459,19 +476,7 @@ module.exports = class Schema {
 		return this
 	}
 
-	SET(whereCaluse, whereCaluse2, { passUndefined = false, encryption = [] } = {}) {
-
-		if (typeof whereCaluse === 'object') {
-			Validator.validate.bind(this)(whereCaluse)
-
-			for (const key of Object.keys(whereCaluse)) {
-				if (this.columns && this.columns[key] && this.columns[key].type && this.columns[key].type.inputMapper) {
-					const { inputMapper } = this.columns[key].type
-					whereCaluse[key] = inputMapper(whereCaluse[key])
-				}
-			}
-		}
-
+	SET(whereClause, whereClause2, { passUndefined = false, encryption = [] } = {}) {
 		function passUndefinedIfNeeded(passUndefined, value) {
 			if (!passUndefined || !(value instanceof Object)) {
 				return value
@@ -486,32 +491,29 @@ module.exports = class Schema {
 			return result
 		}
 
-		function encryptIfNeeded(encryption, value) {
-			if (!(value instanceof Object) || !encryption.length) {
-				return value
-			}
+		//inputMapper
+		if (typeof whereClause === 'object') {
+			Validator.validate.bind(this)(whereClause)
 
-			const result = JSON.parse(JSON.stringify(value))
-			encryption.forEach(column => {
-				Object.keys(result).forEach((key) => {
-					if (key === column) {
-						result[key] = Encryption.encrypt(result[key])
-					}
-				})
-			})
-			return result
+			for (const key of Object.keys(whereClause)) {
+				if (this.columns && this.columns[key] && this.columns[key].type && this.columns[key].type.inputMapper) {
+					const { inputMapper } = this.columns[key].type
+					whereClause[key] = inputMapper(whereClause[key])
+				}
+			}
 		}
 
-		if (whereCaluse instanceof Object) {
-			let value = passUndefinedIfNeeded(passUndefined, whereCaluse)
-			value = encryptIfNeeded(encryption, whereCaluse)
+		this._queryOptions.encryption = encryption
+
+		//pre handle
+		if (whereClause instanceof Object) {
+			const value = passUndefinedIfNeeded(passUndefined, whereClause)
 			this._q.push({ type: 'SET', command: '?', value })
 			return this
+		} else {
+			const value = passUndefinedIfNeeded(passUndefined, whereClause2)
+			return addQuery.bind(this)('SET', whereClause, value, false)
 		}
-
-		let value = passUndefinedIfNeeded(passUndefined, whereCaluse2)
-		value = encryptIfNeeded(encryption, whereCaluse2)
-		return addQuery.bind(this)('SET', whereCaluse, value, false)
 	}
 
 	VALUES(values) {
@@ -527,24 +529,24 @@ module.exports = class Schema {
 		return this
 	}
 
-	DUPLICATE(whereCaluse, whereCaluse2) {
-		if (whereCaluse instanceof Object) {
-			this._q.push({ type: 'ON DUPLICATE KEY', command: 'UPDATE ?', value: whereCaluse })
+	DUPLICATE(whereClause, whereClause2) {
+		if (whereClause instanceof Object) {
+			this._q.push({ type: 'ON DUPLICATE KEY', command: 'UPDATE ?', value: whereClause })
 			return this
 		}
 
-		return addQuery.bind(this)('ON DUPLICATE KEY UPDATE', whereCaluse, whereCaluse2, false)
+		return addQuery.bind(this)('ON DUPLICATE KEY UPDATE', whereClause, whereClause2, false)
 	}
 
 	FIRST() {
-		this._getFirst = true
+		this._queryOptions.getFirst = true
 		addQuery.bind(this)('LIMIT', 1, null)
 		return this
 	}
 
-	static FIND(...whereCaluse) {
+	static FIND(...whereClause) {
 		const object = new this()
-		return object.SELECT().FROM().WHERE(...whereCaluse)
+		return object.SELECT().FROM().WHERE(...whereClause)
 	}
 
 	static FIND_PK(pk) {
@@ -562,7 +564,7 @@ module.exports = class Schema {
 	}
 
 	FILTER(callback) {
-		this._filter = callback
+		this._queryOptions.filter = callback
 		return this
 	}
 
@@ -614,17 +616,17 @@ module.exports = class Schema {
 	}
 
 	DECRYPT(...decryption) {
-		this._decryption = decryption
+		this._queryOptions.decryption = decryption
 		return this
 	}
 
 	COMBINE() {
-		this._combine = true
+		this._queryOptions.combine = true
 		return this
 	}
 
 	UPDATED(...variables) {
-		this._updated = true
+		this._queryOptions.updated = true
 
 		let obj = this
 
@@ -643,75 +645,59 @@ module.exports = class Schema {
 	}
 
 	CHANGED_ROWS(changedRows) {
-		this._changedRows = changedRows
+		this._queryOptions.changedRows = changedRows
 		return this
 	}
 
 	AFFECTED_ROWS(affectedRows) {
-		this._affectedRows = affectedRows
+		this._queryOptions.affectedRows = affectedRows
 		return this
 	}
 
 	_options() {
-		const options = {}
+		const queryOptions = this._queryOptions
+		const { query, values, formatted } = this.FORMATTED()
 
-		const formatted = this.FORMATTED()
-		options.query = formatted.query
-		options.values = formatted.values
-		options.formatted = formatted.formatted
+		const options = {
+			query,
+			values,
+			formatted,
 
+			mapCallback: queryOptions.mapCallback,
+			reduceCallback: queryOptions.reduceCallback,
+			reduceInitVal: queryOptions.reduceInitVal,
+			nested: queryOptions.nested,
+			print: queryOptions.print,
+
+			filter: queryOptions.filter,
+			getFirst: queryOptions.getFirst,
+			updated: queryOptions.updated,
+			changedRows: queryOptions.changedRows,
+			affectedRows: queryOptions.affectedRows,
+			onErr: queryOptions.onErr,
+			decryption: queryOptions.decryption || [],
+			populates: queryOptions.populates || [],
+			useWriter: queryOptions.useWriter || false,
+			encryption: queryOptions.encryption || [],
+			ex: {
+				...queryOptions.EX || { combine: queryOptions.combine || false },
+				...{ redisPrint: queryOptions.print }
+			}
+		}
+
+		this._resetQueryOptions()
 		delete this._nestTables
 
-		options.mapCallback = this._mapCallback
-		delete this._mapCallback
-
-		options.reduceCallback = this._reduceCallback
-		delete this._reduceCallback
-
-		options.reduceInitiVal = this._reduceInitiVal
-		delete this._reduceInitiVal
-
-		options.nested = this._nested
-		this._nested = false
-
-		options.print = this._print
-		this._print = false
-
-		options.filter = this._filter
-		delete this._filter
-
-		options.getFirst = this._getFirst
-		delete this._getFirst
-
-		options.updated = this._updated
-		delete this._updated
-
-		options.changedRows = this._changedRows
-		delete this._changedRows
-
-		options.affectedRows = this._affectedRows
-		delete this._affectedRows
-
-		options.onErr = this._onErr
-		delete this._onErr
-
-		options.decryption = this._decryption || []
-		delete this._decryption
-
-		options.populates = this._populadtes || []
-		delete this._populadtes
-
-		options.useWriter = this._useWriter
-		delete this._useWriter
-
-		const combine = this._combine || false
-		delete this._combine
-
-		options.ex = this._EX || { combine }
-		options.ex.redisPrint = options.print
-		this._EX = {}
-
 		return options
+	}
+
+	_resetQueryOptions() {
+		this._queryOptions = {
+			decryption: [],
+			populates: [],
+			useWriter: false,
+			encryption: [],
+		}
 	}
 
 	validate(isInsert) {
@@ -750,21 +736,21 @@ module.exports = class Schema {
 	}
 }
 
-function addQuery(reservedWord, whereCaluse, whereCaluse2, inBrackets = true) {
-	if (!whereCaluse) {
+function addQuery(reservedWord, whereClause, whereClause2, inBrackets = true) {
+	if (!whereClause) {
 		return this
 	}
 
-	if (typeof whereCaluse == 'string') {
+	if (typeof whereClause == 'string') {
 		if (inBrackets) {
-			this._q.push({ type: reservedWord, command: `(${whereCaluse})`, value: whereCaluse2 })
+			this._q.push({ type: reservedWord, command: `(${whereClause})`, value: whereClause2 })
 		} else {
-			this._q.push({ type: reservedWord, command: `${whereCaluse}`, value: whereCaluse2 })
+			this._q.push({ type: reservedWord, command: `${whereClause}`, value: whereClause2 })
 		}
-	} else if (typeof whereCaluse == 'object') {
-		this._q.push({ type: reservedWord, command: `(?)`, value: whereCaluse })
+	} else if (typeof whereClause == 'object') {
+		this._q.push({ type: reservedWord, command: `(?)`, value: whereClause })
 	} else {
-		this._q.push({ type: reservedWord, command: `?`, value: whereCaluse })
+		this._q.push({ type: reservedWord, command: `?`, value: whereClause })
 	}
 
 	return this

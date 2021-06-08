@@ -1,4 +1,4 @@
-const Base = require('../../index').Schema
+const Base = require('../../src/Pool').Schema
 
 module.exports = class drivers extends Base {
 

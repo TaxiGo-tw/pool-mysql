@@ -1,4 +1,4 @@
-// copy & passte from
+// copy & paste from
 // https://stackoverflow.com/a/14172822/3152391
 
 Object.defineProperty(global, '__stack', {

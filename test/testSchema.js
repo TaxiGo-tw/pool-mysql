@@ -1,12 +1,12 @@
 const { should, expect, assert } = require('chai')  // Using Assert style
 should()
 
-const Trips = require('./model/Trips')
-const Users = require('./model/Users')
-const Block = require('./model/BlockPersonally')
-const Drivers = require('./model/Drivers')
+const Trips = require('./testModels/Trips')
+const Users = require('./testModels/Users')
+const Block = require('./testModels/BlockPersonally')
+const Drivers = require('./testModels/Drivers')
 
-const pool = require('../index')
+const pool = require('../src/Pool')
 const Redis = require('redis')
 const bluebird = require('bluebird')
 bluebird.promisifyAll(Redis.RedisClient.prototype)
@@ -760,55 +760,6 @@ describe('test LIMIT OFFSET', () => {
 })
 
 
-
-describe('test connection.query()', () => {
-	it('3', (done) => {
-		pool.createConnection().then(connection => {
-			return connection.query('SELECT * FROM trips LIMIT 5', (e, r) => {
-				connection.release()
-				done()
-			})
-		}).catch(console.error)
-	})
-})
-
-describe('test get connection', () => {
-	it('1', (done) => {
-		pool.getConnection((err, connection) => {
-			connection.release()
-			done()
-		})
-	})
-
-	it('2', async () => {
-		for (let i = 0; i < 10000; i++) {
-			const connection = await pool.createConnection()
-			connection.release()
-		}
-	})
-})
-
-describe('test pool.query()', () => {
-	it('1', (done) => {
-		pool.query('SELECT * FROM trips LIMIT 5', (e, r) => {
-			done()
-		})
-	})
-})
-
-
-describe('test release before query warning', () => {
-	it('1', async () => {
-		const connection = await pool.createConnection()
-		assert.equal(connection.isUsing, true)
-		connection.release()
-		assert.equal(connection.isUsing, false)
-
-		await connection.q('SELECT * FROM trips LIMIT 5')
-
-	})
-})
-
 describe('test insert values', async () => {
 	it('5', async () => {
 		const query = Block
@@ -817,6 +768,32 @@ describe('test insert values', async () => {
 			.VALUES([[101, undefined, '101 block 301'], [101, 402, '101 block 402']])
 
 		assert.equal(query.FORMATTED().formatted, `INSERT  INTO block_personally (blocker, blocked, notes) VALUES (101,NULL,'101 block 301'),(101,402,'101 block 402')`)
+	})
+})
+
+describe('test update table', () => {
+	it('1', async () => {
+
+		const trips = await Trips.SELECT().FROM().LIMIT(5).EX(5).exec()
+
+		for (const { trip_id } of trips) {
+			await Trips.UPDATE().SET('start_address = start_address').WHERE({ trip_id }).rollback()
+		}
+	})
+
+	it('1', async () => {
+		const connection = pool.connection()
+
+		await connection.beginTransaction()
+		const trips = await Trips.SELECT().FROM().LIMIT(5).EX(5).exec(connection)
+
+
+		for (const { trip_id } of trips) {
+			await Trips.UPDATE().SET('start_address = start_address').WHERE({ trip_id }).exec(connection)
+		}
+
+		await connection.rollback()
+		connection.release()
 	})
 })
 
@@ -836,8 +813,9 @@ describe('test update multi table', () => {
 })
 
 describe('test onErr', () => {
+	const errMessage = 'test message on error'
+
 	it('string', async () => {
-		const errMessage = 'yoyoyoyoyoyo'
 		try {
 
 			await Trips.UPDATE('user_info')
@@ -849,25 +827,35 @@ describe('test onErr', () => {
 
 			assert(false)
 		} catch (err) {
-			assert.equal(err.message, 'yoyoyoyoyoyo')
+			assert.equal(err.message, errMessage)
 		}
 	})
 
 	it('callback', async () => {
-		const errMessage = 'yoyoyoyoyoyo'
 		try {
 			await Trips.UPDATE('user_info')
 				.SET({ uid: 31 })
 				.WHERE({ uid: 31 })
 				.CHANGED_ROWS(1)
-				.ON_ERR(err => {
+				.ON_ERR(_ => {
 					return errMessage
 				})
 				.exec()
 
 			assert(false)
 		} catch (err) {
-			assert.equal(err.message, 'yoyoyoyoyoyo')
+			assert.equal(err.message, errMessage)
+		}
+	})
+
+	it('connection', async () => {
+		try {
+			const connection = await pool.createConnection()
+			await connection.onErr(errMessage).q('...')
+
+			assert(false)
+		} catch (err) {
+			assert.equal(err.message, errMessage)
 		}
 	})
 })
@@ -898,15 +886,15 @@ describe('test map', () => {
 })
 
 describe('test reduce', () => {
-	const reducer = (accumlator, currentValue) => {
+	const reducer = (accumulator, currentValue) => {
 
-		if (typeof accumlator == 'object') {
-			accumlator = accumlator.amount
-		} else if (typeof accumlator == 'undefined') {
-			accumlator = 0
+		if (typeof accumulator == 'object') {
+			accumulator = accumulator.amount
+		} else if (typeof accumulator == 'undefined') {
+			accumulator = 0
 		}
 
-		return parseInt(accumlator) + parseInt(currentValue.amount)
+		return parseInt(accumulator) + parseInt(currentValue.amount)
 	}
 
 	it('number', async () => {
@@ -956,7 +944,6 @@ describe('test rollback', async () => {
 		assert.equal(expected, null)
 	})
 })
-
 
 after(function () {
 	console.log('after all tests')
