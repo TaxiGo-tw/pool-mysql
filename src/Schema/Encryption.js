@@ -1,6 +1,11 @@
 const crypto = require('crypto')
 const algorithm = 'aes-256-cbc'
 
+//向下相容
+const defaultSecret = {
+	key: process.env.DATA_ENCRYPTION_KEY,
+	iv: process.env.DATA_ENCRYPTION_IV
+}
 module.exports = class Encryption {
 
 	static buffered({ key, iv }) {
@@ -10,7 +15,7 @@ module.exports = class Encryption {
 		}
 	}
 
-	static encrypt(text, secret) {
+	static encrypt(text, secret = defaultSecret) {
 		try {
 			const { key, iv } = Encryption.buffered(secret)
 
@@ -23,7 +28,7 @@ module.exports = class Encryption {
 		}
 	}
 
-	static decrypt(text, secret) {
+	static decrypt(text, secret = defaultSecret) {
 		try {
 			const { key, iv } = Encryption.buffered(secret)
 
