@@ -1,12 +1,12 @@
 const { should, expect, assert } = require('chai')  // Using Assert style
 should()
 
-const Trips = require('./testModels/Trips')
-const Users = require('./testModels/Users')
-const Block = require('./testModels/BlockPersonally')
-const Drivers = require('./testModels/Drivers')
+const Trips = require('../testModels/Trips')
+const Users = require('../testModels/Users')
+const Block = require('../testModels/BlockPersonally')
+const Drivers = require('../testModels/Drivers')
 
-const pool = require('../src/Pool')
+const pool = require('../../src/Pool')
 const Redis = require('redis')
 const bluebird = require('bluebird')
 bluebird.promisifyAll(Redis.RedisClient.prototype)
