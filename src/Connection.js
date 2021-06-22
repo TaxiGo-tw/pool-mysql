@@ -41,13 +41,16 @@ module.exports = class Connection {
 
 		const manager = this._pool._mysqlConnectionManager
 		const writeKey = `connection:writer:${this.identity()}:connect`
+		const combine = this._pool.combine
 
-		if (this._pool.combine.isQuerying(writeKey)) {
-			return await this._pool.combine.subscribe(writeKey)
+		if (combine.isQuerying(writeKey)) {
+			return await combine.subscribe(writeKey)
 		} else {
-			this._pool.combine.bind(writeKey)
-			this.writer = await manager.getWriter(this)
-			this._pool.combine.publish(writeKey)
+			combine.bind(writeKey)
+			const writer = await manager.getWriter(this)
+			this.writer = writer
+			combine.publish(writeKey, undefined, writer)
+			return writer
 		}
 	}
 
@@ -57,13 +60,16 @@ module.exports = class Connection {
 		}
 		const manager = this._pool._mysqlConnectionManager
 		const readKey = `connection:reader:${this.identity()}:connect`
+		const combine = this._pool.combine
 
-		if (this._pool.combine.isQuerying(readKey)) {
-			return await this._pool.combine.subscribe(readKey)
+		if (combine.isQuerying(readKey)) {
+			return await combine.subscribe(readKey)
 		} else {
-			this._pool.combine.bind(readKey)
-			this.reader = await manager.getReader(this)
-			this._pool.combine.publish(readKey)
+			combine.bind(readKey)
+			const reader = await manager.getReader(this)
+			this.reader = reader
+			combine.publish(readKey, undefined, reader)
+			return reader
 		}
 	}
 
@@ -377,13 +383,15 @@ module.exports = class Connection {
 	async _getReaderOrWriter(sql, useWriter) {
 		if (this.isSelect(sql) && !useWriter) {
 			if (!this.reader) {
-				await this.connect('Reader')
+				this.reader = await this.genReader()
 			}
+
 			return this.reader
 		} else {
 			if (!this.writer) {
-				await this.connect('Writer')
+				this.writer = await this.genWriter()
 			}
+
 			return this.writer
 		}
 	}

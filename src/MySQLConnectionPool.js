@@ -207,6 +207,11 @@ module.exports = class MySQLConnectionPool {
 				return callback(null, mysqlConnection)
 			}
 
+			if (!mysqlConnection.tag) {
+				Event.emit('warn', this.identity(mysqlConnection), `shouldn't to here, maybe release twice`)
+				return
+			}
+
 			Event.emit('log', this.identity(mysqlConnection), `RELEASE ${JSON.stringify(mysqlConnection.tag)}`)
 			Event.emit('release', this.identity(mysqlConnection), mysqlConnection)
 
