@@ -366,7 +366,7 @@ module.exports = class Schema {
 					const key = conn._pool.options.DATA_ENCRYPTION_KEY
 					const iv = conn._pool.options.DATA_ENCRYPTION_IV
 
-					if (q.value[element] != undefined) {
+					if (q.value[element] != undefined && q.value[element] != null) {
 						q.value[element] = Encryption.encrypt(q.value[element], { key, iv })
 					}
 				})
