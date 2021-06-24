@@ -361,11 +361,14 @@ module.exports = class Schema {
 			}
 
 			//encryption
-			encryption.forEach(e => {
+			encryption.forEach(element => {
 				this._q.filter(q => q.type === 'SET' && q.value instanceof Object).forEach(q => {
 					const key = conn._pool.options.DATA_ENCRYPTION_KEY
 					const iv = conn._pool.options.DATA_ENCRYPTION_IV
-					q.value[e] = Encryption.encrypt(q.value[e], { key, iv })
+
+					if (q.value[element] != undefined) {
+						q.value[element] = Encryption.encrypt(q.value[element], { key, iv })
+					}
 				})
 			})
 
