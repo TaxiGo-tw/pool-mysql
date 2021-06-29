@@ -15,14 +15,18 @@ module.exports = class Connection {
 
 		this.gotAt = new Date()
 
+		this.randomID = Math.random().toString(36).substr(2, 9)
+
 		this.resetStatus()
 	}
 
-	identity(mysqlConnection) {
+	identity(mysqlConnection, withRandomID = false) {
+		const posFix = withRandomID ? this.randomID : ''
+
 		if (mysqlConnection) {
-			return `[Pool:${this._pool.options.poolID}] [Connection:${this.gotAt.getTime() % 100000}] [${mysqlConnection.role}:${mysqlConnection.id || ''}]`
+			return `[Pool:${this._pool.options.poolID}] [Connection:${this.gotAt.getTime() % 100000}${posFix}] [${mysqlConnection.role}:${mysqlConnection.id || ''}]`
 		}
-		return `[Pool:${this._pool.options.poolID}] [Connection:${this.gotAt.getTime() % 100000}]`
+		return `[Pool:${this._pool.options.poolID}] [Connection:${this.gotAt.getTime() % 100000}${posFix}]`
 	}
 
 	resetStatus() {
@@ -40,7 +44,7 @@ module.exports = class Connection {
 		}
 
 		const manager = this._pool._mysqlConnectionManager
-		const writeKey = `connection:writer:${this.identity()}:connect`
+		const writeKey = `connection:writer:${this.identity(undefined, true)}:connect`
 		const combine = this._pool.combine
 
 		if (combine.isQuerying(writeKey)) {
@@ -59,7 +63,7 @@ module.exports = class Connection {
 			return
 		}
 		const manager = this._pool._mysqlConnectionManager
-		const readKey = `connection:reader:${this.identity()}:connect`
+		const readKey = `connection:reader:${this.identity(undefined, true)}:connect`
 		const combine = this._pool.combine
 
 		if (combine.isQuerying(readKey)) {
