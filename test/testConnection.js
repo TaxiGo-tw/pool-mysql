@@ -93,7 +93,8 @@ describe('connection status', () => {
 
 		assert.deepStrictEqual(connection._queryMode({ combine: true, queryKey: '123' }), { CombineLeader: true })
 
-		assert.deepStrictEqual(connection._queryMode({ EX: 1 }), { Caching: true })
+		//測試環境無redis client
+		assert.deepStrictEqual(connection._queryMode({ EX: 1 }), { Normal: true })
 	})
 })
 
