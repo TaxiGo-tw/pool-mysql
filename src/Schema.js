@@ -209,13 +209,8 @@ module.exports = class Schema {
 		return this
 	}
 
-	PRINT(options) {
-		if (options == false) {
-			this._queryOptions.print = false
-			return this
-		}
-
-		this._queryOptions.print = true
+	PRINT(option = true) {
+		this._queryOptions.print = option
 		return this
 	}
 
