@@ -208,7 +208,7 @@ module.exports = class MySQLConnectionPool {
 			}
 
 			if (!mysqlConnection.tag) {
-				Event.emit('warn', this.identity(mysqlConnection), `shouldn't to here, maybe release twice or not query yet`)
+				Event.emit('warn', this.identity(mysqlConnection), `shouldn't to here, maybe release twice`)
 				return
 			}
 
