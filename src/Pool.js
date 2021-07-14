@@ -123,12 +123,12 @@ class Pool {
 	}
 
 	connection({ priority = 0, limit = this.options.connectionLimit } = {}) {
-		if (isNaN(priority)) {
-			throwError('priority should be a number')
+		if (isNaN(priority) || isNaN(limit)) {
+			throwError('priority or limit should be a number')
 		}
 
 		const connection = new Connection(this)
-		connection.tag = { name: priority, limit }
+		connection.tag = { name: priority, limit: parseInt(limit) }
 
 		return connection
 	}
