@@ -7,9 +7,7 @@ module.exports = class MySQLConnectionPool {
 
 		this.connectionRequests = []
 		this.waiting = []
-		this.using = {
-			default: {}
-		}
+		this.using = {}
 
 		this.connectionID = 1
 
@@ -89,7 +87,7 @@ module.exports = class MySQLConnectionPool {
 		}
 
 		const isOnTotalLimit = this.numberOfConnections({ id: '_' }) >= this.option.connectionLimit
-		const isOnTagLimit = Object.keys(this.using[tag.name]).length >= tag.limit
+		const isOnTagLimit = Object.keys(this.using[tag.name] || {}).length >= tag.limit
 
 		// 排隊
 		if (isOnTotalLimit || isOnTagLimit) {
