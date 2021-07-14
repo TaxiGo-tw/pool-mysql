@@ -134,20 +134,24 @@ module.exports = class MySQLConnectionPool {
 	////////////////////////////////////////////////////
 
 	_getNextWaitingCallback() {
-		const sortedDistinctRequests = distinct(this.connectionRequests, (requestCallback) => requestCallback.tag.name)
-			.sort((a, b) => parseInt(b.tag.name) - parseInt(b.tag.name))
+		//不重複tag的callbacks
+		const distinctRequests = distinct(this.connectionRequests, (requestCallback) => requestCallback.tag.name)
 
-		const callback = this.connectionRequests.find(callback => {
-			if (!callback) {
-				return false
-			}
+		const callback = distinctRequests
+			/* 排序tag name大的優先 */
+			.sort((a, b) => parseInt(b.tag.name) - parseInt(a.tag.name))
+			/* 首個未到limit的callback */
+			.find(callback => {
+				if (!callback) {
+					return false
+				}
 
-			const { name, limit } = callback.tag
-			const tagLimit = parseInt(limit, 10)
-			const usingCount = Object.keys(this.using[name]).length
-			const isUnderTagLimit = usingCount <= tagLimit
-			return isUnderTagLimit
-		})
+				const { name, limit } = callback.tag
+				const tagLimit = parseInt(limit, 10)
+				const usingCount = Object.keys(this.using[name]).length
+				const isUnderTagLimit = usingCount <= tagLimit
+				return isUnderTagLimit
+			})
 
 		const callback_index = this.connectionRequests.indexOf(callback)
 		delete this.connectionRequests[callback_index]
@@ -323,5 +327,15 @@ module.exports = class MySQLConnectionPool {
 
 
 function distinct(array, cb) {
-	return []
+	const obj = array.reduce((a, b) => {
+		const key = cb(b)
+
+		if (!a[key]) {
+			a[key] = b
+		}
+
+		return a
+	}, {})
+
+	return Object.values(obj)
 }
