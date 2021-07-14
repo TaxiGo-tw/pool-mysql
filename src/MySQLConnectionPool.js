@@ -134,6 +134,8 @@ module.exports = class MySQLConnectionPool {
 	////////////////////////////////////////////////////
 
 	_getNextWaitingCallback() {
+		const { distinct } = require('./Helper/array')
+
 		//不重複tag的callbacks
 		const distinctTagNameRequests = distinct(this.connectionRequests, requestCallback => requestCallback.tag.name)
 
@@ -321,19 +323,4 @@ module.exports = class MySQLConnectionPool {
 				})
 		}, 10 * 1000)
 	}
-}
-
-
-function distinct(array, cb) {
-	const obj = array.reduce((a, b) => {
-		const key = cb(b)
-
-		if (!a[key]) {
-			a[key] = b
-		}
-
-		return a
-	}, {})
-
-	return Object.values(obj)
 }
