@@ -147,10 +147,8 @@ module.exports = class MySQLConnectionPool {
 				}
 
 				const { name, limit } = callback.tag
-				const tagLimit = parseInt(limit, 10)
 				const usingCount = Object.keys(this.using[name]).length
-				const isUnderTagLimit = usingCount <= tagLimit
-				return isUnderTagLimit
+				return usingCount <= parseInt(limit, 10)
 			})
 
 		const callback_index = this.connectionRequests.indexOf(callback)
