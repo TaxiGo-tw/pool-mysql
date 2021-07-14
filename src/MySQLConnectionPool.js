@@ -134,7 +134,14 @@ module.exports = class MySQLConnectionPool {
 	////////////////////////////////////////////////////
 
 	_getNextWaitingCallback() {
-		const [callback] = this.connectionRequests.filter((callback) => {
+		const sortedDistinctRequests = distinct(this.connectionRequests, (requestCallback) => requestCallback.tag.name)
+			.sort((a, b) => parseInt(b.tag.name) - parseInt(b.tag.name))
+
+		const callback = this.connectionRequests.find(callback => {
+			if (!callback) {
+				return false
+			}
+
 			const { name, limit } = callback.tag
 			const tagLimit = parseInt(limit, 10)
 			const usingCount = Object.keys(this.using[name]).length
@@ -312,4 +319,9 @@ module.exports = class MySQLConnectionPool {
 				})
 		}, 10 * 1000)
 	}
+}
+
+
+function distinct(array, cb) {
+	return []
 }
