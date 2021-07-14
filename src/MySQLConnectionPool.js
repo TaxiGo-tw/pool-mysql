@@ -135,9 +135,9 @@ module.exports = class MySQLConnectionPool {
 
 	_getNextWaitingCallback() {
 		//不重複tag的callbacks
-		const distinctRequests = distinct(this.connectionRequests, requestCallback => requestCallback.tag.name)
+		const distinctTagNameRequests = distinct(this.connectionRequests, requestCallback => requestCallback.tag.name)
 
-		const callback = distinctRequests
+		const callback = distinctTagNameRequests
 			/* 排序tag name大的優先 */
 			.sort((a, b) => parseInt(b.tag.name) - parseInt(a.tag.name))
 			/* 首個未到limit的callback */
