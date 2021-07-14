@@ -311,7 +311,7 @@ module.exports = class Schema {
 	}
 
 	async exec(outSideConnection = null, options) {
-		this._connection = outSideConnection || await Schema._pool.createConnection(options)
+		this._connection = outSideConnection || Schema._pool.connection(options)
 		try {
 			let results
 
