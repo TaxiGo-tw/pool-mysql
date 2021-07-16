@@ -27,25 +27,26 @@ const pool = require('../src/Pool')
 
 describe('test recycle', () => {
 	it('recycle', (done) => {
+
+		async function select(i) {
+			try {
+				const connection = pool.connection({ limit: 10 })
+				await connection.q('select 1')
+				connection.release()
+
+				if (i == count) {
+					done()
+				}
+			} catch (error) {
+				assert.fail(error)
+			}
+		}
+
 		const count = 50
 
 		for (let i = 1; i <= count; i++) {
-			setTimeout(async () => {
-				pool.createConnection({ limit: 10 })
-					.then(c => {
-						setTimeout(async () => {
-							await c.q('select 1')
-							c.release()
-
-							if (i == count) {
-								done()
-							}
-						}, 300)
-						return
-					})
-					.catch(e => assert.fail(e))
-			}, i * 3)
+			setTimeout(async () => await select(i), 300)
 		}
-	})
 
+	})
 })
