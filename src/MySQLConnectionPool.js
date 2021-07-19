@@ -1,5 +1,6 @@
 const Event = require('./Logger/Event')
 const mysql = require('mysql')
+const throwError = require('./Helper/throwError')
 
 module.exports = class MySQLConnectionPool {
 	constructor(option) {
@@ -66,7 +67,10 @@ module.exports = class MySQLConnectionPool {
 				this.using[mysqlConnection.tag.name] = {}
 			}
 
-			if (!this.using[mysqlConnection.tag.name][mysqlConnection.id]) {
+			if (this.using[mysqlConnection.tag.name][mysqlConnection.id]) {
+				const anotherConnection = this.using[mysqlConnection.tag.name][mysqlConnection.id]
+				throwError(anotherConnection.identity() + ' is using')
+			} else {
 				this.using[mysqlConnection.tag.name][mysqlConnection.id] = mysqlConnection
 			}
 
@@ -149,9 +153,13 @@ module.exports = class MySQLConnectionPool {
 				}
 
 				const { name, limit } = callback.tag
-				const usingCount = Object.keys(this.using[name]).length
+				const usingCount = Object.keys(this.using[name] || {}).length
 				return usingCount <= limit
 			})
+
+		if (!callback) {
+			return
+		}
 
 		const callback_index = this.connectionRequests.indexOf(callback)
 		delete this.connectionRequests[callback_index]
@@ -210,6 +218,10 @@ module.exports = class MySQLConnectionPool {
 
 				delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
 				mysqlConnection.tag = callback.tag
+
+				if (!this.using[mysqlConnection.tag.name]) {
+					this.using[mysqlConnection.tag.name] = {}
+				}
 				this.using[mysqlConnection.tag.name][mysqlConnection.id] = mysqlConnection
 
 				Event.emit('log', this.identity(mysqlConnection), `RECYCLE ${JSON.stringify(mysqlConnection.tag)}`)

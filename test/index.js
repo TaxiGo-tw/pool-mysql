@@ -26,65 +26,56 @@ Event.on('print', console.log)
 const pool = require('../src/Pool')
 
 describe('test recycle', () => {
-	// it('recycle', (done) => {
-	// 	async function select(i) {
-	// 		try {
-	// 			const connection = pool.connection({ limit: 10 })
-	// 			await connection.q('select 1')
-	// 			connection.release()
-
-	// 			if (i == count) {
-	// 				done()
-	// 			}
-	// 		} catch (error) {
-	// 			assert.fail(error)
-	// 		}
-	// 	}
-
-	// 	const count = 50
-
-	// 	for (let i = 1; i <= count; i++) {
-	// 		setTimeout(async () => await select(i), 300)
-	// 	}
-	// })
-
-
-	function genConnections({ priority, limit }, amount) {
-		const array = []
-		for (let i = 0; i < amount; i++) {
-			array.push(pool.connection({ priority, limit }))
-		}
-		return array
-	}
-
-	it('test priority', async () => {
-
-		for (const c of genConnections({ priority: 0 }, 500)) {
-			c.genReader().then(c => console.log('got', c.tag.name)).catch(console.error)
-			// setTimeout(() => c.release(), 1000)
-		}
-
-		console.log('======================')
-
-		const hs = genConnections({ priority: 1 }, 20)
-
-		for (const connection of hs) {
-			connection.genReader().then(c => {
-				console.log('got', c.tag.name)
+	it('recycle', (done) => {
+		async function select(i) {
+			try {
+				const connection = pool.connection({ limit: 10 })
+				await connection.q('select 1')
 				connection.release()
-			})
+
+				if (i == count) {
+					done()
+				}
+			} catch (error) {
+				assert.fail(error)
+			}
 		}
-		// hs[0].genReader().then(c => console.log('got', c.tag.name)).catch(console.error)
-		// hs[1].genReader().then(c => console.log('got', c.tag.name)).catch(console.error)
-		// hs[2].genReader().then(c => console.log('got', c.tag.name)).catch(console.error)
-		// hs[3].genReader().then(c => console.log('got', c.tag.name)).catch(console.error)
-		// hs[4].genReader().then(c => console.log('got', c.tag.name)).catch(console.error)
-		// hs[5].genReader().then(c => console.log('got', c.tag.name)).catch(console.error)
-		// hs[6].genReader().then(c => console.log('got', c.tag.name)).catch(console.error)
-		// hs[7].genReader().then(c => console.log('got', c.tag.name)).catch(console.error)
-		// hs[8].genReader().then(c => console.log('got', c.tag.name)).catch(console.error)
-		// hs[9].genReader().then(c => console.log('got', c.tag.name)).catch(console.error)
 
+		const count = 50
 
+		for (let i = 1; i <= count; i++) {
+			setTimeout(async () => await select(i), 300)
+		}
+	})
+
+	it('test priority', done => {
+		function genConnections({ priority, limit }, amount) {
+			const array = []
+			for (let i = 0; i < amount; i++) {
+				array.push(pool.connection({ priority, limit }))
+			}
+			return array
+		}
+
+		let i = 0
+		for (const connection of genConnections({ priority: 0, limit: 30 }, 30)) {
+			connection.genReader()
+				.then(_ => setTimeout(() => connection.release(), 300))
+				.catch(console.error)
+		}
+
+		for (const connection of genConnections({ priority: 1, limit: 30 }, 30)) {
+			connection.genReader()
+				.then(_ => {
+					i++
+
+					if (i == 30) {
+						setTimeout(() => done(), 500)
+					}
+
+					return setTimeout(() => connection.release(), 300)
+				})
+				.catch(console.error)
+		}
 	})
 })
