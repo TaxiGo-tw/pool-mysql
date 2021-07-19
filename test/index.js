@@ -12,7 +12,7 @@ Event.on('get', (title, connection) => console.log(title, 'connections get'))
 
 Event.on('amount', (title, amount) => console.log(title, 'connections amount', amount))
 Event.on('request', (title, amount) => console.log(title, 'connection 額滿使用中', amount))
-Event.on('recycle', (title) => console.log(title, `connection 排隊解除`))
+Event.on('recycle', (title, connection) => console.log(title, `connection 排隊解除`, connection.tag.name))
 Event.on('end', (title, _) => console.log(title, 'connection end'))
 
 Event.on('release', (title, connection) => console.log(title, 'connections released', connection.tag.name))
@@ -26,7 +26,7 @@ Event.on('print', console.log)
 const pool = require('../src/Pool')
 
 describe('test recycle', () => {
-	it('recycle', (done) => {
+	it.skip('recycle', (done) => {
 		async function select(i) {
 			try {
 				const connection = pool.connection({ limit: 10 })
@@ -58,7 +58,7 @@ describe('test recycle', () => {
 		}
 
 		let i = 0
-		for (const connection of genConnections({ priority: 0, limit: 30 }, 30)) {
+		for (const connection of genConnections({ priority: 0, limit: 15 }, 30)) {
 			connection.genReader()
 				.then(_ => setTimeout(() => connection.release(), 300))
 				.catch(console.error)

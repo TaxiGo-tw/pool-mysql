@@ -213,7 +213,7 @@ module.exports = class MySQLConnectionPool {
 			const callback = this._getNextWaitingCallback()
 
 			if (callback) {
-				Event.emit('recycle', this.identity(mysqlConnection))
+				Event.emit('recycle', this.identity(mysqlConnection), mysqlConnection)
 				mysqlConnection.gotAt = new Date()
 
 				delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
