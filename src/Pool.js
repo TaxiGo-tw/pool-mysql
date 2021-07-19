@@ -8,6 +8,7 @@ const Connection = require('./Connection')
 
 const extendRedis = require('./Extension/RedisExtend')
 const Combine = require('./Schema/Combine')
+const throwError = require('./Helper/throwError')
 
 let poolID = 0
 
@@ -117,15 +118,17 @@ class Pool {
 	/**
 		* @deprecated use `connection()` for [Function]
 		*/
-	async createConnection({ tag_name = 'default', limit = this.options.connectionLimit } = {}) {
-		return this.connection({ tag_name, limit })
+	async createConnection({ limit = this.options.connectionLimit } = {}) {
+		return this.connection({ limit })
 	}
 
-	connection({ tag_name = 'default', limit = this.options.connectionLimit } = {}) {
-		const tag = { name: tag_name, limit }
+	connection({ priority = 0, limit = this.options.connectionLimit } = {}) {
+		if (isNaN(priority) || isNaN(limit)) {
+			throwError('priority or limit should be a number')
+		}
 
 		const connection = new Connection(this)
-		connection.tag = tag
+		connection.tag = { name: priority, limit: parseInt(limit) }
 
 		return connection
 	}

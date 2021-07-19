@@ -1,5 +1,6 @@
 const Event = require('./Logger/Event')
 const mysql = require('mysql')
+const throwError = require('./Helper/throwError')
 
 module.exports = class MySQLConnectionPool {
 	constructor(option) {
@@ -7,9 +8,7 @@ module.exports = class MySQLConnectionPool {
 
 		this.connectionRequests = []
 		this.waiting = []
-		this.using = {
-			default: {}
-		}
+		this.using = {}
 
 		this.connectionID = 1
 
@@ -68,7 +67,10 @@ module.exports = class MySQLConnectionPool {
 				this.using[mysqlConnection.tag.name] = {}
 			}
 
-			if (!this.using[mysqlConnection.tag.name][mysqlConnection.id]) {
+			if (this.using[mysqlConnection.tag.name][mysqlConnection.id]) {
+				const anotherConnection = this.using[mysqlConnection.tag.name][mysqlConnection.id]
+				throwError(anotherConnection.identity() + ' is using')
+			} else {
 				this.using[mysqlConnection.tag.name][mysqlConnection.id] = mysqlConnection
 			}
 
@@ -89,7 +91,7 @@ module.exports = class MySQLConnectionPool {
 		}
 
 		const isOnTotalLimit = this.numberOfConnections({ id: '_' }) >= this.option.connectionLimit
-		const isOnTagLimit = Object.keys(this.using[tag.name]).length >= tag.limit
+		const isOnTagLimit = Object.keys(this.using[tag.name] || {}).length >= tag.limit
 
 		// 排隊
 		if (isOnTotalLimit || isOnTagLimit) {
@@ -136,13 +138,28 @@ module.exports = class MySQLConnectionPool {
 	////////////////////////////////////////////////////
 
 	_getNextWaitingCallback() {
-		const [callback] = this.connectionRequests.filter((callback) => {
-			const { name, limit } = callback.tag
-			const tagLimit = parseInt(limit, 10)
-			const usingCount = Object.keys(this.using[name]).length
-			const isUnderTagLimit = usingCount <= tagLimit
-			return isUnderTagLimit
-		})
+		const { distinct } = require('./Helper/Array')
+
+		//不重複tag的callbacks
+		const distinctTagNameRequests = distinct(this.connectionRequests, requestCallback => requestCallback.tag.name)
+
+		const callback = distinctTagNameRequests
+			/* 排序tag name大的優先 */
+			.sort((a, b) => parseInt(b.tag.name) - parseInt(a.tag.name))
+			/* 首個未到limit的callback */
+			.find(callback => {
+				if (!callback) {
+					return false
+				}
+
+				const { name, limit } = callback.tag
+				const usingCount = Object.keys(this.using[name] || {}).length
+				return usingCount <= limit
+			})
+
+		if (!callback) {
+			return
+		}
 
 		const callback_index = this.connectionRequests.indexOf(callback)
 		delete this.connectionRequests[callback_index]
@@ -196,11 +213,15 @@ module.exports = class MySQLConnectionPool {
 			const callback = this._getNextWaitingCallback()
 
 			if (callback) {
-				Event.emit('recycle', this.identity(mysqlConnection))
+				Event.emit('recycle', this.identity(mysqlConnection), mysqlConnection)
 				mysqlConnection.gotAt = new Date()
 
 				delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
 				mysqlConnection.tag = callback.tag
+
+				if (!this.using[mysqlConnection.tag.name]) {
+					this.using[mysqlConnection.tag.name] = {}
+				}
 				this.using[mysqlConnection.tag.name][mysqlConnection.id] = mysqlConnection
 
 				Event.emit('log', this.identity(mysqlConnection), `RECYCLE ${JSON.stringify(mysqlConnection.tag)}`)

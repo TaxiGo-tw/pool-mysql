@@ -8,11 +8,6 @@ module.exports = class Connection {
 	constructor(pool) {
 		this._pool = pool
 
-		this.tag = {
-			name: 'default',
-			limit: this._pool.options.connectionLimit
-		}
-
 		this.gotAt = new Date()
 
 		this.randomID = Math.random().toString(36).substr(2, 9)
