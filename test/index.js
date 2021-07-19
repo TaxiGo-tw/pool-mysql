@@ -58,9 +58,10 @@ describe('test recycle', () => {
 	}
 
 	it('test priority', async () => {
-		const ls = genConnections({ priority: 0 }, 50)
-		for (const c of ls) {
-			c.genReader().then(c => console.log('got', c.tag.name))
+
+		for (const c of genConnections({ priority: 0 }, 500)) {
+			c.genReader().then(c => console.log('got', c.tag.name)).catch(console.error)
+			// setTimeout(() => c.release(), 1000)
 		}
 
 		console.log('======================')
@@ -84,12 +85,6 @@ describe('test recycle', () => {
 		// hs[8].genReader().then(c => console.log('got', c.tag.name)).catch(console.error)
 		// hs[9].genReader().then(c => console.log('got', c.tag.name)).catch(console.error)
 
-		setTimeout(() => {
-			console.log('rrrr')
-			for (const c of ls) {
-				c.release()
-			}
 
-		}, 1000)
 	})
 })
