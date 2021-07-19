@@ -36,12 +36,14 @@ module.exports = (options = {}, poolID) => {
 		...options,
 
 		writer: {
+			connectionLimit: process.env.CONNECTION_LIMIT || 30,
 			...defaultWriter,
 			...options.writer,
 			role: 'Writer',
 			poolID
 		},
 		reader: {
+			connectionLimit: process.env.CONNECTION_LIMIT || 30,
 			...defaultReader,
 			...options.reader,
 			role: 'Reader',
