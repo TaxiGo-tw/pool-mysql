@@ -138,7 +138,7 @@ module.exports = class MySQLConnectionPool {
 	////////////////////////////////////////////////////
 
 	_getNextWaitingCallback() {
-		const { distinct } = require('./Helper/Array')
+		const { distinct } = require('./Helper/array')
 
 		//不重複tag的callbacks
 		const distinctTagNameRequests = distinct(this.connectionRequests, requestCallback => requestCallback.tag.name)
