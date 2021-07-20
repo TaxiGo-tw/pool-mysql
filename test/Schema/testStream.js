@@ -7,7 +7,7 @@ const assert = require('assert')
 
 describe('test stream', () => {
 	it('success', done => {
-
+		const limit = 500
 		let counter = 0
 
 		const res = {
@@ -17,7 +17,7 @@ describe('test stream', () => {
 				assert.ok(typeof object === 'object')
 			},
 			end: () => {
-				assert.equal(counter, 500)
+				assert.equal(counter, limit)
 				done()
 			}
 		}
@@ -26,7 +26,7 @@ describe('test stream', () => {
 			.SELECT()
 			.FROM()
 			.WHERE({ user_id: 3925 })
-			.LIMIT(500)
+			.LIMIT(limit)
 			.readableStream({ res })
 	})
 
