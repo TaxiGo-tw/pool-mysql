@@ -466,7 +466,7 @@ module.exports = class Schema {
 			}
 
 			if (print) {
-				Event.emit('log', this.identity(), formatted)
+				Event.emit('log', connection.identity(), formatted)
 			}
 
 			connection.querying = formatted
