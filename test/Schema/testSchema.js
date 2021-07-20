@@ -1,13 +1,12 @@
+const { should, expect, assert } = require('chai')  // Using Assert style
+should()
 
-const { should } = require('chai')  // Using Assert style
-should()  // Modifies `Object.prototype`
-const assert = require('assert')
+const Trips = require('../testModels/Trips')
+const Users = require('../testModels/Users')
+const Block = require('../testModels/BlockPersonally')
+const Drivers = require('../testModels/Drivers')
 
-const Trips = require('./model/Trips')
-const Users = require('./model/Users')
-const Block = require('./model/BlockPersonally')
-
-const pool = require('../index')
+const pool = require('../../src/Pool')
 const Redis = require('redis')
 const bluebird = require('bluebird')
 bluebird.promisifyAll(Redis.RedisClient.prototype)
@@ -101,6 +100,23 @@ describe('test query', async () => {
 		should(result).equal(undefined)
 	})
 
+	it('object entity', async () => {
+		const trip = new Trips()
+
+		const obj = { trip_id: 23890, user_id: 21640 }
+		const query = trip
+			.SELECT()
+			.FROM()
+			.WHERE_AND(obj)
+			.FIRST()
+		// .FILTER(t => t.trip_id != 23890)
+
+		const result = await query.exec()
+
+		assert.equal(result.trip_id, obj.trip_id)
+		assert.equal(result.user_id, obj.user_id)
+	})
+
 	it('find', async () => {
 		const query = Trips.FIND({ trip_id: 23890 }).FIRST()
 		const result = await query.exec()
@@ -153,6 +169,10 @@ describe('test query', async () => {
 })
 
 describe('test POPULATE', async () => {
+	before(async () => {
+		await Drivers.UPDATE().SET({ trip_id: 23890 }).WHERE({ driver_id: 3925 }).exec()
+	})
+
 	it('POPULATE first', async () => {
 		const query = Trips.
 			SELECT()
@@ -169,8 +189,8 @@ describe('test POPULATE', async () => {
 
 	})
 
-	it('POPULATE 2', async () => {
-		const query = await Trips
+	it('POPULATE 1v1', async () => {
+		const result = await Trips
 			.SELECT()
 			.FROM()
 			.WHERE({ user_id: 3925 })
@@ -178,12 +198,123 @@ describe('test POPULATE', async () => {
 			.ORDER_BY('trip_id', 'desc')
 			.POPULATE('driver_loc', 'driver_info')
 			.FIRST()
+			.exec()
 
-		const result = await query.exec()
 		result.should.have.property('trip_id')
 		result.should.have.property('user_id')
 		result.driver_loc.should.have.property('location')
 		result.driver_info.should.have.property('first_name')
+	})
+
+
+	it('POPULATE 1vN', async () => {
+		const result = await Drivers
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			.ORDER_BY('trip_id', 'desc')
+			.POPULATE('all_trips')
+			.FIRST()
+			.exec()
+
+		result.should.have.property('all_trips')
+		result.all_trips[0].should.have.property('user_id')
+		result.all_trips[0].should.have.property('start_latlng')
+	})
+
+	it('POPULATE 1v1 FK', async () => {
+
+		const result = await Drivers
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			.ORDER_BY('trip_id', 'desc')
+			.POPULATE('trip_id')
+			.FIRST()
+			.exec()
+
+		result.should.have.property('trip_id')
+		result.trip_id.should.have.property('trip_id')
+	})
+
+	it('POPULATE 1vN FK', async () => {
+		const result = await Trips
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			.POPULATE('driver_loc_FK_single')
+			.FIRST()
+			.exec()
+
+		result.should.have.property('driver_loc_FK_single')
+	})
+
+	it('POPULATE nest object', async () => {
+		const result = await Drivers
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			.POPULATE({
+				trip_id: {
+					//TODO: driver_id:3925,
+					driver_loc_FK_multiple: {
+						//TODO: driver_id:3925,
+						trip_id: {
+							//TODO: driver_id:3925,
+							driver_loc_FK_single: {
+								//TODO: driver_id:3925,
+							}
+						}
+					}
+				}
+			})
+			.FIRST()
+			.exec()
+
+		result.should.have.property('trip_id')
+		result.trip_id.should.have.property('driver_loc_FK_multiple')
+
+		const [driver_loc_FK_multiple] = result.trip_id.driver_loc_FK_multiple
+		driver_loc_FK_multiple.should.have.property('trip_id')
+		driver_loc_FK_multiple.trip_id.should.have.property('driver_loc_FK_single')
+		driver_loc_FK_multiple.trip_id.driver_loc_FK_single.should.have.property('driver_id')
+
+	})
+
+	it('POPULATE nest object', async () => {
+		const result = await Drivers
+			.SELECT()
+			.FROM()
+			.WHERE({ driver_id: 3925 })
+			.POPULATE({
+				trip_id: {
+					//TODO: driver_id:3925,
+					driver_loc_FK_multiple: {
+						//TODO: driver_id:3925,
+						trip_id: {
+							//TODO: driver_id:3925,
+							driver_loc_FK_multiple: {
+								//TODO: driver_id:3925,
+							}
+						}
+					},
+					ttttt: {}
+				}
+			})
+			.FIRST()
+			.exec()
+
+		result.should.have.property('trip_id')
+		result.trip_id.should.have.property('driver_loc_FK_multiple')
+		result.trip_id.ttttt.should.have.property('trip_id')
+
+		expect(result.trip_id.driver_loc_FK_multiple).to.be.a('Array')
+		result.trip_id.driver_loc_FK_multiple[0].should.have.property('trip_id')
+		result.trip_id.driver_loc_FK_multiple[0].trip_id.should.have.property('driver_loc_FK_multiple')
+	})
+
+	after(async () => {
+		await Drivers.UPDATE().SET({ trip_id: 0 }).WHERE({ driver_id: 3925 }).exec()
 	})
 })
 
@@ -437,27 +568,38 @@ describe('test UPDATED', async () => {
 	it('2', async () => {
 		const trip_id = 29106
 
-		await Trips
+		const r = await Trips
 			.UPDATE()
-			.SET(`driver_id = 3925, trip_status = 'DRIVER_RESERVED'`)
+			.SET(`driver_id = 3925, trip_status = 'TRIP_STARTED'`)
 			.WHERE({ trip_id })
+			.UPDATED('trip_id', 'user_id', 'driver_id', 'trip_status')
 			.FIRST()
 			.exec()
 
-		const result = await Trips
+		const results = await Trips
 			.UPDATE()
-			.SET(`driver_id = NULL, trip_status = 'REQUESTING_DRIVER'`)
-			.WHERE({ trip_id })
-			.AND(`trip_status = 'DRIVER_RESERVED'`)
-			.UPDATED('trip_id', 'user_id', 'driver_id')
-			.AFFECTED_ROWS(1)
-			.CHANGED_ROWS(1)
-			.FIRST()
+			.SET(`trip_status = 'REQUESTING_DRIVER', start_address = '台北車站'`)
+			.WHERE('trip_id IN (?, 29107, 29108)', [trip_id])
+			// .AND(`trip_status = 'TRIP_STARTED'`)
+			// .UPDATED('trip_id')
+			.UPDATED('trip_id', 'user_id', 'driver_id', 'trip_status', 'start_address')
+			// .AFFECTED_ROWS(1)
+			// .CHANGED_ROWS(1)
+			// .FIRST()
+			.AFFECTED_ROWS(3)
+			// .CHANGED_ROWS(1)
 			.exec()
 
-		result.should.have.property('trip_id')
-		result.should.have.property('user_id')
-		result.should.have.property('driver_id')
+		assert.equal(results.length, 3)
+
+		for (const result of results) {
+			result.should.have.property('trip_id')
+			result.should.have.property('user_id')
+			result.should.have.property('driver_id')
+			result.should.have.property('trip_status')
+			result.should.have.property('start_address')
+			// result.should.have.property('start_latlng')
+		}
 	})
 
 	it('3 test point', async () => {
@@ -532,61 +674,126 @@ describe('test UPDATED', async () => {
 	})
 })
 
-describe('test connection.query()', () => {
-	it('3', (done) => {
-		pool.createConnection().then(connection => {
-			connection.query('SELECT * FROM trips LIMIT 5', (e, r) => {
-				connection.release()
-				done()
-			})
-		})
+
+describe('test LIMIT OFFSET', () => {
+	it('1 ori', async () => {
+		const checkTrips = Trips.SELECT().FROM().LIMIT()
+
+		expect(checkTrips._q[2].type).to.equal('LIMIT')
+		expect(checkTrips._q[2].value).to.equal(20)
+	})
+
+	it('2-1 limit', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(2)
+
+		//預期 2 筆行程
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+	})
+
+	it('2-2 limit', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(3)
+
+		//預期 3 筆行程
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(3)
+	})
+
+	it('3-1 offset', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(2).OFFSET(0)
+
+		//預期 2 筆行程
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+	})
+
+	it('3-2 offset', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(2).OFFSET(2)
+
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+		expect(results._q[3].type).to.equal('OFFSET')
+		expect(results._q[3].value).to.equal(2)
+	})
+
+	it('4-1 default', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(null, 2).OFFSET(null, 2)
+
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+		expect(results._q[3].type).to.equal('OFFSET')
+		expect(results._q[3].value).to.equal(2)
+	})
+
+	it('5-1 LIMIT isExec', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(2, 2, { isExec: true })
+
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+	})
+
+	it('5-2 LIMIT isExec', async () => {
+		const results = await Trips.SELECT().FROM().LIMIT(2, 2, { isExec: false })
+
+		expect(results._q.length).to.equal(2)
+	})
+
+	it('6-1 OFFSET isExec', async () => {
+		const results = await Trips.SELECT()
+			.FROM()
+			.LIMIT(2)
+			.OFFSET(2, 2, { isExec: false })
+		expect(results._q.length).to.equal(3)
+	})
+
+	it('6-2 OFFSET isExec', async () => {
+		const results = await Trips.SELECT()
+			.FROM()
+			.LIMIT(2)
+			.OFFSET(2, 2, { isExec: true })
+
+		expect(results._q[2].type).to.equal('LIMIT')
+		expect(results._q[2].value).to.equal(2)
+		expect(results._q[3].type).to.equal('OFFSET')
+		expect(results._q[3].value).to.equal(2)
 	})
 })
 
-describe('test get connection', () => {
-	it('1', (done) => {
-		pool.getConnection((err, connection) => {
-			connection.release()
-			done()
-		})
-	})
-
-	it('2', async () => {
-		for (let i = 0; i < 10000; i++) {
-			pool.createConnection().then(c => c.release())
-		}
-	})
-})
-
-describe('test pool.query()', () => {
-	it('1', (done) => {
-		pool.query('SELECT * FROM trips LIMIT 5', (e, r) => {
-			done()
-		})
-	})
-})
-
-
-describe('test release before query warning', () => {
-	it('1', async () => {
-		const connection = await pool.createConnection()
-		assert.equal(connection.isUsing, true)
-		connection.release()
-		assert.equal(connection.isUsing, false)
-
-		await connection.q('SELECT * FROM trips LIMIT 5')
-
-	})
-})
 
 describe('test insert values', async () => {
 	it('5', async () => {
 		const query = Block
 			.INSERT()
 			.INTO(`block_personally (blocker, blocked, notes)`)
-			.VALUES([[101, 301, '101 block 301'], [101, 402, '101 block 402']])
+			.VALUES([[101, undefined, '101 block 301'], [101, 402, '101 block 402']])
 
-		assert.equal(query.FORMATTED().formatted, `INSERT  INTO block_personally (blocker, blocked, notes) VALUES ('101','301','101 block 301'),('101','402','101 block 402')`)
+		assert.equal(query.FORMATTED().formatted, `INSERT  INTO block_personally (blocker, blocked, notes) VALUES (101,NULL,'101 block 301'),(101,402,'101 block 402')`)
+	})
+})
+
+describe('test update table', () => {
+	it('1', async () => {
+
+		const trips = await Trips.SELECT().FROM().LIMIT(5).EX(5).exec()
+
+		for (const { trip_id } of trips) {
+			await Trips.UPDATE().SET('start_address = start_address').WHERE({ trip_id }).rollback()
+		}
+	})
+
+	it('1', async () => {
+		const connection = pool.connection()
+
+		await connection.beginTransaction()
+		const trips = await Trips.SELECT().FROM().LIMIT(5).EX(5).exec(connection)
+
+
+		for (const { trip_id } of trips) {
+			await Trips.UPDATE().SET('start_address = start_address').WHERE({ trip_id }).exec(connection)
+		}
+
+		await connection.rollback()
+		connection.release()
 	})
 })
 
@@ -594,20 +801,21 @@ describe('test update multi table', () => {
 	it('1', () => {
 
 		const query = Trips.UPDATE('trips, user_info')
-			.SET({ user_id: 3925 })
+			.SET({ user_id: 3925, request_time: '2020-01-01 08:32:50 GMT+08:00' })
 			.WHERE({ uid: 3925 })
 			.AND('trips.user_id = user_info.uid')
 
 		assert.equal(
 			query.FORMATTED().formatted,
-			'UPDATE trips, user_info SET `user_id` = 3925 WHERE (`uid` = 3925) AND (trips.user_id = user_info.uid)', 'fail format'
+			'UPDATE trips, user_info SET `user_id` = 3925, `request_time` = 1577838770 WHERE (`uid` = 3925) AND (trips.user_id = user_info.uid)', 'fail format'
 		)
 	})
 })
 
 describe('test onErr', () => {
+	const errMessage = 'test message on error'
+
 	it('string', async () => {
-		const errMessage = 'yoyoyoyoyoyo'
 		try {
 
 			await Trips.UPDATE('user_info')
@@ -619,25 +827,35 @@ describe('test onErr', () => {
 
 			assert(false)
 		} catch (err) {
-			assert.equal(err.message, 'yoyoyoyoyoyo')
+			assert.equal(err.message, errMessage)
 		}
 	})
 
 	it('callback', async () => {
-		const errMessage = 'yoyoyoyoyoyo'
 		try {
 			await Trips.UPDATE('user_info')
 				.SET({ uid: 31 })
 				.WHERE({ uid: 31 })
 				.CHANGED_ROWS(1)
-				.ON_ERR(err => {
+				.ON_ERR(_ => {
 					return errMessage
 				})
 				.exec()
 
 			assert(false)
 		} catch (err) {
-			assert.equal(err.message, 'yoyoyoyoyoyo')
+			assert.equal(err.message, errMessage)
+		}
+	})
+
+	it('connection', async () => {
+		try {
+			const connection = await pool.createConnection()
+			await connection.onErr(errMessage).q('...')
+
+			assert(false)
+		} catch (err) {
+			assert.equal(err.message, errMessage)
 		}
 	})
 })
@@ -667,6 +885,65 @@ describe('test map', () => {
 	})
 })
 
+describe('test reduce', () => {
+	const reducer = (accumulator, currentValue) => {
+
+		if (typeof accumulator == 'object') {
+			accumulator = accumulator.amount
+		} else if (typeof accumulator == 'undefined') {
+			accumulator = 0
+		}
+
+		return parseInt(accumulator) + parseInt(currentValue.amount)
+	}
+
+	it('number', async () => {
+		const result = await Trips
+			.SELECT(`amount`)
+			.FROM()
+			.WHERE({ driver_id: 279555 })
+			.AND(`amount > 0`)
+			.REDUCE(reducer)
+			.LIMIT(10)
+			.exec()
+
+		assert.equal(typeof result, 'number')
+	})
+
+	it('with initialValue', async () => {
+		const result = await Trips
+			.SELECT(`amount`)
+			.FROM()
+			.WHERE({ driver_id: 279555 })
+			.AND(`amount > 0`)
+			.REDUCE(reducer, 100)
+			.LIMIT(10)
+			.exec()
+
+		assert.equal(typeof result, 'number')
+	})
+})
+
+describe('test rollback', async () => {
+	it('1', async () => {
+		const notes = Math.random()
+		const { insertId } = await Block
+			.INSERT()
+			.INTO()
+			.SET({ blocker: 1353221, blocked: 203, notes })
+			.DUPLICATE({ notes })
+			.rollback()
+
+		const expected = await Block
+			.SELECT()
+			.FROM()
+			.WHERE({ id: insertId })
+			.FIRST()
+			.exec()
+
+		assert.equal(expected, null)
+	})
+})
 
 describe('test stream', () => {
 	it('success', (done) => {

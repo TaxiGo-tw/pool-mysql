@@ -1,0 +1,54 @@
+env:
+  es6: true
+  node: true
+  mocha: true
+plugins:
+  - promise
+  - require-in-package
+extends:
+  - eslint:recommended
+  - plugin:array-func/recommended
+parserOptions:
+  sourceType: module
+  ecmaVersion: 2017
+  ecmaFeatures:
+    experimentalObjectRestSpread: true
+    jsx: true
+rules:
+  require-in-package/require-in-package: 2
+  promise/always-return: error
+  promise/no-return-wrap: error
+  promise/param-names: error
+  promise/catch-or-return: error
+  promise/no-native: "off"
+  promise/no-nesting: warn
+  promise/no-promise-in-callback: warn
+  promise/no-callback-in-promise: "off"
+  promise/avoid-new: "off"
+  promise/no-new-statics: error
+  promise/no-return-in-finally: warn
+  promise/valid-params: warn
+  indent:
+    - error
+    - tab
+    - SwitchCase: 1
+  linebreak-style:
+    - error
+    - unix
+  quotes:
+    - error
+    - single
+    - allowTemplateLiterals: true
+  semi:
+    - error
+    - never
+  no-empty:
+    - 0
+    - allowEmptyCatch:
+        - true
+  no-unused-vars: 0
+  no-console: 0
+  no-var:
+    - error
+  prefer-const:
+    - error

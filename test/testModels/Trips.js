@@ -1,4 +1,4 @@
-const Schema = require('../../index').Schema
+const Schema = require('../../src/Pool').Schema
 
 module.exports = class trips extends Schema {
 
@@ -17,16 +17,40 @@ module.exports = class trips extends Schema {
 				type: Schema.Types.PK,
 			},
 			user_id: {
-				type: Schema.Types.Num
+				type: Schema.Types.Number
 			},
 			user: {
 				ref: require('./Users'),
 				column: 'user_id'
 			},
 			driver_id: {
-				type: Schema.Types.Num,
+				type: Schema.Types.Number,
+				ref: require('./Drivers'),
 				required: true
 			},
+			request_time: {
+				type: Schema.Types.UNIX_TIMESTAMP
+			},
+			start_latlng: {
+				type: Schema.Types.Point
+			},
+			end_latlng: {
+				type: Schema.Types.Point
+			},
+
+			//visual column for populate
+			// driver_loc_FK: {
+			// 	ref: require('./Drivers'),
+			// 	column: 'driver_id'
+			// },
+			driver_loc_FK_single: {
+				ref: Schema.Types.FK(require('./Drivers'), 'trip_id')
+			},
+			driver_loc_FK_multiple: [Schema.Types.FK(require('./Drivers'), 'trip_id')],
+			ttttt: {
+				ref: Schema.Types.FK(require('./Drivers'), 'trip_id')
+			},
+
 			driver_loc: {
 				ref: require('./Drivers'),
 				column: 'driver_id'
@@ -35,11 +59,8 @@ module.exports = class trips extends Schema {
 				ref: require('./DriverReviewStatus'),
 				column: 'driver_id'
 			},
-			start_latlng: {
-				type: Schema.Types.Point
-			},
-			end_latlng: {
-				type: Schema.Types.Point
+			amount: {
+				type: Schema.Types.Number
 			}
 		}
 	}

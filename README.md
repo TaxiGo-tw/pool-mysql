@@ -1,15 +1,23 @@
 # ReadME
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a86fa5fa33cd4effb4ca5120d9e5ed67)](https://app.codacy.com/app/vivalalova0/pool-mysql?utm_source=github.com&utm_medium=referral&utm_content=vivalalova/pool-mysql&utm_campaign=Badge_Grade_Dashboard)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/928cce8dd2ba4fcaa4d857552209fd16)](https://app.codacy.com/gh/TaxiGo-tw/pool-mysql?utm_source=github.com&utm_medium=referral&utm_content=TaxiGo-tw/pool-mysql&utm_campaign=Badge_Grade_Dashboard)
+
+![](./test/resource/UiYBH9U.png)
 
 This is depend on [mysql](https://github.com/mysqljs/mysql)
 which made for migrating to features
 
-* connection pool
+* multiple connection pool
+
 * connection writer/reader
+
 * async/await
+
 * model.query
+
 * log print
+
+* events
 
 See the test [Examples](https://github.com/TaxiGo-tw/pool-mysql/tree/master/test)
 
@@ -20,10 +28,12 @@ See the test [Examples](https://github.com/TaxiGo-tw/pool-mysql/tree/master/test
 ```
 
 ## Usage
+</details>
 
-### Settings
+<details>
+  <summary>Settings</summary>
 
-pool-mysql loads settings from process.env
+* pool-mysql loads settings from process.env
 There is a helpful package [dotenv](https://github.com/motdotla/dotenv)
 
 ```bash
@@ -34,23 +44,47 @@ SQL_USER={{user}}
 SQL_PASSWORD={{passwd}}
 SQL_TABLE={{table name}}
 ```
+</details>
 
-### Normal Query
+<details>
+  <summary>Normal Query</summary>
 
-Require `pool-mysql`
+* Require `pool-mysql`
 
 ```js
-const pool = reqiure('pool-mysql')
+const pool = require('pool-mysql')
 
 pool.query(sql, value, (err, data) => {
 
 })
 ```
+</details>
 
-### Create connection
+<details>
+  <summary>Multiple Pool</summary>
 
 ```js
-const connection = await pool.createConnection()
+const options = {
+  writer: {
+    host: process.env.HOST2,
+    database: process.env.DB2
+  },
+  reader: {
+    host: process.env.HOST2,
+    database: process.env.DB2
+  },
+  forceWriter: true
+}
+
+const pool2 = pool.createPool({ options })
+```
+</details>
+
+<details>
+  <summary>Create connection</summary>
+
+```js
+const connection = pool.connection()
 
 //callback query
 connection.query(sql, values, (err,data) => {
@@ -64,8 +98,29 @@ try {
   console.log(err)
 }
 ```
+</details>
 
-### Model setting
+<details>
+  <summary>Connection tag</summary>
+
+* pool of connection pool
+
+* limit max connection amount with same priority
+
+```js
+// if equal or more than 5 connections which tagged `foo`, wait for releasing
+const connection = pool.connection({  limit: 5 })
+```
+
+```js
+// higher priority to get connection than 0
+const connection = pool.connection({ priority: 1 })
+```
+
+</details>
+
+<details>
+  <summary>Model setting</summary>
 
 ```js
 const Schema = require('pool-mysql').Schema
@@ -79,6 +134,24 @@ const Posts = class posts extends Schema {
       user2: {
         ref: require('./user'), // one to one reference
         column: 'user'
+      },
+
+      user3: {
+        type: Schema.Types.FK(require('./User.js'), 'id'),
+        required: true,
+        length: { min: 1, max: 20 },
+      },
+
+      user_type: {
+        type: Schema.Types.ENUM('A','B','C')
+      },
+
+      available_area: {
+        type: Schema.Types.Polygon
+      },
+
+      created_at: {
+        type: Schema.Types.DateTime
       }
     }
 }
@@ -92,8 +165,10 @@ const User = class user extends Schema {
     }
 }
 ```
+</details>
 
-### Query
+<details>
+  <summary>Query</summary>
 
 ```js
 await Posts
@@ -105,8 +180,25 @@ await Posts
       .WRITER           //force query on writer
       .exec()
 ```
+</details>
 
-### Nested Query
+<details>
+  <summary>Populate</summary>
+
+```js
+// nest populate
+const result = await Drivers
+    .SELECT()
+    .FROM()
+    .WHERE({ driver_id: 3925 })
+    .POPULATE({ trip_id: { driver_loc_FK_multiple: {} }})
+    .FIRST()
+    .exec()
+```
+</details>
+
+<details>
+  <summary>Nested Query</summary>
 
 ```js
 const results = Trips.SELECT(Trips.KEYS, Users.KEYS)
@@ -131,10 +223,30 @@ results.should.have.property('user')
 results.user.should.have.property('uid')
 assert(results instanceof Trips)
 ```
+</details>
 
-### Updated
+<details>
+  <summary>Insert</summary>
 
-return value after updated
+```js
+// single
+await FOO.INSERT()
+  .INTO()
+  .VALUES(obj)
+  .exec(connection)
+
+// multiple
+await FOO.INSERT()
+  .INTO('table (`id`, `some_one_field`)')
+  .VALUES(array)
+  .exec(connection)
+```
+</details>
+
+<details>
+  <summary>Updated</summary>
+
+* return value after updated
 
 ```js
 const results = await Block
@@ -142,7 +254,9 @@ const results = await Block
         .SET('id = id')
         .WHERE({ blocked: 3925 })
         .UPDATED('id', 'blocker')
-        .CHANGED_ROW(1)  //throw if changedRows !== 1
+        .AFFECTED_ROWS(1) //throw if affectedRows !== 1
+        .CHANGED_ROWS(1)  //throw if changedRows !== 1
+        .ON_ERR('error message') // custom error message, can be string or callback
         .exec()
 
 for (const result of results) {
@@ -150,8 +264,10 @@ for (const result of results) {
     result.should.have.property('blocker')
 }
 ```
+</details>
 
-### cache
+<details>
+  <summary>cache</summary>
 
 ```js
 const redis = require('redis')
@@ -169,7 +285,7 @@ pool.redisClient = Redis
 
 //...
 
-const connection = await pool.createConnection
+const connection = pool.connection
 
 await connection.q('SELECT id FROM user WHERE uid = ?', userID, {
   key: `api:user:id:${userID}`, //optional , default to queryString
@@ -181,15 +297,17 @@ await connection.q('SELECT id FROM user WHERE uid = ?', userID, { EX: 60})
 
 User.SELECT().FROM().WHERE('uid = ?',id).EX(60, { forceUpdate: true }).exec()
 ```
+</details>
 
-### custom error message
+<details>
+  <summary>custom error message</summary>
 
 ```js
 await Trips.UPDATE('user_info')
     .SET({ user_id: 31 })
     .WHERE({ uid: 31 })
     .CHANGED_ROWS(1)
-       .ON_ERR(errMessage) // string
+    .ON_ERR(errMessage) // string
     .exec()
 // or callback
 await Trips.UPDATE('user_info')
@@ -201,14 +319,34 @@ await Trips.UPDATE('user_info')
     })
     .exec()
 ```
+</details>
 
-### Auto Free Connections
+<details>
+  <summary>Combine queries</summary>
 
-Every 300 seconds free half reader&writer connections
+* mass queries in the same time, combined queries will query once only (scope in instance)
 
-But will keep at least 10 reader&writer connections
+```js
+Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
+Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
+Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
+Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
+// the second ... latest query will wait result from first one
+```
+</details>
 
-### Events
+<details>
+  <summary>Auto Free Connections</summary>
+
+* Every 300 seconds free half reader&writer connections
+
+* But will keep at least 10 reader&writer connections
+</details>
+
+<details>
+  <summary>Events</summary>
+
+* `log` logs `not suggested to subscribe`
 
 * `get` called when connection got from pool
 
@@ -230,27 +368,33 @@ But will keep at least 10 reader&writer connections
 
 * `recycle` free connection is back
 
+* `warn` warning
+
+* `err` error
+
 ```js
 pool.event.on('get', connection => {
     console.log(connection.id)
 })
 ```
+</details>
 
-### Validation
+<details>
+  <summary>Validation</summary>
 
-Triggered on UPDATE()..SET(object) and INSERT()...SET(object)
+* Triggered on UPDATE()..SET(object) and INSERT()...SET(object)
 
 * `values must be object`
 
 [default types](https://github.com/TaxiGo-tw/pool-mysql/blob/feature/validator/model/Types.js)
 
-##### Variables
+#### Variables
 
 * type: to limit type
 
 * required: default to false
-	* INSERT() checks all required
-	* UPDATE() checks SET()
+  * INSERT() checks all required
+  * UPDATE() checks SET()
 
 * length: limit something.length
 
@@ -258,50 +402,71 @@ Triggered on UPDATE()..SET(object) and INSERT()...SET(object)
 
 // Custom Validator
 class PlateNumber extends Scheme.Types.Base {
-	static validate(string) {
-		return string.match(/[0-9]+-[A-Z]+/)
-	}
+  static validate(string) {
+    return string.match(/[0-9]+-[A-Z]+/)
+  }
 }
 
 module.exports = class driver_review_status extends Scheme {
 
-	get columns() {
-		return {
-			'uid': {
-				type: Scheme.Types.PK,
-				required: true
-			},
-			'first_name': {
-				type: Scheme.Types.Str,
-				required: true,
-			},
-			'last_name': String,
-			'car_brand': {
-				type: Scheme.Types.JSONString
-			},
-			'model': {
-				type: String
-			},
-			'phone_number': {
-				type: Scheme.Types.Str,
-				required: true,
-				length: 10
-			},
-			'plate_number': {
-				type: PlateNumber,
-				length: { min: 6 , max: 9 }
-			},
-			'email': {
-				type: Scheme.Types.Email,
-				required: true
-			}
-		}
-	}
+  get columns() {
+    return {
+      'uid': {
+        type: Scheme.Types.PK,
+        required: true
+      },
+      'first_name': {
+        type: Scheme.Types.String,
+        required: true,
+      },
+      'last_name': String,
+      'car_brand': {
+        type: Scheme.Types.JSONString
+      },
+      'model': {
+        type: String
+      },
+      'phone_number': {
+        type: Scheme.Types.String,
+        required: true,
+        length: 10
+      },
+      'plate_number': {
+        type: PlateNumber,
+        length: { min: 6 , max: 9 }
+      },
+      'email': {
+        type: Scheme.Types.Email,
+        required: true
+      }
+    }
+  }
 }
 ```
+</details>
 
+<details>
+  <summary>Mock response</summary>
 
-### Log level
+* [Usage](https://github.com/TaxiGo-tw/pool-mysql/blob/master/test/testConnection.js)
+
+* every query return response from mock() and increase index
+
+* assign mock() to pool will reset index to 0
+</details>
+
+<details>
+  <summary>Dry Run</summary>
+
+* rollback after execute
+
+```js
+await Table.INSERT().INTO().rollback()
+```
+</details>
+
+<details>
+  <summary>Log level</summary>
 
 * `all` print logs anywhere
 
@@ -314,4 +479,10 @@ default to `error`
 ```js
 pool.logger = 'error'
 // [3] Reader 1ms:  SELECT * FROM table
+```
+
+#### Custom Logger
+
+```js
+pool._logger = (err, toPrint) => { }
 ```
