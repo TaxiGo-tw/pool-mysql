@@ -6,7 +6,7 @@ const assert = require('assert')
 
 
 describe('test stream', () => {
-	it('success', (done) => {
+	it('success', done => {
 
 		let counter = 0
 
@@ -30,7 +30,7 @@ describe('test stream', () => {
 			})
 	})
 
-	it('fail', (done) => {
+	it('Stream query must be SELECT', done => {
 		Trips
 			.UPDATE('user_info')
 			.SET({ uid: 31 })
