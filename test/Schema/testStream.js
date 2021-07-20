@@ -30,17 +30,19 @@ describe('test stream', () => {
 			})
 	})
 
-	// it('fail', (end) => {
-	// 	Trips
-	// 		.UPDATE('user_info')
-	// 		.SET({ uid: 31 })
-	// 		.WHERE({ uid: 31 })
-	// 		.readableStream({
-	// 			res: {
-	// 				setHeader: () => { },
-	// 				write: () => { },
-	// 				end
-	// 			}
-	// 		})
-	// })
+	it('fail', (done) => {
+		Trips
+			.UPDATE('user_info')
+			.SET({ uid: 31 })
+			.WHERE({ uid: 31 })
+			.readableStream({
+				res: {
+					setHeader: () => { },
+					write: () => { },
+					end: done
+				}
+			})
+			.then(assert)
+			.catch(err => done())
+	})
 })
