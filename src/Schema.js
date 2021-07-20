@@ -311,7 +311,7 @@ module.exports = class Schema {
 	}
 
 	async exec(outSideConnection = null, options) {
-		this._connection = outSideConnection || Schema._pool.connection(options)
+		const connection = outSideConnection || Schema._pool.connection(options)
 		try {
 			let results
 
@@ -343,10 +343,10 @@ module.exports = class Schema {
 			}
 			///////////////////////////////////////////////////////////////////
 
-			this._connection._status.useWriter = (this._connection._status.useWriter || useWriter)
+			connection._status.useWriter = (connection._status.useWriter || useWriter)
 
 			// eslint-disable-next-line no-unused-vars
-			let conn = this._connection
+			let conn = connection
 			if (print) {
 				conn = conn.print
 			}
@@ -392,7 +392,7 @@ module.exports = class Schema {
 			}
 
 			//SELECT()
-			if (this._connection.isSelect(query.sql)) {
+			if (connection.isSelect(query.sql)) {
 				//populate
 				if (populates.length && results.length) {
 					results = await Populate.find({ this: this, results, populates, print, Schema })
@@ -436,10 +436,80 @@ module.exports = class Schema {
 			throwError(error)
 		} finally {
 			if (!outSideConnection) {
-				this._connection.release()
+				connection.release()
 			}
 		}
 	}
+
+	//select only
+	async stream({ connection: outSideConnection, res }) {
+		const pool = Schema._pool
+		const stream = require('stream')
+
+		const connection = outSideConnection || pool.connection()
+
+		res.setHeader('Content-Type', 'application/json')
+		res.setHeader('Cache-Control', 'no-cache')
+
+		try {
+			const options = this._options()
+			const { formatted, print } = options
+
+			for (const key of Object.keys(options)) {
+				if (options[key] && ['query', 'values', 'formatted', 'print'].includes(key) == false) {
+					throwError(`function '${key}' is not support in stream() `)
+				}
+			}
+
+			if (!connection.isSelect(formatted)) {
+				throwError(`'Stream query' must be SELECT, but "${formatted}"`)
+			}
+
+			if (print) {
+				Event.emit('log', this.identity(), formatted)
+			}
+
+			connection.querying = formatted
+
+			await connection.genReader()
+
+			connection.reader
+				.query(formatted)
+				.stream()
+				.pipe(stream.Transform({
+					objectMode: true,
+					transform: (data, encoding, callback) => {
+						try {
+							res.write(JSON.stringify(data))
+						} catch (error) { }
+
+						callback()
+					}
+				}))
+				.on('finish', () => {
+					res.end()
+
+					delete connection.querying
+
+					if (!connection) {
+						connection.release()
+					}
+				})
+
+		} catch (error) {
+			delete connection.querying
+
+			// res.write(JSON.stringify({ msg: error.message }))
+			// res.end()
+			// res.status(400).send()
+			if (!connection) {
+				connection.release()
+			}
+
+			throwError(error)
+		}
+	}
+
 
 	get JSON() {
 		return this
