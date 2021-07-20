@@ -442,10 +442,10 @@ module.exports = class Schema {
 	}
 
 	//select only
-	async stream({ connection: outSideConnection, res }) {
-		const pool = Schema._pool
+	async readableStream({ connection: outSideConnection, res }) {
 		const stream = require('stream')
 
+		const pool = Schema._pool
 		const connection = outSideConnection || pool.connection()
 
 		res.setHeader('Content-Type', 'application/json')
@@ -455,11 +455,11 @@ module.exports = class Schema {
 			const options = this._options()
 			const { formatted, print } = options
 
-			for (const key of Object.keys(options)) {
-				if (options[key] && ['query', 'values', 'formatted', 'print'].includes(key) == false) {
-					throwError(`function '${key}' is not support in stream() `)
-				}
-			}
+			// for (const key of Object.keys(options)) {
+			// 	if (options[key] && ['query', 'values', 'formatted', 'print'].includes(key) == false) {
+			// 		throwError(`function '${key}' is not support in stream() `)
+			// 	}
+			// }
 
 			if (!connection.isSelect(formatted)) {
 				throwError(`'Stream query' must be SELECT, but "${formatted}"`)

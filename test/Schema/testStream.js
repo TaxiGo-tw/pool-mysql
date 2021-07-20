@@ -1,5 +1,6 @@
+require('dotenv').config({ path: '.env' })
 
-const Trips = require('../../app/Schema/Trips.js')
+const Trips = require('../testModels/Trips')
 const expect = require('chai').expect
 const assert = require('assert')
 
@@ -14,7 +15,7 @@ describe('test stream', () => {
 			.FROM()
 			.WHERE({ user_id: 3925 })
 			.LIMIT(500)
-			.stream({
+			.readableStream({
 				res: {
 					setHeader: () => { },
 					write: (object) => {
@@ -29,17 +30,17 @@ describe('test stream', () => {
 			})
 	})
 
-	it('fail', (end) => {
-		Trips
-			.UPDATE('user_info')
-			.SET({ uid: 31 })
-			.WHERE({ uid: 31 })
-			.stream({
-				res: {
-					setHeader: () => { },
-					write: () => { },
-					end
-				}
-			})
-	})
+	// it('fail', (end) => {
+	// 	Trips
+	// 		.UPDATE('user_info')
+	// 		.SET({ uid: 31 })
+	// 		.WHERE({ uid: 31 })
+	// 		.readableStream({
+	// 			res: {
+	// 				setHeader: () => { },
+	// 				write: () => { },
+	// 				end
+	// 			}
+	// 		})
+	// })
 })
