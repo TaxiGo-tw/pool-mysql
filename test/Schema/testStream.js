@@ -10,38 +10,39 @@ describe('test stream', () => {
 
 		let counter = 0
 
+		const res = {
+			setHeader: () => { },
+			write: (object) => {
+				counter++
+				assert.ok(typeof object === 'object')
+			},
+			end: () => {
+				assert.equal(counter, 500)
+				done()
+			}
+		}
+
 		Trips
 			.SELECT()
 			.FROM()
 			.WHERE({ user_id: 3925 })
 			.LIMIT(500)
-			.readableStream({
-				res: {
-					setHeader: () => { },
-					write: (object) => {
-						counter++
-						assert.ok(typeof object === 'object')
-					},
-					end: () => {
-						assert.equal(counter, 500)
-						done()
-					}
-				}
-			})
+			.readableStream({ res })
 	})
 
 	it('Stream query must be SELECT', done => {
+		const res = {
+			setHeader: () => { },
+			write: () => { },
+			end: done
+		}
+
+
 		Trips
 			.UPDATE('user_info')
 			.SET({ uid: 31 })
 			.WHERE({ uid: 31 })
-			.readableStream({
-				res: {
-					setHeader: () => { },
-					write: () => { },
-					end: done
-				}
-			})
+			.readableStream({ res })
 			.then(assert)
 			.catch(err => done())
 	})
