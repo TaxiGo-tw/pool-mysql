@@ -502,7 +502,7 @@ module.exports = class Schema {
 			// res.write(JSON.stringify({ msg: error.message }))
 			// res.end()
 			// res.status(400).send()
-			if (!connection) {
+			if (!outSideConnection) {
 				connection.release()
 			}
 
