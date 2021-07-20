@@ -499,9 +499,9 @@ module.exports = class Schema {
 		} catch (error) {
 			delete connection.querying
 
-			// res.write(JSON.stringify({ msg: error.message }))
-			// res.end()
-			// res.status(400).send()
+			res.write(JSON.stringify({ msg: error.message }))
+			res.end()
+			res.status(400).send()
 			if (!outSideConnection) {
 				connection.release()
 			}
