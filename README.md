@@ -105,12 +105,18 @@ try {
 
 * pool of connection pool
 
-* limit max connection amount with same tag_name
+* limit max connection amount with same priority
 
 ```js
 // if equal or more than 5 connections which tagged `foo`, wait for releasing
-const connection = pool.connection({ tag_name: 'foo', limit: 5 })
+const connection = pool.connection({  limit: 5 })
 ```
+
+```js
+// higher priority to get connection than 0
+const connection = pool.connection({ priority: 1 })
+```
+
 </details>
 
 <details>
