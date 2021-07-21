@@ -508,7 +508,9 @@ module.exports = class Schema {
 							connection.release()
 						}
 
-						await onValue(results)
+						if (results.length) {
+							await onValue(results)
+						}
 						onEnd()
 
 						done()
