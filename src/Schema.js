@@ -528,65 +528,64 @@ module.exports = class Schema {
 	}
 
 	/* select only */
-	async readableStream({ connection: outSideConnection, res } = {}) {
-		if (!res) {
-			throwError('res is needed')
-		}
+	// async readableStream({ connection: outSideConnection, res } = {}) {
+	// 	if (!res) {
+	// 		throwError('res is needed')
+	// 	}
 
-		const { stringify } = require('./Helper/Stream')
+	// 	const { stringify } = require('./Helper/Stream')
 
-		const pool = Schema._pool
-		const connection = outSideConnection || pool.connection()
+	// 	const pool = Schema._pool
+	// 	const connection = outSideConnection || pool.connection()
 
-		res.setHeader('Content-Type', 'application/json')
-		res.setHeader('Cache-Control', 'no-cache')
+	// 	res.setHeader('Content-Type', 'application/json')
+	// 	res.setHeader('Cache-Control', 'no-cache')
 
-		try {
-			const options = this._options()
-			const { formatted, print } = options
+	// 	try {
+	// 		const options = this._options()
+	// 		const { formatted, print } = options
 
-			if (!connection.isSelect(formatted)) {
-				throwError(`'Stream query' must be SELECT, but "${formatted}"`)
-			}
+	// 		if (!connection.isSelect(formatted)) {
+	// 			throwError(`'Stream query' must be SELECT, but "${formatted}"`)
+	// 		}
 
-			if (print) {
-				Event.emit('log', connection.identity(), formatted)
-			}
+	// 		if (print) {
+	// 			Event.emit('log', connection.identity(), formatted)
+	// 		}
 
-			connection.querying = formatted
+	// 		connection.querying = formatted
 
-			await connection.genReader()
+	// 		await connection.genReader()
 
-			connection
-				.reader
-				.query(formatted)
-				.stream({ highWaterMark: 50 })
-				.pipe(stringify())
-				.pipe(res)
-				.on('end', () => {
-					console.error('end')
-					res.end()
+	// 		connection
+	// 			.reader
+	// 			.query(formatted)
+	// 			.stream({ highWaterMark: 50 })
+	// 			.pipe(stringify())
+	// 			.pipe(res)
+	// 			.on('end', () => {
+	// 				console.error('end')
+	// 				res.end()
 
-					delete connection.querying
+	// 				delete connection.querying
 
-					if (!connection) {
-						connection.release()
-					}
-				})
+	// 				if (!connection) {
+	// 					connection.release()
+	// 				}
+	// 			})
 
-		} catch (error) {
-			delete connection.querying
+	// 	} catch (error) {
+	// 		delete connection.querying
 
-			res.write(JSON.stringify({ msg: error.message }))
-			res.end()
-			if (!outSideConnection) {
-				connection.release()
-			}
+	// 		res.write(JSON.stringify({ msg: error.message }))
+	// 		res.end()
+	// 		if (!outSideConnection) {
+	// 			connection.release()
+	// 		}
 
-			throwError(error)
-		}
-	}
-
+	// 		throwError(error)
+	// 	}
+	// }
 
 	get JSON() {
 		return this
