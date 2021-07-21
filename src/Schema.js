@@ -441,45 +441,63 @@ module.exports = class Schema {
 		}
 	}
 
-	async stream(outSideConnection, cb) {
+	async stream({ connection: outSideConnection, highWaterMark = 1, transform }) {
 		const stream = require('stream')
 
 		const connection = outSideConnection || Schema._pool.connection()
 
 		try {
-			const options = this._options()
-			const { formatted, print } = options
+			const { formatted, print } = this._options()
 
 			if (!connection.isSelect(formatted)) {
 				throwError(`'Stream query' must be SELECT, but "${formatted}"`)
 			}
 
 			if (print) {
-				Event.emit('log', connection.identity(), formatted)
+				Event.emit('print', connection.identity(), formatted)
 			}
 
 			connection.querying = formatted
 
 			await connection.genReader()
 
-			return connection
+			connection
 				.reader
 				.query(formatted)
-				.stream()
+				.stream({ highWaterMark })
 				.pipe(stream.Transform({
 					objectMode: true,
-					transform: async (data, encoding, callback) => {
-						await cb(JSON.stringify(data))
-						callback()
+					transform: async (data, encoding, done) => {
+						let isCompleted = false
+
+						const completeCallback = () => {
+							if (isCompleted) {
+								return
+							}
+
+							done()
+							isCompleted = true
+						}
+
+						try {
+							await transform(JSON.stringify(data), completeCallback)
+						} catch (error) { }
+
+						completeCallback()
+					},
+					flush: done => {
+						if (print) {
+							Event.emit('print', connection.identity(), formatted)
+						}
+
+						delete connection.querying
+						if (!connection) {
+							connection.release()
+						}
+
+						done()
 					}
 				}))
-				.on('end', () => {
-					delete connection.querying
-
-					if (!connection) {
-						connection.release()
-					}
-				})
 		} catch (error) {
 			delete connection.querying
 
@@ -492,7 +510,11 @@ module.exports = class Schema {
 	}
 
 	//select only
-	async readableStream({ connection: outSideConnection, res }) {
+	async readableStream({ connection: outSideConnection, res } = {}) {
+		if (!res) {
+			throwError('res is needed')
+		}
+
 		const { stringify } = require('./Helper/Stream')
 
 		const pool = Schema._pool
@@ -524,6 +546,7 @@ module.exports = class Schema {
 				.pipe(stringify())
 				.pipe(res)
 				.on('end', () => {
+					console.error('end')
 					res.end()
 
 					delete connection.querying
