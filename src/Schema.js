@@ -443,7 +443,7 @@ module.exports = class Schema {
 
 	//select only
 	async readableStream({ connection: outSideConnection, res }) {
-		const stream = require('stream')
+		const { stringify } = require('./Helper/Stream')
 
 		const pool = Schema._pool
 		const connection = outSideConnection || pool.connection()
@@ -473,20 +473,13 @@ module.exports = class Schema {
 
 			await connection.genReader()
 
-			connection.reader
+			connection
+				.reader
 				.query(formatted)
-				.stream()
-				.pipe(stream.Transform({
-					objectMode: true,
-					transform: (data, encoding, callback) => {
-						try {
-							res.write(JSON.stringify(data))
-						} catch (error) { }
-
-						callback()
-					}
-				}))
-				.on('finish', () => {
+				.stream({ highWaterMark: 5 })
+				.pipe(stringify())
+				.pipe(res)
+				.on('end', () => {
 					res.end()
 
 					delete connection.querying
@@ -501,7 +494,6 @@ module.exports = class Schema {
 
 			res.write(JSON.stringify({ msg: error.message }))
 			res.end()
-			res.status(400).send()
 			if (!outSideConnection) {
 				connection.release()
 			}
