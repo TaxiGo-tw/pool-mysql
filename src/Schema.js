@@ -527,7 +527,7 @@ module.exports = class Schema {
 		}
 	}
 
-	//select only
+	/* select only */
 	async readableStream({ connection: outSideConnection, res } = {}) {
 		if (!res) {
 			throwError('res is needed')
