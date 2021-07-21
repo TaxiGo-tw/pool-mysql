@@ -441,7 +441,7 @@ module.exports = class Schema {
 		}
 	}
 
-	async stream({ connection: outSideConnection, highWaterMark = 1, transform }) {
+	async stream({ connection: outSideConnection, highWaterMark = 1, onValue, onEnd }) {
 		const stream = require('stream')
 
 		const connection = outSideConnection || Schema._pool.connection()
@@ -461,6 +461,8 @@ module.exports = class Schema {
 
 			await connection.genReader()
 
+			let results = []
+
 			connection
 				.reader
 				.query(formatted)
@@ -470,7 +472,7 @@ module.exports = class Schema {
 					transform: async (data, encoding, done) => {
 						let isCompleted = false
 
-						const completeCallback = () => {
+						function completeCallback() {
 							if (isCompleted) {
 								return
 							}
@@ -480,12 +482,23 @@ module.exports = class Schema {
 						}
 
 						try {
-							await transform(JSON.stringify(data), completeCallback)
+							if (highWaterMark === 1) {
+								await onValue(new this.constructor(data), completeCallback)
+							} else {
+								results.push(new this.constructor(data))
+
+								if (results.length === highWaterMark) {
+									await onValue(results, completeCallback)
+									results = []
+								} else {
+									//還沒湊滿,或是最後一輪了, 給flush去給
+								}
+							}
 						} catch (error) { }
 
 						completeCallback()
 					},
-					flush: done => {
+					flush: async done => {
 						if (print) {
 							Event.emit('print', connection.identity(), formatted)
 						}
@@ -494,6 +507,9 @@ module.exports = class Schema {
 						if (!connection) {
 							connection.release()
 						}
+
+						await onValue(results)
+						onEnd()
 
 						done()
 					}
