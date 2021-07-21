@@ -9,7 +9,7 @@ module.exports.stringify = (op, sep, cl, indent) => {
 	} else if (op == null) {
 
 		op = '[\n'
-		sep = '\n,\n'
+		sep = ',\n'
 		cl = '\n]\n'
 
 	}

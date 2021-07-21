@@ -441,6 +441,56 @@ module.exports = class Schema {
 		}
 	}
 
+	async stream(outSideConnection, cb) {
+		const stream = require('stream')
+
+		const connection = outSideConnection || Schema._pool.connection()
+
+		try {
+			const options = this._options()
+			const { formatted, print } = options
+
+			if (!connection.isSelect(formatted)) {
+				throwError(`'Stream query' must be SELECT, but "${formatted}"`)
+			}
+
+			if (print) {
+				Event.emit('log', connection.identity(), formatted)
+			}
+
+			connection.querying = formatted
+
+			await connection.genReader()
+
+			return connection
+				.reader
+				.query(formatted)
+				.stream()
+				.pipe(stream.Transform({
+					objectMode: true,
+					transform: async (data, encoding, callback) => {
+						await cb(JSON.stringify(data))
+						callback()
+					}
+				}))
+				.on('end', () => {
+					delete connection.querying
+
+					if (!connection) {
+						connection.release()
+					}
+				})
+		} catch (error) {
+			delete connection.querying
+
+			if (!outSideConnection) {
+				connection.release()
+			}
+
+			throwError(error)
+		}
+	}
+
 	//select only
 	async readableStream({ connection: outSideConnection, res }) {
 		const { stringify } = require('./Helper/Stream')
@@ -454,12 +504,6 @@ module.exports = class Schema {
 		try {
 			const options = this._options()
 			const { formatted, print } = options
-
-			// for (const key of Object.keys(options)) {
-			// 	if (options[key] && ['query', 'values', 'formatted', 'print'].includes(key) == false) {
-			// 		throwError(`function '${key}' is not support in stream() `)
-			// 	}
-			// }
 
 			if (!connection.isSelect(formatted)) {
 				throwError(`'Stream query' must be SELECT, but "${formatted}"`)
@@ -476,7 +520,7 @@ module.exports = class Schema {
 			connection
 				.reader
 				.query(formatted)
-				.stream({ highWaterMark: 5 })
+				.stream({ highWaterMark: 50 })
 				.pipe(stringify())
 				.pipe(res)
 				.on('end', () => {
