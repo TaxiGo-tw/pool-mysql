@@ -272,8 +272,8 @@ TableA
 ```js
 .stream({
   connection, //optional
-  highWaterMark: 5, //optional, default to 1
-  onValue: async (rows,done) => {
+  highWaterMark: 1, // if set to 1, will be object in `onValue`
+  onValue: async (row,done) => {
     await doSomething()
   },
   onEnd: async (error) => {
