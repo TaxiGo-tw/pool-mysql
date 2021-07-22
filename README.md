@@ -232,35 +232,35 @@ assert(results instanceof Trips)
 * Some modifier will not works
 
 * highWaterMark
-	* set to 1 : `onValue`.rows will be `object`
-	* set to 2 or greater : `onValue`.rows will be `array`
-		* rows.length will less or equal to `highWaterMark`
+  * set to 1 : `onValue`.rows will be `object`
+  * set to 2 or greater : `onValue`.rows will be `array`
+    * rows.length will less or equal to `highWaterMark`
 
 ```js
 TableA
-	.SELECT()
-	.FROM()
-	.LEFTJOIN('tableB on tableB.id = tableA.id')
-	.LIMIT(25)
-	.NESTTABLES()
-	.MAP(data => {
-		const tableA = data.tableA
-		return { ...tableA, user: data.tableB }
-	})
-	.stream({
-		connection, //optional
-		highWaterMark: 5, //optional, default to 1
-		onValue: (rows, done) => {
-			assert.equal(rows.length, 5)
-			expect(rows[0]).haveOwnProperty('id')
-			expect(rows[0]).haveOwnProperty('user')
+  .SELECT()
+  .FROM()
+  .LEFTJOIN('tableB on tableB.id = tableA.id')
+  .LIMIT(25)
+  .NESTTABLES()
+  .MAP(data => {
+    const tableA = data.tableA
+    return { ...tableA, user: data.tableB }
+  })
+  .stream({
+    connection, //optional
+    highWaterMark: 5, //optional, default to 1
+    onValue: (rows, done) => {
+      assert.equal(rows.length, 5)
+      expect(rows[0]).haveOwnProperty('id')
+      expect(rows[0]).haveOwnProperty('user')
 
-			done()
-		},
-		onEnd: (error) => {
-			ok()
-		}
-	})
+      done()
+    },
+    onEnd: (error) => {
+      ok()
+    }
+  })
 ```
 
 #### async / await
@@ -269,14 +269,14 @@ TableA
 
 ```js
 .stream({
-	connection, //optional
-	highWaterMark: 5, //optional, default to 1
-	onValue: async (rows,done) => {
-		await doSomething()
-	},
-	onEnd: async (error) => {
-		ok()
-	}
+  connection, //optional
+  highWaterMark: 5, //optional, default to 1
+  onValue: async (rows,done) => {
+    await doSomething()
+  },
+  onEnd: async (error) => {
+    ok()
+  }
 })
 ```
 
