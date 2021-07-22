@@ -442,7 +442,7 @@ module.exports = class Schema {
 	}
 
 	/**
-			* stream query from database
+			* stream query from database, await just waiting for generate reader connection
 			*
 			* @param {Connection} [connection] - connection instance
 			* @param {number} [highWaterMark] number of rows return in one time
@@ -455,7 +455,7 @@ module.exports = class Schema {
 		const connection = outSideConnection || Schema._pool.connection()
 
 		try {
-			const { formatted, print } = this._options()
+			const { formatted, print, useWriter } = this._options()
 
 			if (!connection.isSelect(formatted)) {
 				throwError(`'Stream query' must be SELECT, but "${formatted}"`)
@@ -467,13 +467,12 @@ module.exports = class Schema {
 
 			connection.querying = formatted
 
-			await connection.genReader()
-
 			let results = []
 			let counter = 0
 
-			connection
-				.reader
+			const mysqlConnection = useWriter ? await connection.genWriter() : await connection.genReader()
+
+			mysqlConnection
 				.query(formatted)
 				.stream({ highWaterMark })
 				.pipe(stream.Transform({
@@ -495,6 +494,7 @@ module.exports = class Schema {
 							switch (true) {
 								//每個都給
 								case highWaterMark === 1:
+									console.error('hihi')
 									await onValue(classObject, wrappedDone)
 									break
 								//給array
