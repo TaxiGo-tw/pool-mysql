@@ -451,6 +451,12 @@ module.exports = class Schema {
 	*/
 	async stream({ connection: outSideConnection, highWaterMark = 1, onValue = async (value, done) => { }, onEnd = async () => { } }) {
 		const stream = require('stream')
+		function endQuery() {
+			delete connection.querying
+			if (!outSideConnection) {
+				connection.release()
+			}
+		}
 
 		const connection = outSideConnection || Schema._pool.connection()
 
@@ -471,6 +477,7 @@ module.exports = class Schema {
 			let counter = 0
 
 			const mysqlConnection = useWriter ? await connection.genWriter() : await connection.genReader()
+			const isOnValueAsync = (onValue.constructor.name === 'AsyncFunction')
 
 			mysqlConnection
 				.query(formatted)
@@ -478,14 +485,24 @@ module.exports = class Schema {
 				.pipe(stream.Transform({
 					objectMode: true,
 					transform: async (data, encoding, done) => {
-						let isCompleted = false
+						let isThisCircleCompleted = false
 						function wrappedDone() {
-							if (isCompleted) {
+							if (isThisCircleCompleted) {
 								return
 							}
 
+							results = []
+
 							done()
-							isCompleted = true
+							isThisCircleCompleted = true
+						}
+
+						async function sendValue(input) {
+							if (isOnValueAsync) {
+								await onValue(input)
+							} else {
+								onValue(input, wrappedDone)
+							}
 						}
 
 						const classObject = new this.constructor(data)
@@ -494,17 +511,16 @@ module.exports = class Schema {
 							switch (true) {
 								//每個都給
 								case highWaterMark === 1:
-									console.error('hihi')
-									await onValue(classObject, wrappedDone)
+									await sendValue(classObject)
 									break
 								//給array
 								case highWaterMark > 1:
 									results.push(classObject)
 									if (results.length === highWaterMark) {
-										await onValue(results, wrappedDone)
-										results = []
+										await sendValue(results)
 									} else {
-										//還沒湊滿,或是最後一輪了, 在flush去給
+										//還沒湊滿,或是最後一輪了, 繼續跑
+										done()
 									}
 									break
 								default:
@@ -512,11 +528,9 @@ module.exports = class Schema {
 							}
 						} catch (e) { }
 
-						const isOnValueAsyncFunction = (onValue.constructor.name === 'AsyncFunction')
-						if (isOnValueAsyncFunction) {
+						if (isOnValueAsync) {
 							wrappedDone()
 						}
-
 						counter++
 					},
 					flush: async finished => {
@@ -524,10 +538,7 @@ module.exports = class Schema {
 							Event.emit('print', connection.identity(), `found ${counter} rows`)
 						}
 
-						delete connection.querying
-						if (!outSideConnection) {
-							connection.release()
-						}
+						endQuery()
 
 						if (results.length) {
 							try {
@@ -541,11 +552,8 @@ module.exports = class Schema {
 					}
 				}))
 		} catch (error) {
-			delete connection.querying
-
-			if (!outSideConnection) {
-				connection.release()
-			}
+			endQuery()
+			onEnd(error)
 
 			throwError(error)
 		}
