@@ -6,44 +6,31 @@ const assert = require('assert')
 
 
 describe('test stream', () => {
-	it('success', done => {
-		const limit = 500
-		let counter = 0
-
-		const res = {
-			setHeader: () => { },
-			write: (object) => {
-				counter++
-				assert.ok(typeof object === 'object')
-			},
-			end: () => {
-				assert.equal(counter, limit)
-				done()
-			}
-		}
-
+	it('success', ok => {
 		Trips
 			.SELECT()
 			.FROM()
-			.WHERE({ user_id: 3925 })
-			.LIMIT(limit)
-			.readableStream({ res })
-	})
+			.LEFTJOIN('user_info on user_info.uid = trips.user_id')
+			.LIMIT(25)
+			.NESTTABLES()
+			.MAP(data => {
+				const trip = data.trips
+				return {
+					...trip,
+					user: data.user_info
+				}
+			})
+			.stream({
+				highWaterMark: 5,
+				onValue: (rows, done) => {
+					console.log('onValue', rows.length)
+					done()
+				},
+				onEnd: (error) => {
+					console.log('onEnd')
 
-	it('Stream query must be SELECT', done => {
-		const res = {
-			setHeader: () => { },
-			write: () => { },
-			end: done
-		}
-
-
-		Trips
-			.UPDATE('user_info')
-			.SET({ uid: 31 })
-			.WHERE({ uid: 31 })
-			.readableStream({ res })
-			.then(assert)
-			.catch(err => done())
+					ok()
+				}
+			})
 	})
 })

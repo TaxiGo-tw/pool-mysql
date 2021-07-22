@@ -462,7 +462,7 @@ module.exports = class Schema {
 		const connection = outSideConnection || Schema._pool.connection()
 
 		try {
-			const { query, formatted, print, useWriter, mapCallback, onErr } = this._options()
+			const { query: { sql, nestTables }, formatted, print, useWriter, mapCallback, onErr } = this._options()
 
 			if (!connection.isSelect(formatted)) {
 				throwError(`'Stream query' must be SELECT, but "${formatted}"`)
@@ -481,7 +481,7 @@ module.exports = class Schema {
 			const isOnValueAsync = (onValue.constructor.name === 'AsyncFunction')
 
 			mysqlConnection
-				.query({ sql: formatted, nestTables: query.nestTables })
+				.query({ sql: formatted, nestTables })
 				.stream({ highWaterMark })
 				.pipe(stream.Transform({
 					objectMode: true,
@@ -499,16 +499,22 @@ module.exports = class Schema {
 						}
 
 						async function sendValue(input) {
-							const mapped = mapCallback ? mapCallback(input) : input
+							let mapped
+							if (input instanceof Array) {
+								mapped = mapCallback ? input.map(i => mapCallback(i)) : input
+							} else {
+								mapped = mapCallback ? mapCallback(input) : input
+							}
 
 							if (isOnValueAsync) {
 								await onValue(mapped)
+								wrappedDone()
 							} else {
 								onValue(mapped, wrappedDone)
 							}
 						}
 
-						const classObject = new this.constructor(data)
+						const classObject = nestTables ? data : new this.constructor(data)
 
 						try {
 							switch (true) {
