@@ -462,7 +462,7 @@ module.exports = class Schema {
 		const connection = outSideConnection || Schema._pool.connection()
 
 		try {
-			const { query, formatted, print, useWriter } = this._options()
+			const { query, formatted, print, useWriter, mapCallback } = this._options()
 
 			if (!connection.isSelect(formatted)) {
 				throwError(`'Stream query' must be SELECT, but "${formatted}"`)
@@ -499,10 +499,12 @@ module.exports = class Schema {
 						}
 
 						async function sendValue(input) {
+							const mapped = mapCallback ? mapCallback(input) : input
+
 							if (isOnValueAsync) {
-								await onValue(input)
+								await onValue(mapped)
 							} else {
-								onValue(input, wrappedDone)
+								onValue(mapped, wrappedDone)
 							}
 						}
 
