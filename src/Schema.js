@@ -462,7 +462,7 @@ module.exports = class Schema {
 		const connection = outSideConnection || Schema._pool.connection()
 
 		try {
-			const { query, formatted, print, useWriter, mapCallback } = this._options()
+			const { query, formatted, print, useWriter, mapCallback, onErr } = this._options()
 
 			if (!connection.isSelect(formatted)) {
 				throwError(`'Stream query' must be SELECT, but "${formatted}"`)
@@ -529,7 +529,9 @@ module.exports = class Schema {
 								default:
 									throwError('highWaterMark must be 1 or greater')
 							}
-						} catch (e) { }
+						} catch (err) {
+							Event.emit('err', connection.identity(), err)
+						}
 
 						if (isOnValueAsync) {
 							wrappedDone()
@@ -546,7 +548,9 @@ module.exports = class Schema {
 						if (results.length) {
 							try {
 								await onValue(results)
-							} catch (e) { }
+							} catch (err) {
+								Event.emit('err', connection.identity(), err)
+							}
 						}
 
 						onEnd()
