@@ -441,7 +441,7 @@ module.exports = class Schema {
 		}
 	}
 
-	async stream({ connection: outSideConnection, highWaterMark = 1, onValue, onEnd }) {
+	async stream({ connection: outSideConnection, highWaterMark = 1, onValue = async (value, done) => { }, onEnd = async () => { } }) {
 		const stream = require('stream')
 
 		const connection = outSideConnection || Schema._pool.connection()
@@ -462,6 +462,7 @@ module.exports = class Schema {
 			await connection.genReader()
 
 			let results = []
+			let counter = 0
 
 			connection
 				.reader
@@ -471,8 +472,7 @@ module.exports = class Schema {
 					objectMode: true,
 					transform: async (data, encoding, done) => {
 						let isCompleted = false
-
-						function completeCallback() {
+						function wrappedDone() {
 							if (isCompleted) {
 								return
 							}
@@ -481,39 +481,55 @@ module.exports = class Schema {
 							isCompleted = true
 						}
 
+						const classObject = new this.constructor(data)
+
 						try {
-							if (highWaterMark === 1) {
-								await onValue(new this.constructor(data), completeCallback)
-							} else {
-								results.push(new this.constructor(data))
-
-								if (results.length === highWaterMark) {
-									await onValue(results, completeCallback)
-									results = []
-								} else {
-									//還沒湊滿,或是最後一輪了, 給flush去給
-								}
+							switch (true) {
+								//每個都給
+								case highWaterMark === 1:
+									await onValue(classObject, wrappedDone)
+									break
+								//給array
+								case highWaterMark > 1:
+									results.push(classObject)
+									if (results.length === highWaterMark) {
+										await onValue(results, wrappedDone)
+										results = []
+									} else {
+										//還沒湊滿,或是最後一輪了, 在flush去給
+									}
+									break
+								default:
+									throwError('highWaterMark must be 1 or greater')
 							}
-						} catch (error) { }
+						} catch (e) { }
 
-						completeCallback()
+						const isOnValueAsyncFunction = (onValue.constructor.name === 'AsyncFunction')
+						if (isOnValueAsyncFunction) {
+							wrappedDone()
+						}
+
+						counter++
 					},
-					flush: async done => {
+					flush: async finished => {
 						if (print) {
-							Event.emit('print', connection.identity(), formatted)
+							Event.emit('print', connection.identity(), `found ${counter} rows`)
 						}
 
 						delete connection.querying
-						if (!connection) {
+						if (!outSideConnection) {
 							connection.release()
 						}
 
 						if (results.length) {
-							await onValue(results)
+							try {
+								await onValue(results)
+							} catch (e) { }
 						}
+
 						onEnd()
 
-						done()
+						finished()
 					}
 				}))
 		} catch (error) {

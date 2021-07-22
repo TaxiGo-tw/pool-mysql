@@ -1,3 +1,4 @@
+/* for pipe */
 module.exports.stringify = (op, sep, cl, indent) => {
 	const through = require('through')
 
