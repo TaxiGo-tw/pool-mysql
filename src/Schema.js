@@ -559,14 +559,14 @@ module.exports = class Schema {
 							}
 						}
 
-						onEnd()
+						await onEnd()
 
 						finished()
 					}
 				}))
 		} catch (error) {
 			endQuery()
-			onEnd(error)
+			await onEnd(error)
 
 			throwError(error)
 		}
