@@ -269,6 +269,7 @@ module.exports = class Schema {
 			nestTables: this._nestTables || this._queryOptions.nested
 		}
 
+
 		const values = this._q
 			.filter(q => ((q.command && q.command.includes('?')) || q.value))
 			.map(q => q.value)
@@ -461,7 +462,7 @@ module.exports = class Schema {
 		const connection = outSideConnection || Schema._pool.connection()
 
 		try {
-			const { formatted, print, useWriter } = this._options()
+			const { query, formatted, print, useWriter } = this._options()
 
 			if (!connection.isSelect(formatted)) {
 				throwError(`'Stream query' must be SELECT, but "${formatted}"`)
@@ -480,7 +481,7 @@ module.exports = class Schema {
 			const isOnValueAsync = (onValue.constructor.name === 'AsyncFunction')
 
 			mysqlConnection
-				.query(formatted)
+				.query({ sql: formatted, nestTables: query.nestTables })
 				.stream({ highWaterMark })
 				.pipe(stream.Transform({
 					objectMode: true,
