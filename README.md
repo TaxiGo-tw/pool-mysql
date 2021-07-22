@@ -228,6 +228,8 @@ assert(results instanceof Trips)
 <details>
   <summary>Stream Query</summary>
 
+#### for massive rows query
+
 * Replace exec() with stream()
 * Some modifier will not works
 
