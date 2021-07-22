@@ -441,6 +441,14 @@ module.exports = class Schema {
 		}
 	}
 
+	/**
+			* stream query from database
+			*
+			* @param {Connection} [connection] - connection instance
+			* @param {number} [highWaterMark] number of rows return in one time
+			* @param {Callback} [onValue] value handler
+			* @param {Callback} [onEnd] end handler
+	*/
 	async stream({ connection: outSideConnection, highWaterMark = 1, onValue = async (value, done) => { }, onEnd = async () => { } }) {
 		const stream = require('stream')
 
