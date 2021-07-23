@@ -469,7 +469,7 @@ module.exports = class Schema {
 			}
 
 			if (print) {
-				Event.emit('print', connection.identity(), formatted)
+				Event.emit('print', connection.identity(), `stream started: ${formatted}`)
 			}
 
 			connection.querying = formatted
@@ -479,6 +479,8 @@ module.exports = class Schema {
 
 			const mysqlConnection = useWriter ? await connection.genWriter() : await connection.genReader()
 			const isOnValueAsync = (onValue.constructor.name === 'AsyncFunction')
+
+			const startTime = new Date()
 
 			mysqlConnection
 				.query({ sql: formatted, nestTables })
@@ -542,11 +544,10 @@ module.exports = class Schema {
 						if (isOnValueAsync) {
 							wrappedDone()
 						}
-						counter++
 					},
 					flush: async finished => {
 						if (print) {
-							Event.emit('print', connection.identity(), `found ${counter} rows`)
+							Event.emit('print', connection.identity(), `stream completed, found ${counter} rows for ${new Date() - startTime}ms`)
 						}
 
 						endQuery()
