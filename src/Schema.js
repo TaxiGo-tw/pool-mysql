@@ -488,19 +488,12 @@ module.exports = class Schema {
 				.pipe(stream.Transform({
 					objectMode: true,
 					transform: async (data, encoding, done) => {
-						let isThisCircleCompleted = false
-						function wrappedDone() {
-							if (isThisCircleCompleted) {
-								return
+						async function sendValue(input) {
+							function wrappedDone() {
+								results = []
+								done()
 							}
 
-							results = []
-
-							done()
-							isThisCircleCompleted = true
-						}
-
-						async function sendValue(input) {
 							let mapped
 							if (input instanceof Array) {
 								mapped = mapCallback ? input.map(i => mapCallback(i)) : input
@@ -509,7 +502,7 @@ module.exports = class Schema {
 							}
 
 							if (isOnValueAsync) {
-								await onValue(mapped)
+								await onValue(mapped, () => { })
 								wrappedDone()
 							} else {
 								onValue(mapped, wrappedDone)
@@ -541,10 +534,6 @@ module.exports = class Schema {
 							}
 						} catch (err) {
 							Event.emit('err', connection.identity(), err)
-						}
-
-						if (isOnValueAsync) {
-							wrappedDone()
 						}
 					},
 					flush: async finished => {
