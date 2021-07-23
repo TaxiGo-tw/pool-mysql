@@ -518,6 +518,8 @@ module.exports = class Schema {
 
 						const classObject = nestTables ? data : new this.constructor(data)
 
+						counter++
+
 						try {
 							switch (true) {
 								//每個都給
