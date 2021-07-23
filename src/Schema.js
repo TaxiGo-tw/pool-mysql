@@ -545,7 +545,11 @@ module.exports = class Schema {
 
 						if (results.length) {
 							try {
-								await onValue(results, () => { })
+								if (highWaterMark === 1) {
+									await onValue(results[0], () => { })
+								} else {
+									await onValue(results, () => { })
+								}
 							} catch (err) {
 								Event.emit('err', connection.identity(), err)
 							}
