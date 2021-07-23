@@ -576,59 +576,59 @@ module.exports = class Schema {
 	}
 
 	/* select only */
-	async readableStream({ connection: outSideConnection, res } = {}) {
-		if (!res) {
-			throwError('res is needed')
-		}
+	// async readableStream({ connection: outSideConnection, res } = {}) {
+	// 	if (!res) {
+	// 		throwError('res is needed')
+	// 	}
 
-		const { stringify } = require('./Helper/Stream')
+	// 	const { stringify } = require('./Helper/Stream')
 
-		const pool = Schema._pool
-		const connection = outSideConnection || pool.connection()
+	// 	const pool = Schema._pool
+	// 	const connection = outSideConnection || pool.connection()
 
-		res.setHeader('Content-Type', 'application/json')
-		res.setHeader('Cache-Control', 'no-cache')
+	// 	res.setHeader('Content-Type', 'application/json')
+	// 	res.setHeader('Cache-Control', 'no-cache')
 
-		try {
-			const { query: { sql, nestTables }, formatted, print, useWriter, mapCallback, onErr } = this._options()
+	// 	try {
+	// 		const { query: { sql, nestTables }, formatted, print, useWriter, mapCallback, onErr } = this._options()
 
-			if (!connection.isSelect(formatted)) {
-				throwError(`'Stream query' must be SELECT, but "${formatted}"`)
-			}
+	// 		if (!connection.isSelect(formatted)) {
+	// 			throwError(`'Stream query' must be SELECT, but "${formatted}"`)
+	// 		}
 
-			if (print) {
-				Event.emit('log', connection.identity(), formatted)
-			}
+	// 		if (print) {
+	// 			Event.emit('log', connection.identity(), formatted)
+	// 		}
 
-			connection.querying = formatted
+	// 		connection.querying = formatted
 
-			const mysqlConnection = useWriter ? await connection.genWriter() : await connection.genReader()
+	// 		const mysqlConnection = useWriter ? await connection.genWriter() : await connection.genReader()
 
-			mysqlConnection
-				.query({ sql: formatted, nestTables })
-				.stream({ highWaterMark: 50 })
-				.pipe(stringify())
-				.pipe(res)
-				.on('end', () => {
-					res.end()
+	// 		mysqlConnection
+	// 			.query({ sql: formatted, nestTables })
+	// 			.stream({ highWaterMark: 50 })
+	// 			.pipe(stringify())
+	// 			.pipe(res)
+	// 			.on('end', () => {
+	// 				res.end()
 
-					delete connection.querying
-					if (!outSideConnection) {
-						connection.release()
-					}
-				})
-		} catch (error) {
-			res.write(JSON.stringify({ msg: error.message }))
-			res.end()
+	// 				delete connection.querying
+	// 				if (!outSideConnection) {
+	// 					connection.release()
+	// 				}
+	// 			})
+	// 	} catch (error) {
+	// 		res.write(JSON.stringify({ msg: error.message }))
+	// 		res.end()
 
-			delete connection.querying
-			if (!outSideConnection) {
-				connection.release()
-			}
+	// 		delete connection.querying
+	// 		if (!outSideConnection) {
+	// 			connection.release()
+	// 		}
 
-			throwError(error)
-		}
-	}
+	// 		throwError(error)
+	// 	}
+	// }
 
 	get JSON() {
 		return this
