@@ -576,6 +576,8 @@ module.exports = class Schema {
 	}
 
 	/* select only */
+	// TODO: 有需要再加
+	// known issue: on('end') 不work
 	// async readableStream({ connection: outSideConnection, res } = {}) {
 	// 	if (!res) {
 	// 		throwError('res is needed')
