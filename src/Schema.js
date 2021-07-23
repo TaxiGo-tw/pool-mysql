@@ -556,7 +556,7 @@ module.exports = class Schema {
 
 						if (results.length) {
 							try {
-								await onValue(results)
+								await onValue(results, () => { })
 							} catch (err) {
 								Event.emit('err', connection.identity(), err)
 							}
