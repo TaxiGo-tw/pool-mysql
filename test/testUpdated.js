@@ -5,7 +5,7 @@ const updated = require('../src/Schema/Updated').handler
 
 describe('test Updated', async () => {
 	it('normal case', async () => {
-		const results = updated({
+		const input = {
 			results: [
 				{},
 				{ affectedRows: 1 },
@@ -16,24 +16,32 @@ describe('test Updated', async () => {
 					}
 				]
 			]
-		})
+		}
 
-		expect(results).to.eql([
+		const output = [
 			{ id: '1', name: 'test' },
 			{ id: '2', name: 'name' },
 			{ id: '3', name: undefined }
-		])
+		]
+
+		const results = updated(input)
+
+		expect(results).to.eql(output)
 	})
 
 	it('amount', () => {
-		const results = updated({
+		const input = {
 			results: [
 				{},
 				{ affectedRows: 1 },
 				[{ amount: '-1,' }]
 			]
-		})
+		}
 
-		expect(results).to.eql([{ amount: '-1' }])
+		const output = [{ amount: '-1' }]
+
+		const results = updated(input)
+
+		expect(results).to.eql(output)
 	})
 })
