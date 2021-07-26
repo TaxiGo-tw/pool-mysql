@@ -6,54 +6,45 @@ const assert = require('assert')
 
 describe('test stream', () => {
 	it('success', ok => {
-		Query()
-			.stream({
-				highWaterMark: 5,
-				onValue: (rows, done) => {
-					toExpect(rows)
-					assert.strictEqual(rows.length, 5)
+		Query().stream({
+			highWaterMark: 5,
+			onValue: (rows, done) => {
+				toExpect(rows)
+				assert.strictEqual(rows.length, 5)
 
-					done()
-				},
-				onEnd: error => {
-					ok(error)
-				}
-			})
+				done()
+			},
+			onEnd: ok
+		})
 	})
 
 	it('success single', ok => {
-		Query()
-			.stream({
-				highWaterMark: 1,
-				onValue: (row, done) => {
-					toExpect([row])
-					assert.strictEqual(typeof row, 'object')
+		Query().stream({
+			highWaterMark: 1,
+			onValue: (row, done) => {
+				toExpect([row])
+				assert.strictEqual(typeof row, 'object')
 
-					done()
-				},
-				onEnd: error => {
-					ok(error)
-				}
-			})
+				done()
+			},
+			onEnd: ok
+		})
 	})
 
 	it('success async/await', ok => {
-		Query()
-			.stream({
-				highWaterMark: 1,
-				onValue: async (row, _) => {
-					toExpect([row])
-					assert.strictEqual(typeof row, 'object')
-				},
-				onEnd: error => {
-					ok(error)
-				}
-			})
+		Query().stream({
+			highWaterMark: 1,
+			onValue: async (row, _) => {
+				toExpect([row])
+				assert.strictEqual(typeof row, 'object')
+			},
+			onEnd: ok
+		})
 	})
 
-	function toExpect(rows) {
-		expect(rows[0]).haveOwnProperty('trip_id')
-		expect(rows[0]).haveOwnProperty('user')
+	function toExpect([firstRow]) {
+		expect(firstRow).haveOwnProperty('trip_id')
+		expect(firstRow).haveOwnProperty('user')
 	}
 
 	function Query() {
