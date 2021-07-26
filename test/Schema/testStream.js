@@ -10,18 +10,21 @@ describe('test stream', () => {
 		expect(rows[0]).haveOwnProperty('user')
 	}
 
-
-	it('success', ok => {
-		Trips
+	function Query() {
+		return Trips
 			.SELECT()
 			.FROM()
 			.LEFTJOIN('user_info on user_info.uid = trips.user_id')
-			.LIMIT(25)
+			.LIMIT(30)
 			.NESTTABLES()
 			.MAP(data => {
 				const trip = data.trips
 				return { ...trip, user: data.user_info }
 			})
+	}
+
+	it('success', ok => {
+		Query()
 			.stream({
 				highWaterMark: 5,
 				onValue: (rows, done) => {
@@ -37,19 +40,7 @@ describe('test stream', () => {
 	})
 
 	it('success single', ok => {
-		Trips
-			.SELECT()
-			.FROM()
-			.LEFTJOIN('user_info on user_info.uid = trips.user_id')
-			.LIMIT(30)
-			.NESTTABLES()
-			.MAP(data => {
-				const trip = data.trips
-				return {
-					...trip,
-					user: data.user_info
-				}
-			})
+		Query()
 			.stream({
 				highWaterMark: 1,
 				onValue: (row, done) => {
@@ -63,20 +54,9 @@ describe('test stream', () => {
 			})
 	})
 
+
 	it('success async/await', ok => {
-		Trips
-			.SELECT()
-			.FROM()
-			.LEFTJOIN('user_info on user_info.uid = trips.user_id')
-			.LIMIT(30)
-			.NESTTABLES()
-			.MAP(data => {
-				const trip = data.trips
-				return {
-					...trip,
-					user: data.user_info
-				}
-			})
+		Query()
 			.stream({
 				highWaterMark: 1,
 				onValue: async (row, _) => {
