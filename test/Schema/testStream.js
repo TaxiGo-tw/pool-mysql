@@ -42,16 +42,26 @@ describe('test stream', () => {
 		})
 	})
 
+	it('onValue should not called', ok => {
+		Query(false).stream({
+			highWaterMark: 1,
+			onValue: async (row, _) => assert(false, 'but called'),
+			onEnd: ok
+		})
+	})
+
 	function toExpect([firstRow]) {
 		expect(firstRow).haveOwnProperty('trip_id')
 		expect(firstRow).haveOwnProperty('user')
 	}
 
-	function Query() {
+	function Query(shouldFind = true) {
 		return Trips
 			.SELECT()
 			.FROM()
 			.LEFTJOIN('user_info on user_info.uid = trips.user_id')
+			.WHERE('1=1')
+			.AND('user_id = ?', 25, { isExec: !shouldFind })
 			.LIMIT(30)
 			.NESTTABLES()
 			.MAP(data => {
