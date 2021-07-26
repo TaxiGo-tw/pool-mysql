@@ -6,8 +6,8 @@
 	"main": "index.js",
 	"scripts": {
 		"lint": "eslint ./**/*.js",
-		"test": "mocha --exit",
-		"t": "nodemon --exec 'mocha --exit -s 0'"
+		"test": "mocha --exit --recursive",
+		"t": "nodemon --exec 'mocha --exit -s 0 --recursive'"
 	},
 	"author": "",
 	"license": "ISC",

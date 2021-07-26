@@ -1,6 +1,6 @@
-require('dotenv').config({ path: '.env' })
+// require('dotenv').config({ path: '.env' })
 
-const Trips = require('../testModels/Trips')
+const Trips = require('./testModels/Trips')
 const expect = require('chai').expect
 const assert = require('assert')
 

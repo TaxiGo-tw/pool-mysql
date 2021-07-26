@@ -533,6 +533,7 @@ module.exports = class Schema {
 									throwError('highWaterMark must be 1 or greater')
 							}
 						} catch (err) {
+							console.log(err)
 							Event.emit('err', connection.identity(), err)
 						}
 					},

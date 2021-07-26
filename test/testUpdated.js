@@ -1,7 +1,7 @@
 const { should, expect } = require('chai')  // Using Assert style
 should()  // Modifies `Object.prototype`
 
-const updated = require('../../src/Schema/Updated').handler
+const updated = require('../src/Schema/Updated').handler
 
 describe('test Updated', async () => {
 	it('normal case', async () => {
