@@ -269,6 +269,7 @@ module.exports = class Schema {
 			nestTables: this._nestTables || this._queryOptions.nested
 		}
 
+
 		const values = this._q
 			.filter(q => ((q.command && q.command.includes('?')) || q.value))
 			.map(q => q.value)
@@ -311,7 +312,7 @@ module.exports = class Schema {
 	}
 
 	async exec(outSideConnection = null, options) {
-		this._connection = outSideConnection || Schema._pool.connection(options)
+		const connection = outSideConnection || Schema._pool.connection(options)
 		try {
 			let results
 
@@ -343,10 +344,10 @@ module.exports = class Schema {
 			}
 			///////////////////////////////////////////////////////////////////
 
-			this._connection._status.useWriter = (this._connection._status.useWriter || useWriter)
+			connection._status.useWriter = (connection._status.useWriter || useWriter)
 
 			// eslint-disable-next-line no-unused-vars
-			let conn = this._connection
+			let conn = connection
 			if (print) {
 				conn = conn.print
 			}
@@ -392,7 +393,7 @@ module.exports = class Schema {
 			}
 
 			//SELECT()
-			if (this._connection.isSelect(query.sql)) {
+			if (connection.isSelect(query.sql)) {
 				//populate
 				if (populates.length && results.length) {
 					results = await Populate.find({ this: this, results, populates, print, Schema })
@@ -436,10 +437,189 @@ module.exports = class Schema {
 			throwError(error)
 		} finally {
 			if (!outSideConnection) {
-				this._connection.release()
+				connection.release()
 			}
 		}
 	}
+
+	/**
+			* stream query from database, await just waiting for generate reader connection
+			*
+			* @param {Connection} [connection] - connection instance
+			* @param {number} [highWaterMark] number of rows return in one time
+			* @param {Callback} [onValue] value handler
+			* @param {Callback} [onEnd] end handler
+	*/
+	async stream({ connection: outSideConnection, highWaterMark = 1, onValue = async (value, done) => { }, onEnd = async () => { } }) {
+		const stream = require('stream')
+		function endQuery() {
+			delete connection.querying
+			if (!outSideConnection) {
+				connection.release()
+			}
+		}
+
+		const connection = outSideConnection || Schema._pool.connection()
+
+		try {
+			const { query: { sql, nestTables }, formatted, print, useWriter, mapCallback, onErr } = this._options()
+
+			if (!connection.isSelect(formatted)) {
+				throwError(`'Stream query' must be SELECT, but "${formatted}"`)
+			}
+
+			if (print) {
+				Event.emit('print', connection.identity(), `stream started: ${formatted}`)
+			}
+
+			connection.querying = formatted
+
+			let results = []
+			let counter = 0
+
+			const mysqlConnection = useWriter ? await connection.genWriter() : await connection.genReader()
+			const isOnValueAsync = (onValue.constructor.name === 'AsyncFunction')
+
+			const startTime = new Date()
+
+			mysqlConnection
+				.query({ sql: formatted, nestTables })
+				.stream({ highWaterMark })
+				.pipe(stream.Transform({
+					objectMode: true,
+					transform: async (data, encoding, done) => {
+						async function sendValue(input) {
+							function wrappedDone() {
+								results = []
+								done()
+							}
+
+							let mapped
+							if (input instanceof Array) {
+								mapped = mapCallback ? input.map(i => mapCallback(i)) : input
+							} else {
+								mapped = mapCallback ? mapCallback(input) : input
+							}
+
+							if (isOnValueAsync) {
+								await onValue(mapped, () => { })
+								wrappedDone()
+							} else {
+								onValue(mapped, wrappedDone)
+							}
+						}
+
+						const classObject = nestTables ? data : new this.constructor(data)
+
+						counter++
+
+						try {
+							switch (true) {
+								//每個都給
+								case highWaterMark === 1:
+									await sendValue(classObject)
+									break
+								//給array
+								case highWaterMark > 1:
+									results.push(classObject)
+									if (results.length === highWaterMark) {
+										await sendValue(results)
+									} else {
+										//還沒湊滿,或是最後一輪了, 繼續跑
+										done()
+									}
+									break
+								default:
+									throwError('highWaterMark must be 1 or greater')
+							}
+						} catch (err) {
+							Event.emit('err', connection.identity(), err)
+						}
+					},
+					flush: async finished => {
+						if (print) {
+							Event.emit('print', connection.identity(), `stream completed, found ${counter} rows for ${new Date() - startTime}ms`)
+						}
+
+						endQuery()
+
+						if (results.length) {
+							try {
+								await onValue(results, () => { })
+							} catch (err) {
+								Event.emit('err', connection.identity(), err)
+							}
+						}
+
+						await onEnd()
+
+						finished()
+					}
+				}))
+		} catch (error) {
+			endQuery()
+			await onEnd(error)
+
+			throwError(error)
+		}
+	}
+
+	/* select only */
+	// TODO: 有需要再加
+	// known issue: on('end') 不work
+	// async readableStream({ connection: outSideConnection, res } = {}) {
+	// 	if (!res) {
+	// 		throwError('res is needed')
+	// 	}
+
+	// 	const { stringify } = require('./Helper/Stream')
+
+	// 	const pool = Schema._pool
+	// 	const connection = outSideConnection || pool.connection()
+
+	// 	res.setHeader('Content-Type', 'application/json')
+	// 	res.setHeader('Cache-Control', 'no-cache')
+
+	// 	try {
+	// 		const { query: { sql, nestTables }, formatted, print, useWriter, mapCallback, onErr } = this._options()
+
+	// 		if (!connection.isSelect(formatted)) {
+	// 			throwError(`'Stream query' must be SELECT, but "${formatted}"`)
+	// 		}
+
+	// 		if (print) {
+	// 			Event.emit('log', connection.identity(), formatted)
+	// 		}
+
+	// 		connection.querying = formatted
+
+	// 		const mysqlConnection = useWriter ? await connection.genWriter() : await connection.genReader()
+
+	// 		mysqlConnection
+	// 			.query({ sql: formatted, nestTables })
+	// 			.stream({ highWaterMark: 50 })
+	// 			.pipe(stringify())
+	// 			.pipe(res)
+	// 			.on('end', () => {
+	// 				res.end()
+
+	// 				delete connection.querying
+	// 				if (!outSideConnection) {
+	// 					connection.release()
+	// 				}
+	// 			})
+	// 	} catch (error) {
+	// 		res.write(JSON.stringify({ msg: error.message }))
+	// 		res.end()
+
+	// 		delete connection.querying
+	// 		if (!outSideConnection) {
+	// 			connection.release()
+	// 		}
+
+	// 		throwError(error)
+	// 	}
+	// }
 
 	get JSON() {
 		return this
@@ -616,6 +796,11 @@ module.exports = class Schema {
 
 	DECRYPT(...decryption) {
 		this._queryOptions.decryption = decryption
+		return this
+	}
+
+	ENCRYPT(...encryption) {
+		this._queryOptions.encryption = encryption
 		return this
 	}
 
