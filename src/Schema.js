@@ -799,6 +799,11 @@ module.exports = class Schema {
 		return this
 	}
 
+	ENCRYPT(...encryption) {
+		this._queryOptions.encryption = encryption
+		return this
+	}
+
 	COMBINE() {
 		this._queryOptions.combine = true
 		return this
