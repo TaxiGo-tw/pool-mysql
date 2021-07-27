@@ -442,15 +442,34 @@ module.exports = class Schema {
 		}
 	}
 
+
 	/**
-			* stream query from database, await just waiting for generate reader connection
-			*
-			* @param {Connection} [connection] - connection instance
-			* @param {number} [highWaterMark] number of rows return in one time
-			* @param {Callback} [onValue] value handler
-			* @param {Callback} [onEnd] end handler
-	*/
-	async stream({ connection: outSideConnection, highWaterMark = 1, onValue = async (value, done) => { }, onEnd = async () => { } }) {
+		* stream query from database, await just waiting for generate reader connection
+		*
+		* @param {Connection} [connection] - connection instance
+		* @param {number} [highWaterMark] number of rows return in one time
+		* @param {Callback} [onValue] value handler
+		* @param {Callback} [onEnd] end handler
+*/
+	async stream({ connection, highWaterMark = 1, onValue = async (value, done) => { }, onEnd = async () => { } }) {
+		return new Promise((resolve, reject) => {
+			try {
+				this._stream({
+					connection,
+					highWaterMark,
+					onValue,
+					onEnd: () => {
+						onEnd()
+						resolve()
+					}
+				})
+			} catch (error) {
+				reject(error)
+			}
+		})
+	}
+
+	async _stream({ connection: outSideConnection, highWaterMark = 1, onValue = async (value, done) => { }, onEnd = async () => { } }) {
 		const stream = require('stream')
 		function endQuery() {
 			delete connection.querying
@@ -538,10 +557,6 @@ module.exports = class Schema {
 						}
 					},
 					flush: async finished => {
-						if (print) {
-							Event.emit('print', connection.identity(), `stream completed, found ${counter} rows for ${new Date() - startTime}ms`)
-						}
-
 						endQuery()
 
 						if (results.length) {
@@ -555,6 +570,10 @@ module.exports = class Schema {
 						await onEnd()
 
 						finished()
+
+						if (print) {
+							Event.emit('print', connection.identity(), `stream completed, found ${counter} rows for ${new Date() - startTime}ms`)
+						}
 					}
 				}))
 		} catch (error) {
