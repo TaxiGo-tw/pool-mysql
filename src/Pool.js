@@ -122,7 +122,7 @@ class Pool {
 		return this.connection({ limit })
 	}
 
-	connection({ priority = 0, limit = this.options.connectionLimit } = {}) {
+	connection({ priority = 5, limit = this.options.connectionLimit } = {}) {
 		if (isNaN(priority) || isNaN(limit)) {
 			throwError('priority or limit should be a number')
 		}

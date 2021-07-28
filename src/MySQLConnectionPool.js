@@ -144,8 +144,8 @@ module.exports = class MySQLConnectionPool {
 		const distinctTagNameRequests = distinct(this.connectionRequests, requestCallback => requestCallback.tag.name)
 
 		const callback = distinctTagNameRequests
-			/* 排序tag name大的優先 */
-			.sort((a, b) => parseInt(b.tag.name) - parseInt(a.tag.name))
+			/* 排序tag name小的優先 */
+			.sort((a, b) => parseInt(a.tag.name) - parseInt(b.tag.name))
 			/* 首個未到limit的callback */
 			.find(callback => {
 				if (!callback) {
