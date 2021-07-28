@@ -58,13 +58,13 @@ describe('test recycle', () => {
 		}
 
 		let i = 0
-		for (const connection of genConnections({ priority: 0, limit: 15 }, 30)) {
+		for (const connection of genConnections({ priority: 5, limit: 15 }, 30)) {
 			connection.genReader()
 				.then(_ => setTimeout(() => connection.release(), 300))
 				.catch(console.error)
 		}
 
-		for (const connection of genConnections({ priority: 1, limit: 30 }, 30)) {
+		for (const connection of genConnections({ priority: 0, limit: 30 }, 30)) {
 			connection.genReader()
 				.then(_ => {
 					i++
