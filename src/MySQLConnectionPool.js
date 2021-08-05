@@ -173,8 +173,13 @@ module.exports = class MySQLConnectionPool {
 	_decorator(mysqlConnection, connection) {
 		mysqlConnection.on('error', err => {
 			if (err) {
-				Event.emit('err', `${this.identity(mysqlConnection)}: ${err.message}`, err)
+				if (mysqlConnection.tag) { //using
+					Event.emit('err', `${this.identity(mysqlConnection)}: ${err.message}`, err)
+				} else {
+					Event.emit('warn', `${this.identity(mysqlConnection)}: ${err.message}`, err)
+				}
 			}
+
 
 			mysqlConnection.close()
 		})
