@@ -173,10 +173,10 @@ module.exports = class MySQLConnectionPool {
 	_decorator(mysqlConnection, connection) {
 		mysqlConnection.on('error', err => {
 			if (err) {
-				Event.emit('err', this.identity(mysqlConnection), err)
+				Event.emit('err', `${this.identity(mysqlConnection)}: ${err.message}`, err)
 			}
 
-			connection.end()
+			mysqlConnection.close()
 		})
 
 		mysqlConnection.q = (sql, values) => {
@@ -299,7 +299,7 @@ module.exports = class MySQLConnectionPool {
 				}
 
 				this.numberOfConnections(mysqlConnection)
-				mysqlConnection.end()
+				mysqlConnection.close()
 			}
 		}, 5 * 60 * 1000)
 
