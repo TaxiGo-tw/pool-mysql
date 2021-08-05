@@ -8,14 +8,14 @@ const { assert } = require('chai')
 const Event = require('../src/Logger/Event')
 
 Event.on('did_create', (title, connection) => console.log(title, 'connections created'))
-Event.on('get', (title, connection) => console.log(title, 'connections get'))
+Event.on('get', (title, connection) => console.log(title, 'connections get priority:', connection.tag.name))
 
 Event.on('amount', (title, amount) => console.log(title, 'connections amount', amount))
 Event.on('request', (title, amount) => console.log(title, 'connection 額滿使用中', amount))
-Event.on('recycle', (title, connection) => console.log(title, `connection 排隊解除`, connection.tag.name))
+Event.on('recycle', (title, connection) => console.log(title, `connection 排隊解除, priority:`, connection.tag.name))
 Event.on('end', (title, _) => console.log(title, 'connection end'))
 
-Event.on('release', (title, connection) => console.log(title, 'connections released', connection.tag.name))
+Event.on('release', (title, connection) => console.log(title, 'connections released priority:', connection.tag.name))
 
 Event.on('warn', (title, warn) => console.warn(title, warn))
 Event.on('err', (title, err) => console.error(title, err))

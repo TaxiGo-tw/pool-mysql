@@ -119,10 +119,10 @@ module.exports = class MySQLConnectionPool {
 					}
 					case err.message.includes('PROTOCOL_CONNECTION_LOST'):
 					case err.message.includes('ER_CON_COUNT_ERROR'):
-					case err.message.startsWith('Error: connect ECONNREFUSED'): {
+					case err.message.includes('Connection lost: The server closed the connection.'):
+					case err.message.includes('Error: connect ECONNREFUSED'):
+					default:
 						mysqlConnection.close()
-						return callback(err, undefined)
-					} default:
 						return callback(err, undefined)
 				}
 			}
@@ -179,7 +179,6 @@ module.exports = class MySQLConnectionPool {
 					Event.emit('warn', `${this.identity(mysqlConnection)}: ${err.message}`, err)
 				}
 			}
-
 
 			mysqlConnection.close()
 		})
