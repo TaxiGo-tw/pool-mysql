@@ -110,7 +110,7 @@ module.exports = class MySQLConnectionPool {
 
 		mysqlConnection.connect(err => {
 			if (err) {
-				Event.emit('err', this.identity(mysqlConnection), err)
+				Event.emit('err', `${this.identity(mysqlConnection)}: ${err.message}`, err)
 
 				switch (true) {
 					case err.message.startsWith('ER_CON_COUNT_ERROR: Too many connections'): {
@@ -118,10 +118,11 @@ module.exports = class MySQLConnectionPool {
 						return enqueue(tag, callback)
 					}
 					case err.message.includes('PROTOCOL_CONNECTION_LOST'):
-					case err.message.startsWith('Error: connect ECONNREFUSED'): {
+					case err.message.includes('ER_CON_COUNT_ERROR'):
+					case err.message.includes('Connection lost: The server closed the connection.'):
+					case err.message.includes('Error: connect ECONNREFUSED'):
+					default:
 						mysqlConnection.close()
-						return callback(err, undefined)
-					} default:
 						return callback(err, undefined)
 				}
 			}
@@ -172,10 +173,14 @@ module.exports = class MySQLConnectionPool {
 	_decorator(mysqlConnection, connection) {
 		mysqlConnection.on('error', err => {
 			if (err) {
-				Event.emit('err', this.identity(mysqlConnection), err)
+				if (mysqlConnection.tag) { //using
+					Event.emit('err', `${this.identity(mysqlConnection)}: ${err.message}`, err)
+				} else {
+					Event.emit('warn', `${this.identity(mysqlConnection)}: ${err.message}`, err)
+				}
 			}
 
-			connection.end()
+			mysqlConnection.close()
 		})
 
 		mysqlConnection.q = (sql, values) => {
@@ -298,7 +303,7 @@ module.exports = class MySQLConnectionPool {
 				}
 
 				this.numberOfConnections(mysqlConnection)
-				mysqlConnection.end()
+				mysqlConnection.close()
 			}
 		}, 5 * 60 * 1000)
 
