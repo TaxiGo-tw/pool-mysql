@@ -291,7 +291,7 @@ TableA
 // single
 await FOO.INSERT()
   .INTO()
-  .VALUES(obj)
+  .VALUE(obj)
   .exec(connection)
 
 // multiple
