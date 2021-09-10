@@ -1,6 +1,6 @@
 
 module.exports.handler = function ({ results, filter, getFirst }) {
-	if (results[1].affectedRows == 0) {
+	if (results[1].affectedRows == 0 && results[2].length == 0) {
 		return []
 	}
 

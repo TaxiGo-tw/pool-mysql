@@ -44,4 +44,26 @@ describe('test Updated', async () => {
 
 		expect(results).to.eql(output)
 	})
+
+	it('test -1 in value', async () => {
+		const pool = require('../index')
+		const Trips = require('./testModels/Trips')
+		const connection = pool.connection()
+		await connection.beginTransaction()
+
+		const [{ trip_id }] = await Trips.SELECT('trip_id').FROM().LIMIT(1).exec(connection)
+
+		const results = await Trips.UPDATE()
+			.SET({ driver_id: -1 })
+			.WHERE({ trip_id })
+			.UPDATED('user_id', 'driver_id')
+			.exec(connection)
+
+		results[0].should.have.property('driver_id')
+		results[0].should.have.property('user_id')
+
+		connection.rollback()
+		connection.release()
+	})
+
 })
