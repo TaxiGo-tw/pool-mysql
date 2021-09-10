@@ -46,24 +46,18 @@ describe('test Updated', async () => {
 	})
 
 	it('test -1 in value', async () => {
-		const pool = require('../index')
 		const Trips = require('./testModels/Trips')
-		const connection = pool.connection()
-		await connection.beginTransaction()
 
-		const [{ trip_id }] = await Trips.SELECT('trip_id').FROM().LIMIT(1).exec(connection)
+		const [{ trip_id }] = await Trips.SELECT('trip_id').FROM().LIMIT(1).exec()
 
 		const results = await Trips.UPDATE()
 			.SET({ driver_id: -1 })
 			.WHERE({ trip_id })
 			.UPDATED('user_id', 'driver_id')
-			.exec(connection)
+			.rollback()
 
 		results[0].should.have.property('driver_id')
 		results[0].should.have.property('user_id')
-
-		connection.rollback()
-		connection.release()
 	})
 
 })
