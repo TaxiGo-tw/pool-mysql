@@ -17,15 +17,15 @@
 	"devDependencies": {
 		"bluebird": "^3.7.2",
 		"chai": "^4.3.4",
-		"debug": "^4.1.1",
-		"dotenv": "^8.6.0",
-		"eslint": "^4.19.1",
+		"debug": "^4.3.2",
+		"dotenv": "^10.0.0",
+		"eslint": "^7.32.0",
 		"eslint-plugin-array-func": "^3.1.0",
-		"eslint-plugin-promise": "^4.3.1",
+		"eslint-plugin-promise": "^5.1.0",
 		"eslint-plugin-require-in-package": "^1.0.3",
-		"expect": "^26.4.2",
-		"jest": "^24.9.0",
-		"mocha": "^6.2.1",
-		"redis": "^2.8.0"
+		"expect": "^27.1.1",
+		"jest": "^27.1.1",
+		"mocha": "^9.1.1",
+		"redis": "^3.1.2"
 	}
 }
