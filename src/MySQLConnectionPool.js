@@ -118,6 +118,7 @@ module.exports = class MySQLConnectionPool {
 						return enqueue(tag, callback)
 					}
 					case err.message.includes('PROTOCOL_CONNECTION_LOST'):
+					case err.message.includes('PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR'):
 					case err.message.includes('ER_CON_COUNT_ERROR'):
 					case err.message.includes('Connection lost: The server closed the connection.'):
 					case err.message.includes('Error: connect ECONNREFUSED'):

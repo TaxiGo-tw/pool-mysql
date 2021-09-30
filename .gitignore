@@ -63,3 +63,4 @@ yarn.lock
 # next.js build output
 .next
 package-lock.json
+.DS_Store
