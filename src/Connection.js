@@ -287,6 +287,7 @@ module.exports = class Connection {
 					Event.emit('err', this.identity(), Error(onErr(error)))
 					throw Error(onErr(error))
 				default:
+					Event.emit('err', this.identity(), error)
 					throw error
 			}
 		}
