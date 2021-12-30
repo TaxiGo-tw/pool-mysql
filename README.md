@@ -445,7 +445,7 @@ pool.event.on('get', connection => {
 
 * `values must be object`
 
-[default types](https://github.com/TaxiGo-tw/pool-mysql/blob/feature/validator/model/Types.js)
+[default types](https://github.com/TaxiGo-tw/pool-mysql/blob/master/src/Schema/Types.js)
 
 #### Variables
 
