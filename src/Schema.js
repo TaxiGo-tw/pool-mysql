@@ -928,7 +928,8 @@ module.exports = class Schema {
 			if (type) {
 				const typeValidator = type.validate
 				if (value !== undefined && value !== null && typeValidator && !typeValidator(value)) {
-					throwError(`${this.constructor.name}.${key} must be type: '${type.name}', not '${typeof value}' ${JSON.stringify(this)}`)
+					let tableName = process.env.NODE_ENV == 'production' ? '' : `${this.constructor.name}.${key}`
+					throwError(`${tableName} must be type: '${type.name}', not '${typeof value}' ${JSON.stringify(this)}`)
 				}
 			}
 
