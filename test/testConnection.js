@@ -170,11 +170,15 @@ describe('test connection.query()', () => {
 })
 
 describe('test connection reset _status.mustUpdateOneRow after mustUpdateOneRow error', () => {
-	it('1', async (done) => {
+	it('1', (done) => {
 		const connection = pool.connection()
 
 		const sql = `UPDATE trips SET user_id = 101 WHERE user_id = 101 LIMIT 3;`
-		await connection.mustUpdateOneRow.q(sql)
-		done()
+		connection.mustUpdateOneRow.query(sql, () => {
+			assert(connection._status.mustUpdateOneRow === false)
+			connection.release()
+			done()
+		})
+
 	})
 })
