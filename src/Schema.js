@@ -720,6 +720,29 @@ module.exports = class Schema {
 			throwError(`${this.constructor.name} values is not an array`)
 		}
 
+		const [first] = values
+
+		if (first === undefined) {
+			throwError(`${this.constructor.name} values is empty`)
+		}
+
+		/*
+			FOR `XX.INSERT().INTO().SET([object,object ....]).exec(connection)`
+		*/
+		if (first instanceof Object) {
+			const into = this._q.find(item => item.type === 'INTO')
+			const content = Object.keys(first).map(key => `\`${key}\``).join(', ')
+			into.command += ` (${content})`
+
+			this._q.push({
+				type: 'VALUES',
+				value: Object.values(values).reduce((a, b) => a.concat(b), []),
+				command: Object.values(values).map(value => `(${value.map(_ => '?').join(`,`)})`).join(',')
+			})
+			return this
+		}
+
+
 		this._q.push({
 			type: 'VALUES',
 			value: values.reduce((a, b) => a.concat(b), []),

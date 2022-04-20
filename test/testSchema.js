@@ -769,6 +769,22 @@ describe('test insert values', async () => {
 
 		assert.equal(query.FORMATTED().formatted, `INSERT  INTO block_personally (blocker, blocked, notes) VALUES (101,NULL,'101 block 301'),(101,402,'101 block 402')`)
 	})
+
+	it('test insert values [object]', async () => {
+		const values = [{
+			blocker: 101,
+			blocked: undefined,
+			notes: '101 block 301'
+		}, {
+			blocker: 101,
+			blocked: 402,
+			notes: null
+		}]
+
+		const query = Block.INSERT().INTO().VALUES(values)
+
+		assert.equal(query.FORMATTED().formatted, `INSERT  INTO block_personally (blocker, blocked, notes) VALUES (101,NULL,'101 block 301'),(101,402,NULL)`)
+	})
 })
 
 describe('test update table', () => {
