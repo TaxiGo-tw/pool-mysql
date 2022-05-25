@@ -164,7 +164,7 @@ module.exports = class MySQLConnectionPool {
 		}
 
 		const callback_index = this.connectionRequests.indexOf(callback)
-		delete this.connectionRequests[callback_index]
+		this.connectionRequests.splice(callback_index, 1)
 
 		return callback
 	}
