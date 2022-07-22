@@ -1,11 +1,11 @@
-const { should, expect } = require('chai')  // Using Assert style
+const { should, expect, assert } = require('chai')  // Using Assert style
 should()  // Modifies `Object.prototype`
 
-const updated = require('../src/Schema/Updated').handler
+const { handler } = require('../src/Schema/Updated')
 
 describe('test Updated', async () => {
 	it('normal case', async () => {
-		const input = {
+		expect(handler({
 			results: [
 				{},
 				{ affectedRows: 1 },
@@ -16,17 +16,11 @@ describe('test Updated', async () => {
 					}
 				]
 			]
-		}
-
-		const output = [
+		})).to.eql([
 			{ id: '1', name: 'test' },
 			{ id: '2', name: 'name' },
 			{ id: '3', name: undefined }
-		]
-
-		const results = updated(input)
-
-		expect(results).to.eql(output)
+		])
 	})
 
 	it('amount', () => {
@@ -40,14 +34,14 @@ describe('test Updated', async () => {
 
 		const output = [{ amount: '-1' }]
 
-		const results = updated(input)
+		const results = handler(input)
 
 		expect(results).to.eql(output)
 	})
 
-	it('test -1 in value', async () => {
-		const Trips = require('./testModels/Trips')
+	const Trips = require('./testModels/Trips')
 
+	it('test -1 in value', async () => {
 		const [{ trip_id }] = await Trips.SELECT('trip_id').FROM().LIMIT(1).exec()
 
 		const results = await Trips.UPDATE()
@@ -60,4 +54,28 @@ describe('test Updated', async () => {
 		results[0].should.have.property('user_id')
 	})
 
+	it('test nothing updated', async () => {
+		const results = await Trips.UPDATE()
+			.SET({ driver_id: -1, user_id: -1 })
+			.WHERE({ trip_id: 1 })
+			.UPDATED('driver_id')
+			.rollback()
+
+		results.should.eql([])
+	})
+
+	it('test updated empty field', async () => {
+		const results = await Trips.UPDATE()
+			.SET({ driver_id: -1, user_id: -1 })
+			.WHERE({ trip_id: 2 })
+			.UPDATED('driver_id', 'start_address')
+			.rollback()
+
+		results.should.eql([
+			{
+				'driver_id': "6",
+				'start_address': ""
+			}
+		])
+	})
 })

@@ -8,9 +8,14 @@ module.exports.handler = function ({ results, filter, getFirst }) {
 	let updatedResults = []
 
 	for (const key in updated) {
+		if (updated[key] == '') { //沒update到row, 不然至少有個 ','
+			continue
+		}
+
 		const arr = typeof updated[key] === 'string'
 			? updated[key].replace(/,$/, '').split(',')
 			: [updated[key]]
+
 		for (let i = 0; i < arr.length; i++) {
 			if (!updatedResults[i]) {
 				updatedResults[i] = {}
