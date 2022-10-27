@@ -157,6 +157,7 @@ module.exports = class Connection {
 
 		this._status.querying = query.sql
 		mysqlConnection.querying = query.sql
+		mysqlConnection.last_query = mysqlConnection.querying
 		// Query
 		const { result, fields: _ } = await mysqlConnection.q(query)
 

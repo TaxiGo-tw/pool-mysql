@@ -325,16 +325,19 @@ module.exports = class MySQLConnectionPool {
 		setInterval(() => {
 			Object.values(this.using)
 				.map(tagged => Object.values(tagged))
+				.reduce((array, mysqlConnections) => array.concat(mysqlConnections), [])
 				.forEach(mysqlConnection => {
 					try {
 						const queryTime = new Date() - mysqlConnection.gotAt
 
-						if (queryTime > 3000) {
-							Event.emit('warn', this.identity(mysqlConnection), `stroked time:${queryTime}ms, name:${mysqlConnection.name}, sql:${mysqlConnection.querying}`)
-						}
-
-						if (queryTime > 1000 * 60 * 30 && !mysqlConnection.querying) {
-							Event.emit('warn', this.identity(mysqlConnection), `leaked time:${queryTime}ms, should release it`)
+						if (queryTime <= 3000) {
+							return // 還沒很久
+						} else if (mysqlConnection.querying) {
+							Event.emit('warn', this.identity(mysqlConnection), `Stroked time:${queryTime}ms, querying:${mysqlConnection.querying}`)
+						} else if (mysqlConnection.last_query) {
+							Event.emit('warn', this.identity(mysqlConnection), `Leaked time:${queryTime}ms, should release it. last_query: ${mysqlConnection.last_query}`)
+						} else {
+							Event.emit('warn', this.identity(mysqlConnection), `Leaked time:${queryTime}ms, connection not used,should release it`)
 						}
 					} catch (error) {
 						Event.emit('err', this.identity(mysqlConnection), error)
