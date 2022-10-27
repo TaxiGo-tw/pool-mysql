@@ -324,6 +324,7 @@ module.exports = class MySQLConnectionPool {
 		setInterval(() => {
 			Object.values(this.using)
 				.map(tagged => Object.values(tagged))
+				.reduce((array, mysqlConnections) => array.concat(mysqlConnections), [])
 				.forEach(mysqlConnection => {
 					try {
 						const queryTime = new Date() - mysqlConnection.gotAt
@@ -333,7 +334,7 @@ module.exports = class MySQLConnectionPool {
 						}
 
 						if (queryTime > 1000 * 60 * 30 && !mysqlConnection.querying) {
-							Event.emit('warn', this.identity(mysqlConnection), `leaked time:${queryTime}ms, should release it`)
+							Event.emit('warn', this.identity(mysqlConnection), `leaked time:${queryTime}ms, should release it, last_query: ${mysqlConnection.last_query}`)
 						}
 					} catch (error) {
 						Event.emit('err', this.identity(mysqlConnection), error)
