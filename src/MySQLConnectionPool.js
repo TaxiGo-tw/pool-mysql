@@ -58,6 +58,8 @@ module.exports = class MySQLConnectionPool {
 		const enqueue = (tag, callback) => {
 			callback.requestTime = new Date()
 			callback.tag = tag
+			callback.parent = connection
+
 			this.connectionRequests.push(callback)
 			Event.emit('request', this.identity({ id: '_' }), this.connectionRequests.length)
 		}
@@ -86,6 +88,8 @@ module.exports = class MySQLConnectionPool {
 		// 重用舊的connection
 		if (mysqlConnection) {
 			mysqlConnection.tag = connection.tag
+			mysqlConnection.parent = connection
+
 			setUsing(mysqlConnection)
 			return callback(undefined, mysqlConnection)
 		}
@@ -104,6 +108,8 @@ module.exports = class MySQLConnectionPool {
 		mysqlConnection.id = this.connectionID++
 
 		mysqlConnection.tag = connection.tag
+		mysqlConnection.parent = connection
+
 		this._decorator(mysqlConnection, connection)
 
 		setUsing(mysqlConnection)
@@ -121,7 +127,7 @@ module.exports = class MySQLConnectionPool {
 					case err.message.includes('PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR'):
 					case err.message.includes('ER_CON_COUNT_ERROR'):
 					case err.message.includes('Connection lost: The server closed the connection.'):
-					case err.message.includes('Cannot enqueue Query after fatal error'):			
+					case err.message.includes('Cannot enqueue Query after fatal error'):
 					case err.message.includes('Error: connect ECONNREFUSED'):
 					default:
 						mysqlConnection.close()
@@ -225,6 +231,7 @@ module.exports = class MySQLConnectionPool {
 
 				delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
 				mysqlConnection.tag = callback.tag
+				mysqlConnection.parent = callback.parent
 
 				if (!this.using[mysqlConnection.tag.name]) {
 					this.using[mysqlConnection.tag.name] = {}
@@ -333,11 +340,11 @@ module.exports = class MySQLConnectionPool {
 						if (queryTime <= 3000) {
 							return // 還沒很久
 						} else if (mysqlConnection.querying) {
-							Event.emit('warn', this.identity(mysqlConnection), `Stroked time:${queryTime}ms, querying:${mysqlConnection.querying}`, mysqlConnection)
+							Event.emit('warn', this.identity(mysqlConnection), `Stroked time:${queryTime}ms, querying:${mysqlConnection.querying}`, mysqlConnection.parent)
 						} else if (mysqlConnection.last_query) {
-							Event.emit('warn', this.identity(mysqlConnection), `Leaked time:${queryTime}ms, should release it. last_query: ${mysqlConnection.last_query}`, mysqlConnection)
+							Event.emit('warn', this.identity(mysqlConnection), `Leaked time:${queryTime}ms, should release it. last_query: ${mysqlConnection.last_query}`, mysqlConnection.parent)
 						} else {
-							Event.emit('warn', this.identity(mysqlConnection), `Leaked time:${queryTime}ms, connection not used,should release it`, mysqlConnection)
+							Event.emit('warn', this.identity(mysqlConnection), `Leaked time:${queryTime}ms, connection not used,should release it`, mysqlConnection.parent)
 						}
 					} catch (error) {
 						Event.emit('err', this.identity(mysqlConnection), error)
