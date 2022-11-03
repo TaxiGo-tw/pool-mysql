@@ -252,6 +252,7 @@ module.exports = class MySQLConnectionPool {
 
 			delete this.using[mysqlConnection.tag.name][mysqlConnection.id]
 			delete mysqlConnection.tag
+			delete mysqlConnection.parent
 
 			mysqlConnection._resetStatus()
 			this.waiting.push(mysqlConnection)
