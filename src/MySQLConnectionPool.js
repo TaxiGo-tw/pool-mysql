@@ -333,11 +333,11 @@ module.exports = class MySQLConnectionPool {
 						if (queryTime <= 3000) {
 							return // 還沒很久
 						} else if (mysqlConnection.querying) {
-							Event.emit('warn', this.identity(mysqlConnection), `Stroked time:${queryTime}ms, querying:${mysqlConnection.querying}`)
+							Event.emit('warn', this.identity(mysqlConnection), `Stroked time:${queryTime}ms, querying:${mysqlConnection.querying}`, mysqlConnection)
 						} else if (mysqlConnection.last_query) {
-							Event.emit('warn', this.identity(mysqlConnection), `Leaked time:${queryTime}ms, should release it. last_query: ${mysqlConnection.last_query}`)
+							Event.emit('warn', this.identity(mysqlConnection), `Leaked time:${queryTime}ms, should release it. last_query: ${mysqlConnection.last_query}`, mysqlConnection)
 						} else {
-							Event.emit('warn', this.identity(mysqlConnection), `Leaked time:${queryTime}ms, connection not used,should release it`)
+							Event.emit('warn', this.identity(mysqlConnection), `Leaked time:${queryTime}ms, connection not used,should release it`, mysqlConnection)
 						}
 					} catch (error) {
 						Event.emit('err', this.identity(mysqlConnection), error)
