@@ -566,20 +566,20 @@ describe('test UPDATED', async () => {
 	})
 
 	it('2', async () => {
-		const trip_id = 29106
+		const [a, b, c] = await Trips.SELECT('trip_id').FROM().WHERE().LIMIT(3).MAP(t => t.trip_id).exec()
 
-		const r = await Trips
+		await Trips
 			.UPDATE()
 			.SET(`driver_id = 3925, trip_status = 'TRIP_STARTED'`)
-			.WHERE({ trip_id })
+			.WHERE({ trip_id: a })
 			.UPDATED('trip_id', 'user_id', 'driver_id', 'trip_status')
 			.FIRST()
-			.exec()
+			.rollback()
 
 		const results = await Trips
 			.UPDATE()
 			.SET(`trip_status = 'REQUESTING_DRIVER', start_address = '台北車站'`)
-			.WHERE('trip_id IN (?, 29107, 29108)', [trip_id])
+			.WHERE('trip_id IN (?, ?, ?)', [a, b, c])
 			// .AND(`trip_status = 'TRIP_STARTED'`)
 			// .UPDATED('trip_id')
 			.UPDATED('trip_id', 'user_id', 'driver_id', 'trip_status', 'start_address')
@@ -588,7 +588,7 @@ describe('test UPDATED', async () => {
 			// .FIRST()
 			.AFFECTED_ROWS(3)
 			// .CHANGED_ROWS(1)
-			.exec()
+			.rollback()
 
 		assert.equal(results.length, 3)
 

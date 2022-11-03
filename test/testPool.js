@@ -23,7 +23,7 @@ describe('test pool2', async () => {
 	it('should finish a query', async () => {
 		const connection = await pool2.createConnection()
 
-		const [obj] = await connection.q('select * from town limit 1')
+		const [obj] = await connection.q('select * from trips limit 1')
 
 
 		connection.should.have.property('writer')
@@ -34,7 +34,7 @@ describe('test pool2', async () => {
 		connection.should.not.have.property('writer')
 		connection.should.not.have.property('reader')
 
-		obj.should.have.property('id')
+		obj.should.have.property('trip_id')
 	})
 
 
@@ -55,10 +55,9 @@ describe('test pool2', async () => {
 		const connection = pool2.connection()
 
 		const obj = await ZZZPoolMysqlTesting.SELECT('*').FROM().FIRST().EX(5).exec(connection)
-		await ZZZPoolMysqlTesting.SELECT('*').FROM().FIRST().EX(5).exec(connection)
 
 		expect(obj).to.have.property('id')
-		expect(obj).to.not.have.property('email')
+		expect(obj).to.have.property('email')
 
 		connection.should.have.property('writer')
 
