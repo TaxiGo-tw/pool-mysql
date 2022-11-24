@@ -23,21 +23,19 @@ module.exports = class Schema {
 		return require('./Pool')
 	}
 
-	static async native(outSideConnection, sql, values) {
+	static async native(sql, values) {
 		if (!sql) {
 			throwError('sql command needed')
 		}
 
-		const connection = outSideConnection || await Schema._pool.createConnection()
+		const connection = Schema._pool.connection()
 
 		try {
 			return await connection.q(sql, values)
 		} catch (error) {
 			throwError(error)
 		} finally {
-			if (!outSideConnection) {
-				connection.release()
-			}
+			connection.release()
 		}
 	}
 
