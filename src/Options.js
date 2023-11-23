@@ -2,6 +2,7 @@ const defaultWriter = {
 	host: process.env.SQL_HOST || '127.0.0.1',
 	user: process.env.SQL_USER || 'root',
 	password: process.env.SQL_PASSWORD || '123',
+	port: process.env.SQL_PORT || 3306,
 	database: process.env.SQL_DB || process.env.SQL_TABLE || 'test',
 	multipleStatements: process.env.SQL_MULTIPLE_STATEMENTS || true,
 	charset: 'utf8mb4'
@@ -11,6 +12,7 @@ const defaultReader = {
 	host: process.env.SQL_HOST_READER || process.env.SQL_HOST || '127.0.0.1',
 	user: process.env.SQL_USER_READER || process.env.SQL_USER || 'root',
 	password: process.env.SQL_PASSWORD_READER || process.env.SQL_PASSWORD || '123',
+	port: process.env.SQL_PORT || 3306,
 	database: process.env.SQL_DB || process.env.SQL_TABLE || 'test',
 	multipleStatements: process.env.SQL_MULTIPLE_STATEMENTS || true,
 	charset: 'utf8mb4'
