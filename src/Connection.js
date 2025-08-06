@@ -186,6 +186,7 @@ module.exports = class Connection {
 		Event.emit('did_query', this.identity(), query.sql)
 
 		if (mustUpdateOneRow && result && result.affectedRows != 1) {
+			this._status.mustUpdateOneRow = false
 			throw Error(`MUST_UPDATE_ONE_ROW: ${query.sql}`)
 		}
 
