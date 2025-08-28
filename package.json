@@ -4,16 +4,18 @@
 	"description": "",
 	"url": "https://github.com/vivalalova/pool-mysql",
 	"main": "index.js",
-	"types": "index.d.ts",
+	"types": "types/index.d.ts",
 	"scripts": {
 		"lint": "eslint ./**/*.js",
 		"test": "mocha --exit --recursive",
-		"t": "nodemon --exec 'mocha --exit -s 0 --recursive'"
+		"t": "nodemon --exec 'mocha --exit -s 0 --recursive'",
+		"build": "tsc"
 	},
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
-		"mysql": "^2.18.1"
+		"mysql": "^2.18.1",
+		"typescript": "^5.9.2"
 	},
 	"devDependencies": {
 		"bluebird": "^3.7.2",
