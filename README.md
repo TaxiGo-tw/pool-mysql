@@ -545,3 +545,8 @@ pool.logger = 'error'
 ```js
 pool._logger = (err, toPrint) => { }
 ```
+</details>
+
+### How to update declaration file  
+  1. update jsdoc
+  2. run `npm run build`
