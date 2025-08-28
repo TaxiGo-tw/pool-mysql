@@ -7,7 +7,22 @@ const { Type, Nested, Populate, Updated } = require('./Schema/')
 
 const Event = require('./Logger/Event')
 
+/**
+ * @typedef {import('./Connection')} Connection
+ * @typedef {string | Record<string, any> | [string, any] | [string, any[]]} WhereClause
+ * @typedef {{connection?: Connection; highWaterMark?: number; onValue?: (value: any, done?: () => void) => void | Promise<void>; onEnd?: (err?: any) => void | Promise<void>}} StreamOptions
+ */
+
+/**
+ * Generic Schema base class. Concrete tables should `extends` this class to
+ * describe their columns.
+ * @template {Record<string, any>} T
+ */
 module.exports = class Schema {
+	/**
+   * Construct a model instance from DB row data
+   * @param {Partial<T>} [dict]
+   */
 	constructor(dict) {
 		if (dict) {
 			for (const key in dict) {
@@ -23,6 +38,13 @@ module.exports = class Schema {
 		return require('./Pool')
 	}
 
+	/**
+   * Execute raw SQL query
+   * @param {Connection} [outSideConnection]
+   * @param {string} sql
+   * @param {any[]} [values]
+   * @returns {Promise<any>}
+   */
 	static async native(outSideConnection, sql, values) {
 		if (!sql) {
 			throwError('sql command needed')
@@ -41,6 +63,9 @@ module.exports = class Schema {
 		}
 	}
 
+	/**
+   * @returns {string[]}
+   */
 	static get KEYS() {
 		const object = new this()
 		const columns = object.columns
@@ -55,11 +80,20 @@ module.exports = class Schema {
 	// 	return this
 	// }
 
+	/**
+   * @template {Record<string, any>} T
+   * @param {...(keyof T | string)} columns
+   * @returns {Schema<T>}
+   */
 	static SELECT(...columns) {
 		const object = new this()
 		return object.SELECT(columns)
 	}
 
+	/**
+   * @param {(keyof T | string)[]} [columns]
+   * @returns {this}
+   */
 	SELECT(columns = []) {
 		if (columns.length && columns[0].includes('?')) {
 			this._q.push({ type: 'SELECT', command: columns[0], value: columns[1] })
@@ -95,11 +129,20 @@ module.exports = class Schema {
 		return this
 	}
 
+	/**
+   * @param {string} [table]
+   * @returns {this}
+   */
 	FROM(table = this.constructor.name) {
 		this._q.push({ type: 'FROM', command: `${table}` })
 		return this
 	}
 
+	/**
+   * @param {string} on
+   * @param {any} [values]
+   * @returns {this}
+   */
 	JOIN(whereClause, whereClause2) {
 		const tableName = whereClause.split(' ')[0]
 		for (const q of this._q) {
@@ -113,6 +156,11 @@ module.exports = class Schema {
 		return addQuery.bind(this)('JOIN', whereClause, whereClause2, false)
 	}
 
+	/**
+   * @param {string} on
+   * @param {any} [values]
+   * @returns {this}
+   */
 	LEFTJOIN(whereClause, whereClause2) {
 		const tableName = whereClause.split(' ')[0]
 
@@ -127,8 +175,18 @@ module.exports = class Schema {
 		return addQuery.bind(this)('LEFT JOIN', whereClause, whereClause2, false)
 	}
 
+	/**
+   * @param {WhereClause} where
+   * @param {any} [value]
+   * @returns {this}
+   */
 	WHERE(whereClause, whereClause2) { return addQuery.bind(this)('WHERE', whereClause, whereClause2) }
 
+	/**
+   * @param {WhereClause} where
+   * @param {any} [value]
+   * @returns {this}
+   */
 	AND(whereClause, whereClause2, { isExec = true } = {}) {
 		if (isExec) {
 			return addQuery.bind(this)('AND', whereClause, whereClause2)
@@ -149,6 +207,11 @@ module.exports = class Schema {
 		return result
 	}
 
+	/**
+   * @param {WhereClause} where
+   * @param {any} [value]
+   * @returns {this}
+   */
 	OR(whereClause, whereClause2, { isExec = true } = {}) {
 		if (isExec) {
 			return addQuery.bind(this)('OR', whereClause, whereClause2)
@@ -157,10 +220,30 @@ module.exports = class Schema {
 		return this
 	}
 
+	/**
+   * @param {...string} columns
+   * @returns {this}
+   */
 	HAVING(...column) { return addQuery.bind(this)('HAVING', column.join(' AND '), null) }
+
+	/**
+   * @param {...string} columns
+   * @returns {this}
+   */
 	GROUP_BY(...column) { return addQuery.bind(this)('GROUP BY', column.join(', '), null, false) }
+
+	/**
+   * @param {string} column
+   * @param {'ASC' | 'DESC'} [sort]
+   * @returns {this}
+   */
 	ORDER_BY(column, sort = 'ASC') { return addQuery.bind(this)('ORDER BY ', `${column} ${sort}`, null, false) }
 
+	/**
+   * @param {number} [limit]
+   * @param {number} [defaultValue]
+   * @returns {this}
+   */
 	LIMIT(numbers, defaultValue = 20, { isExec = true } = {}) {
 		if (isExec) {
 			const limit = numbers ? parseInt(numbers) : defaultValue
@@ -170,6 +253,11 @@ module.exports = class Schema {
 		return this
 	}
 
+	/**
+   * @param {number} [offset]
+   * @param {number} [defaultValue]
+   * @returns {this}
+   */
 	OFFSET(numbers, defaultValue = 0, { isExec = true } = {}) {
 		if (isExec) {
 			const limit = numbers ? parseInt(numbers) : defaultValue
@@ -178,74 +266,131 @@ module.exports = class Schema {
 		return this
 	}
 
+	/**
+   * @param {...string} fields
+   * @returns {this}
+   */
 	POPULATE(...fields) {
 		this._queryOptions.populates = fields
 		return this
 	}
 
+	/**
+   * @param {boolean} [ignore]
+   * @returns {this}
+   */
 	INSERT(ignore = false) {
 		const ig = ignore ? 'IGNORE' : ''
 		this._q.push({ type: `INSERT`, command: ig })
 		return this
 	}
 
+	/**
+   * @template {Record<string, any>} T
+   * @param {boolean} [ignore]
+   * @returns {Schema<T>}
+   */
 	static INSERT(ignore = false) {
 		const object = new this()
 		return object.INSERT(ignore)
 	}
 
+	/**
+   * @param {string} [table]
+   * @returns {this}
+   */
 	INTO(table = this.constructor.name) {
 		this._q.push({ type: 'INTO', command: `${table}` })
 		return this
 	}
 
+	/**
+   * @template {Record<string, any>} T
+   * @returns {Schema<T>}
+   */
 	static DELETE() {
 		const object = new this()
 		return object.DELETE()
 	}
 
+	/**
+   * @returns {this}
+   */
 	DELETE() {
 		this._q.push({ type: 'DELETE' })
 		return this
 	}
 
+	/**
+	 * @param {boolean} [option=true]
+	 * @returns {this}
+	 */
 	PRINT(option = true) {
 		this._queryOptions.print = option
 		return this
 	}
 
+	/**
+	 * @param {((err: any) => any) | string} callbackOrString
+	 * @returns {this}
+	 */
 	ON_ERR(callbackOrString) {
 		this._queryOptions.onErr = callbackOrString
 		return this
 	}
 
-
+	/**
+	 * @param {boolean} [useWriter=true]
+	 * @returns {this}
+	 */
 	WRITER(useWriter = true) {
 		this._queryOptions.useWriter = useWriter
 		return this
 	}
 
+	/**
+	 * @returns {this}
+	 */
 	NESTTABLES() {
 		this._nestTables = true
 		return this
 	}
 
+	/**
+	 * @template U
+	 * @param {(row: T) => U} cb
+	 * @returns {this}
+	 */
 	MAP(mapCallback) {
 		this._queryOptions.mapCallback = mapCallback
 		return this
 	}
 
+	/**
+	 * @template U
+	 * @param {(acc: U, curr: T) => U} cb
+	 * @param {U} [initVal]
+	 * @returns {this}
+	 */
 	REDUCE(reduceCallback, reduceInitVal = undefined) {
 		this._queryOptions.reduceCallback = reduceCallback
 		this._queryOptions.reduceInitVal = reduceInitVal
 		return this
 	}
 
+	/**
+	 * @returns {this}
+	 */
 	NESTED() {
 		this._queryOptions.nested = true
 		return this
 	}
 
+	/**
+	 * @param {number} expireSecond
+	 * @param {{key?: string; forceUpdate?: boolean; shouldRefreshInCache?: (cached: any) => boolean}} [options]
+	 * @returns {this}
+	 */
 	EX(expireSecond, { key, forceUpdate = false, shouldRefreshInCache } = {}) {
 		this._queryOptions.EX = {
 			key,
@@ -257,6 +402,10 @@ module.exports = class Schema {
 		return this
 	}
 
+	/**
+	 * @param {boolean} [formatted=true]
+	 * @returns {{query: {sql: string; nestTables: boolean}; values: any[]; formatted: string | null}}
+	 */
 	FORMATTED(formatted = true) {
 		const pre = this._pre || ''
 		delete this._pre
@@ -284,10 +433,17 @@ module.exports = class Schema {
 		}
 	}
 
+	/**
+	 * @returns {boolean}
+	 */
 	shouldMock() {
 		return Schema._pool.mock && !isNaN(Schema._pool._mockCounter)
 	}
 
+	/**
+	 * @param {string} formatted
+	 * @returns {any}
+	 */
 	mocked(formatted) {
 		if (this._print) {
 			Event.emit('log', 'all', `${formatted}`)
@@ -296,6 +452,10 @@ module.exports = class Schema {
 		return Schema._pool.mock(Schema._pool._mockCounter++, formatted)
 	}
 
+	/**
+	 * @param {Connection} [outSideConnection]
+	 * @returns {Promise<any>}
+	 */
 	async rollback(outSideConnection = null) {
 		const connection = outSideConnection || Schema._pool.connection()
 		try {
@@ -311,6 +471,11 @@ module.exports = class Schema {
 		}
 	}
 
+	/**
+	 * @param {Connection} [outSideConnection]
+	 * @param {any} [options]
+	 * @returns {Promise<any>}
+	 */
 	async exec(outSideConnection = null, options) {
 		const connection = outSideConnection || Schema._pool.connection(options)
 		try {
@@ -450,7 +615,8 @@ module.exports = class Schema {
 		* @param {number} [highWaterMark] number of rows return in one time
 		* @param {Callback} [onValue] value handler
 		* @param {Callback} [onEnd] end handler
-*/
+	 * @returns {Promise<void>}
+	 */
 	async stream({ connection, highWaterMark = 1, onValue = async (value, done) => { }, onEnd = async () => { } }) {
 		return new Promise((resolve, reject) => {
 			try {
@@ -657,15 +823,26 @@ module.exports = class Schema {
 		return {}
 	}
 
+	/**
+	 * @returns {Types}
+	 */
 	static get Types() { return Types }
 
 	//////////////////////////////Base.js
 	//UPDATE
+	/**
+	 * @param {string} [table]
+	 * @returns {Schema<T>}
+	 */
 	static UPDATE(table) {
 		const object = new this()
 		return object.UPDATE(table)
 	}
 
+	/**
+	 * @param {string} [table]
+	 * @returns {this}
+	 */
 	UPDATE(table = this.constructor.name) {
 		if (!this._q) {
 			this._q = []
@@ -675,6 +852,12 @@ module.exports = class Schema {
 		return this
 	}
 
+	/**
+	 * @param {Record<string, any> | string} whereClause
+	 * @param {any} [whereClause2]
+	 * @param {{passUndefined: boolean; encryption: string[]}} [options]
+	 * @returns {this}
+	 */
 	SET(whereClause, whereClause2, { passUndefined = false, encryption = [] } = {}) {
 		function passUndefinedIfNeeded(passUndefined, value) {
 			if (!passUndefined || !(value instanceof Object)) {
@@ -715,6 +898,10 @@ module.exports = class Schema {
 		}
 	}
 
+	/**
+	 * @param {any[][]} values
+	 * @returns {this}
+	 */
 	VALUES(values) {
 		if (!(values instanceof Array)) {
 			throwError(`${this.constructor.name} values is not an array`)
@@ -728,6 +915,11 @@ module.exports = class Schema {
 		return this
 	}
 
+	/**
+	 * @param {Record<string, any> | string} whereClause
+	 * @param {any} [whereClause2]
+	 * @returns {this}
+	 */
 	DUPLICATE(whereClause, whereClause2) {
 		if (whereClause instanceof Object) {
 			this._q.push({ type: 'ON DUPLICATE KEY', command: 'UPDATE ?', value: whereClause })
@@ -737,17 +929,30 @@ module.exports = class Schema {
 		return addQuery.bind(this)('ON DUPLICATE KEY UPDATE', whereClause, whereClause2, false)
 	}
 
+	/**
+	 * @returns {this}
+	 */
 	FIRST() {
 		this._queryOptions.getFirst = true
 		addQuery.bind(this)('LIMIT', 1, null)
 		return this
 	}
 
+	/**
+	 * @template {Record<string, any>} T\
+	 * @param {WhereClause} whereClause
+	 * @returns {Schema<T>}
+	 */
 	static FIND(...whereClause) {
 		const object = new this()
 		return object.SELECT().FROM().WHERE(...whereClause)
 	}
 
+	/**
+   * @template {Record<string, any>} T
+   * @param {any} pk
+   * @returns {Schema<T>}
+   */
 	static FIND_PK(pk) {
 		if (!this.columns) {
 			throwError(`${this.constructor.name} columns not defined`)
@@ -762,11 +967,18 @@ module.exports = class Schema {
 		return this.SELECT().FROM().WHERE(`${find} = ?`, pk).FIRST()
 	}
 
+	/**
+	 * @param {(row: T) => boolean} callback
+	 * @returns {this}
+	 */
 	FILTER(callback) {
 		this._queryOptions.filter = callback
 		return this
 	}
 
+	/**
+	 * @returns {Promise<void>}
+	 */
 	async save() {
 		const pk = this._pk
 
@@ -814,21 +1026,36 @@ module.exports = class Schema {
 		return this
 	}
 
+	/**
+   * @param {...(keyof T | string)} columns
+   * @returns {this}
+   */
 	DECRYPT(...decryption) {
 		this._queryOptions.decryption = decryption
 		return this
 	}
 
+	/**
+   * @param {...(keyof T | string)} columns
+   * @returns {this}
+   */
 	ENCRYPT(...encryption) {
 		this._queryOptions.encryption = encryption
 		return this
 	}
 
+	/**
+	 * @returns {this}
+	 */
 	COMBINE() {
 		this._queryOptions.combine = true
 		return this
 	}
 
+	/**
+   * @param {...string} variables
+   * @returns {this}
+   */
 	UPDATED(...variables) {
 		this._queryOptions.updated = true
 
@@ -848,11 +1075,19 @@ module.exports = class Schema {
 		return obj._AFTER(`SELECT ${queryParams}`)
 	}
 
+	/**
+   * @param {number} rows
+   * @returns {this}
+   */
 	CHANGED_ROWS(changedRows) {
 		this._queryOptions.changedRows = changedRows
 		return this
 	}
 
+	/**
+   * @param {number} affectedRows
+   * @returns {this}
+   */
 	AFFECTED_ROWS(affectedRows) {
 		this._queryOptions.affectedRows = affectedRows
 		return this
