@@ -4,7 +4,13 @@ const mysql = require('mysql')
 const throwError = require('./Helper/throwError')
 const Event = require('./Logger/Event')
 
+/**
+ * @typedef {import('./Pool')} Pool
+ */
 module.exports = class Connection {
+	/**
+   * @param {Pool} pool
+   */
 	constructor(pool) {
 		this._pool = pool
 
@@ -70,6 +76,11 @@ module.exports = class Connection {
 		}
 	}
 
+	/**
+   * Lazily acquires underlying MySQL connections.
+   * @param {'All' | 'Writer' | 'Reader'} [type='All'] Which connections to acquire. Defaults to `'All'`.
+   * @returns {Promise<this>} Promise resolving to the current `Connection` instance so calls can be chained.
+   */
 	async connect(type = 'All') {
 		switch (type) {
 			case 'All':
@@ -87,15 +98,20 @@ module.exports = class Connection {
 		return this
 	}
 
-
 	/**
-		* @deprecated use `beginTransaction` for naming style
-		*/
+   * @deprecated use `beginTransaction` for naming style
+   * @returns {Promise<void>}
+   */
 	async awaitTransaction() {
 		await this.beginTransaction()
 	}
 
-	async beginTransaction(cb = () => { }) {
+	/**
+   * Starts a transaction on the writer connection.
+   * @param {(error?: Error) => void} [cb]
+   * @returns {Promise<void>}
+   */
+	async beginTransaction(cb = () => {}) {
 		try {
 			await this.genWriter()
 
@@ -108,8 +124,12 @@ module.exports = class Connection {
 	}
 
 	/**
-	* @deprecated use `q()` for async/await
-	*/
+   * @deprecated use `q()` for async/await
+   * Legacy callback-style query method.
+   * @param {string | { sql: string; nestTables?: any }} sql
+   * @param {any[] | Record<string, any>} [values]
+   * @param {(error: Error | null, results: any) => void} [cb]
+   */
 	query(sql, bb, cc) {
 		let values = bb
 		let cb = cc
@@ -212,6 +232,13 @@ module.exports = class Connection {
 		}
 	}
 
+	/**
+   * Preferred Promise-based query helper.
+   * @param {string | { sql: string; nestTables?: any }} sql
+   * @param {any[] | Record<string, any>} [values]
+   * @param {{key?: string; EX?: number; shouldRefreshInCache?: (cached: any) => boolean; redisPrint?: boolean; combine?: boolean}} [options]
+   * @returns {Promise<any>}
+   */
 	async q(sql, values, { key, EX, shouldRefreshInCache, redisPrint, combine } = {}) {
 
 		const queryString = mysql.format((sql.sql || sql), values).replace(/\n/g, '')
@@ -295,19 +322,26 @@ module.exports = class Connection {
 	}
 
 	/**
-	* @deprecated use `commitAsync()` for async/await
-	*/
+   * @deprecated use `commitAsync()` for async/await
+   * Commit the current transaction (callback style).
+   * @param {(error: Error | null, result: any) => void} [cb]
+   */
 	commit(cb = () => { }) {
 		this.commitAsync().then(r => cb(undefined, r)).catch(e => cb(e))
 	}
 
 	/**
-	* @deprecated use `commitAsync()` for naming style
-	*/
+   * @deprecated use `commitAsync()` for naming style
+   * @returns {Promise<void>}
+   */
 	async awaitCommit() {
 		await this.commitAsync()
 	}
 
+	/**
+   * Commit the current transaction (Promise style).
+   * @returns {Promise<void>}
+   */
 	async commitAsync() {
 		try {
 			if (!this.writer) {
@@ -324,6 +358,10 @@ module.exports = class Connection {
 		}
 	}
 
+	/**
+   * Rollback the current transaction.
+   * @returns {Promise<void>}
+   */
 	async rollback() {
 		if (!this.writer) {
 			Event.emit('log', this.identity(), `nothing : ROLLBACK`)
@@ -339,6 +377,9 @@ module.exports = class Connection {
 		})
 	}
 
+	/**
+   * Release underlying driver connections back to their pools.
+   */
 	release() {
 		Event.emit('log', this.identity(), `RELEASE`)
 
@@ -357,6 +398,9 @@ module.exports = class Connection {
 		}
 	}
 
+	/**
+   * Close underlying driver connections and destroy references.
+   */
 	end() {
 		Event.emit('end', this.identity(), this)
 
@@ -373,6 +417,10 @@ module.exports = class Connection {
 		delete this._pool
 	}
 
+	/**
+   * @param {string} sql
+   * @returns {boolean}
+   */
 	isSelect(sql) {
 		const command = (sql.sql || sql).trim().toLowerCase()
 
@@ -395,21 +443,38 @@ module.exports = class Connection {
 		}
 	}
 
+	/**
+   * Force queries issued after this call to use the writer connection.
+   * @returns {this}
+   */
 	get forceWriter() {
 		this._status.useWriter = true
 		return this
 	}
 
+	/**
+   * Log query even if it isn't considered a long query.
+   * @returns {this}
+   */
 	get print() {
 		this._status.print = true
 		return this
 	}
 
+	/**
+   * Ensure that exactly one row is affected by UPDATE / DELETE.
+   * @returns {this}
+   */
 	get mustUpdateOneRow() {
 		this._status.mustUpdateOneRow = true
 		return this
 	}
 
+	/**
+   * Supply a custom error mapper or message.
+   * @param {((error: any) => string) | string} callbackOrString
+   * @returns {this}
+   */
 	onErr(callbackOrString) {
 		this._status.onErr = callbackOrString
 		return this

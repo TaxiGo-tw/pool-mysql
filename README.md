@@ -545,3 +545,9 @@ pool.logger = 'error'
 ```js
 pool._logger = (err, toPrint) => { }
 ```
+</details>
+
+### How to update declaration file  
+  1. update jsdoc
+  2. run `npm run build`
+  3. if you need to update .d.ts directly you need add add `exclude` file in tsconfig.json, in case of overwriting
