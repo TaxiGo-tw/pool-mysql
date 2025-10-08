@@ -6,7 +6,7 @@ const defaultWriter = {
 	database: process.env.SQL_DB || process.env.SQL_TABLE || 'test',
 	multipleStatements: process.env.SQL_MULTIPLE_STATEMENTS || true,
 	charset: 'utf8mb4',
-	connectTimeout: process.env.SQL_CONNECT_TIMEOUT ? parseInt(process.env.SQL_CONNECT_TIMEOUT) : 30000,
+	connectTimeout: process.env.SQL_CONNECT_TIMEOUT ? parseInt(process.env.SQL_CONNECT_TIMEOUT) : 10000,
 }
 
 const defaultReader = {
