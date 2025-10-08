@@ -7,7 +7,6 @@ const defaultWriter = {
 	multipleStatements: process.env.SQL_MULTIPLE_STATEMENTS || true,
 	charset: 'utf8mb4',
 	connectTimeout: process.env.SQL_CONNECT_TIMEOUT ? parseInt(process.env.SQL_CONNECT_TIMEOUT) : 30000,
-	acquireTimeout: process.env.SQL_ACQUIRE_TIMEOUT ? parseInt(process.env.SQL_ACQUIRE_TIMEOUT) : 30000,
 }
 
 const defaultReader = {
@@ -18,8 +17,7 @@ const defaultReader = {
 	database: process.env.SQL_DB || process.env.SQL_TABLE || 'test',
 	multipleStatements: process.env.SQL_MULTIPLE_STATEMENTS || true,
 	charset: 'utf8mb4',
-	connectTimeout: process.env.SQL_CONNECT_TIMEOUT ? parseInt(process.env.SQL_CONNECT_TIMEOUT) : 30000,
-	acquireTimeout: process.env.SQL_ACQUIRE_TIMEOUT ? parseInt(process.env.SQL_ACQUIRE_TIMEOUT) : 30000,
+	connectTimeout: process.env.SQL_CONNECT_TIMEOUT ? parseInt(process.env.SQL_CONNECT_TIMEOUT) : 10000,
 }
 
 module.exports = (options = {}, poolID) => {
