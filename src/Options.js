@@ -5,7 +5,9 @@ const defaultWriter = {
 	port: process.env.SQL_PORT || 3306,
 	database: process.env.SQL_DB || process.env.SQL_TABLE || 'test',
 	multipleStatements: process.env.SQL_MULTIPLE_STATEMENTS || true,
-	charset: 'utf8mb4'
+	charset: 'utf8mb4',
+	connectTimeout: process.env.SQL_CONNECT_TIMEOUT ? parseInt(process.env.SQL_CONNECT_TIMEOUT) : 30000,
+	acquireTimeout: process.env.SQL_ACQUIRE_TIMEOUT ? parseInt(process.env.SQL_ACQUIRE_TIMEOUT) : 30000,
 }
 
 const defaultReader = {
@@ -15,8 +17,9 @@ const defaultReader = {
 	port: process.env.SQL_PORT || 3306,
 	database: process.env.SQL_DB || process.env.SQL_TABLE || 'test',
 	multipleStatements: process.env.SQL_MULTIPLE_STATEMENTS || true,
-	charset: 'utf8mb4'
-
+	charset: 'utf8mb4',
+	connectTimeout: process.env.SQL_CONNECT_TIMEOUT ? parseInt(process.env.SQL_CONNECT_TIMEOUT) : 30000,
+	acquireTimeout: process.env.SQL_ACQUIRE_TIMEOUT ? parseInt(process.env.SQL_ACQUIRE_TIMEOUT) : 30000,
 }
 
 module.exports = (options = {}, poolID) => {
