@@ -142,19 +142,28 @@ class Polygon {
 	static inputMapper(value) {
 		if (value instanceof Array) {
 			const result = value.map(array => {
-				const string = array.map(r => `${r.x} ${r.y}`).join(',')
+				const string = array.map(r => `${Polygon._coord(r.x)} ${Polygon._coord(r.y)}`).join(',')
 				return `(${string})`
 			}).join(',')
 
-			return mysql.raw(`ST_GeomFromText("POLYGON(${result})")`)
+			return mysql.raw(`ST_GeomFromText(${mysql.escape(`POLYGON(${result})`)})`)
 		} else if (typeof value === 'string') {
 			const matched = value.match(/\(\s*\(\s*([+-]?\d*\.\d+)\s+([+-]?\d*\.\d+)\s*(,\s*[+-]?\d*\.\d+\s+[+-]?\d*\.\d+)+\s*,\s*\1\s+\2\s*\)\s*\)/i)
 			if (matched) {
-				return mysql.raw(`ST_GeomFromText("POLYGON${matched[0]}")`)
+				return mysql.raw(`ST_GeomFromText(${mysql.escape(`POLYGON${matched[0]}`)})`)
 			}
 		}
 
 		throwError(`map to polygon failed, input: ${value}`)
+	}
+
+	// 每個座標都必須是有限數值，非數值一律擋掉，避免字串座標被拼進 raw SQL
+	static _coord(value) {
+		const number = Number(value)
+		if (!Number.isFinite(number)) {
+			throwError(`invalid polygon coordinate: ${value}`)
+		}
+		return number
 	}
 }
 
