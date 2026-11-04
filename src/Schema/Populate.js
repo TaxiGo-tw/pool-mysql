@@ -31,7 +31,7 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 			const ids = superValue.map(r => r[currentColumn])
 
 			const values = ids.length
-				? await model.SELECT().FROM().WHERE(`${column} IN (${ids})`).PRINT(print).exec(connection)
+				? await model.SELECT().FROM().WHERE(`${column} IN (?)`, [ids]).PRINT(print).exec(connection)
 				: []
 
 			let toRef = []
@@ -78,7 +78,7 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 				const ids = results.map(result => result[PKColumn]).filter(r => r !== undefined)
 
 				const populated = ids.length
-					? await type.SELECT().FROM().WHERE(`${tColumn} in (${ids})`).PRINT(print).exec(connection)
+					? await type.SELECT().FROM().WHERE(`${tColumn} in (?)`, [ids]).PRINT(print).exec(connection)
 					: []
 
 				results.forEach(result => {
@@ -94,7 +94,7 @@ module.exports.find = async function ({ this: { connection, columns, constructor
 				const ids = results.filter(result => result[refColumn]).map(result => result[refColumn])
 
 				const populated = ids.length
-					? await refType.SELECT().FROM().WHERE(`${PKColumn} IN (${ids})`).PRINT(print).exec(connection)
+					? await refType.SELECT().FROM().WHERE(`${PKColumn} IN (?)`, [ids]).PRINT(print).exec(connection)
 					: []
 
 				results.forEach(result => {
