@@ -78,6 +78,8 @@ const options = {
 
 const pool2 = pool.createPool({ options })
 ```
+
+`createPool` returns the same pool only when the whole normalized config (every writer/reader field, `forceWriter`) and the `redisClient` are identical. Pools for the same hosts but a different database, user, password or port are kept separate.
 </details>
 
 <details>

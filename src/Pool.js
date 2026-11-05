@@ -1,4 +1,5 @@
 require('./Helper/Misc')
+const crypto = require('crypto')
 const logger = require('./Logger/Logger')
 const LogLevel = require('./Logger/LogLevel')
 const Event = require('./Logger/Event')
@@ -12,6 +13,51 @@ const throwError = require('./Helper/throwError')
 
 let poolID = 0
 
+const redisClientIDs = new WeakMap()
+let redisClientID = 0
+
+/* 同一個 redisClient 物件拿同一個編號，不同物件視為不同 pool */
+function redisIdentity(redisClient) {
+	if (!redisClient || typeof redisClient !== 'object') {
+		return null
+	}
+
+	if (!redisClientIDs.has(redisClient)) {
+		redisClientIDs.set(redisClient, ++redisClientID)
+	}
+
+	return redisClientIDs.get(redisClient)
+}
+
+/* key 排序後遞迴序列化；poolID／role 是每個 pool 自己的編號不算設定，密碼類欄位只放 hash */
+function canonical(value, name) {
+	if (['password', 'DATA_ENCRYPTION_KEY', 'DATA_ENCRYPTION_IV'].includes(name) && value !== undefined && value !== null) {
+		return crypto.createHash('sha256').update(String(value)).digest('hex')
+	}
+
+	if (Buffer.isBuffer(value)) {
+		return crypto.createHash('sha256').update(value).digest('hex')
+	}
+
+	if (Array.isArray(value)) {
+		return value.map(item => canonical(item))
+	}
+
+	if (value && typeof value === 'object') {
+		return Object.keys(value)
+			.filter(key => !['poolID', 'role'].includes(key))
+			.sort()
+			.reduce((result, key) => Object.assign(result, { [key]: canonical(value[key], key) }), {})
+	}
+
+	return value
+}
+
+/* pool 的識別＝完整正規化後的設定＋redisClient；少任何一項就會讓同主機不同 DB／帳號／port 共用同一個 pool */
+function poolKey(options, redisClient) {
+	return JSON.stringify(canonical(Object.assign({}, options, { redisClient: redisIdentity(redisClient) })))
+}
+
 class Pool {
 
 	/* for create second or more pool */
@@ -24,15 +70,15 @@ class Pool {
 
 		const options = require('./Options')(op)
 
-		const key = options.writer.host + options.reader.host + options.database
+		const key = poolKey(options, redisClient)
 
 		if (instance._pools[key]) {
 			return instance._pools[key]
-		} else {
-			const pool = new Pool({ options, redisClient, id: ++poolID })
-			instance._pools[key] = pool
-			return pool
 		}
+
+		const pool = new Pool({ options, redisClient, id: ++poolID })
+		instance._pools[key] = pool
+		return pool
 	}
 
 	constructor({ options, redisClient, id } = {}) {
