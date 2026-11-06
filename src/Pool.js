@@ -104,6 +104,33 @@ class Pool {
 		return `Pool:${this.options.poolID} `
 	}
 
+	/* Redis cache 的穩定命名空間＝pool 的 DB 身分（writer host/port/database/user）雜湊。
+	   多個邏輯 pool 共用同一 Redis 時，用來隔離 auto key（SQL 字串）避免跨 pool/DB 撞到彼此快取（CWE-524）。
+	   以 DB 身分（非 runtime poolID）為基底，確保跨 process／重啟一致、同 DB 的 pool 仍共用快取。 */
+	get cacheNamespace() {
+		if (this._cacheNamespace === undefined) {
+			const w = this.options.writer || {}
+			const identity = `${w.host}:${w.port}:${w.database}:${w.user}`
+			this._cacheNamespace = `pm:${crypto.createHash('sha1').update(identity).digest('hex').slice(0, 12)}:`
+		}
+		return this._cacheNamespace
+	}
+
+	/**
+	 * 決定 Redis cache 實際使用的 key。
+	 * auto key（呼叫端沒給 key，用 SQL 字串）自動加 pool+DB 命名空間，避免跨 pool/DB 撞快取；
+	 * 呼叫端自帶的 custom key 維持原樣（呼叫端契約，常與 pool-mysql 外部的 Redis 存取共用同一 key）。
+	 * @param {string | undefined} customKey
+	 * @param {string} queryString
+	 * @returns {string}
+	 */
+	redisCacheKey(customKey, queryString) {
+		if (customKey) {
+			return customKey
+		}
+		return this.cacheNamespace + queryString
+	}
+
 
 	get event() {
 		return Event

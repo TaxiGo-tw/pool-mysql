@@ -243,6 +243,9 @@ module.exports = class Connection {
 
 		const queryString = mysql.format((sql.sql || sql), values).replace(/\n/g, '')
 		const queryKey = key || queryString
+		// Redis cache key：auto key（SQL 字串）自動加 pool+DB 命名空間，避免多個邏輯 pool 共用同一 Redis 時跨 pool/DB 撞快取（CWE-524）；
+		// combine 為每個 pool 各自的 in-memory 狀態，仍用 queryKey。
+		const redisKey = this._pool.redisCacheKey(key, queryString)
 		const onErr = this._status.onErr
 
 		try {
@@ -263,7 +266,7 @@ module.exports = class Connection {
 
 					//以下想要redis cache 且有client
 
-					const someThing = await this._pool.redisClient.getJSONAsync(queryKey)
+					const someThing = await this._pool.redisClient.getJSONAsync(redisKey)
 
 					//if cached
 					const keepCache = shouldRefreshInCache ? !shouldRefreshInCache(someThing) : true
@@ -294,7 +297,7 @@ module.exports = class Connection {
 
 					const toCache = (result !== null) ? result : { isNull: true }
 
-					await this._pool.redisClient.setJSONAsync(queryKey, toCache, 'EX', EX)
+					await this._pool.redisClient.setJSONAsync(redisKey, toCache, 'EX', EX)
 
 					this._pool.combine.publish(queryKey, undefined, result)
 					return result
