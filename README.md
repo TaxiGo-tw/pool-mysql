@@ -28,13 +28,11 @@ See the test [Examples](https://github.com/TaxiGo-tw/pool-mysql/tree/master/test
 ```
 
 ## Usage
-</details>
 
 <details>
   <summary>Settings</summary>
 
-* pool-mysql loads settings from process.env
-There is a helpful package [dotenv](https://github.com/motdotla/dotenv)
+* pool-mysql loads settings from process.env **when it is first required**, so load your env (e.g. with [dotenv](https://github.com/motdotla/dotenv)) before `require('pool-mysql')`
 
 ```bash
 SQL_HOST={{writer}}
@@ -42,8 +40,28 @@ SQL_HOST={{writer}}
 SQL_HOST_READER={{reader}}
 SQL_USER={{user}}
 SQL_PASSWORD={{passwd}}
-SQL_TABLE={{table name}}
+SQL_DB={{database name}}
 ```
+
+| Env | Default | Description |
+|---|---|---|
+| `SQL_HOST` | `127.0.0.1` | writer host |
+| `SQL_HOST_READER` | `SQL_HOST` | reader host |
+| `SQL_USER` | `root` | writer user |
+| `SQL_USER_READER` | `SQL_USER` | reader user |
+| `SQL_PASSWORD` | `123` | writer password |
+| `SQL_PASSWORD_READER` | `SQL_PASSWORD` | reader password |
+| `SQL_PORT` | `3306` | port, shared by writer and reader |
+| `SQL_DB` | `test` | database name. `SQL_TABLE` is read as a fallback |
+| `SQL_CONNECT_TIMEOUT` | `10000` | connect timeout in ms |
+| `CONNECTION_LIMIT` | `30` | max connections, counted separately for writer and reader |
+| `SQL_FREE_CONNECTIONS` | `10` | idle connections kept when freeing, see `Auto Free Connections` |
+| `QUERY_THRESHOLD_MS` | `500` | a query slower than this emits `longQuery` |
+| `QUERY_THRESHOLD_START` | `60000` | ms after process start before `longQuery` is reported |
+| `DATA_ENCRYPTION_KEY` | | hex key (32 bytes) for `Encryption` |
+| `DATA_ENCRYPTION_IV` | | hex IV (16 bytes) for `Encryption` |
+
+* Connections use charset `utf8mb4` and `multipleStatements: true`. To turn `multipleStatements` off, pass it in `createPool` options — the `SQL_MULTIPLE_STATEMENTS` env cannot disable it.
 </details>
 
 <details>
@@ -76,8 +94,12 @@ const options = {
   forceWriter: true
 }
 
-const pool2 = pool.createPool({ options })
+const pool2 = pool.createPool({ options, redisClient }) // redisClient is optional
 ```
+
+* `options.writer` is required, and either `options.reader` or `forceWriter: true`
+* Fields not given fall back to the env defaults in `Settings`
+* Any key from `Settings` (e.g. `connectionLimit`, `DATA_ENCRYPTION_KEY`) can be overridden per pool
 
 `createPool` returns the same pool only when the whole normalized config (every writer/reader field, `forceWriter`) and the `redisClient` are identical. Pools for the same hosts but a different database, user, password or port are kept separate.
 </details>
@@ -98,26 +120,75 @@ try {
   const result = await connection.q(sql,value)
 } catch(err) {
   console.log(err)
+} finally {
+  connection.release() // always give it back to the pool
 }
 ```
+
+* A `connection` holds up to one reader and one writer, acquired lazily on first use
+* `SELECT` (without `FOR UPDATE`) goes to the reader, everything else goes to the writer
+* A connection held for more than 3 seconds emits a `warn` event every 10 seconds (`Stroked` = still querying, `Leaked` = idle and not released)
+
+#### Modifiers
+
+Each one applies to the next query only.
+
+```js
+await connection.forceWriter.q(sql, values)       // SELECT on writer
+await connection.print.q(sql, values)             // emit `print` event with sql and cost time
+await connection.mustUpdateOneRow.q(sql, values)  // throw if affectedRows !== 1
+await connection.onErr('custom message').q(sql, values) // string or (err) => string
+```
+
+#### Other methods
+
+* `connection.connect('All' | 'Writer' | 'Reader')` acquire connections ahead of time
+* `connection.release()` return connections to the pool
+* `connection.end()` close the underlying connections instead of reusing them
+</details>
+
+<details>
+  <summary>Transaction</summary>
+
+* Transactions run on the writer. Use `forceWriter` / `.WRITER()` for a `SELECT` that must see uncommitted rows
+
+```js
+const connection = pool.connection()
+
+try {
+  await connection.beginTransaction()
+
+  await connection.q('UPDATE user SET name = ? WHERE id = ?', ['foo', 1])
+  const rows = await connection.forceWriter.q('SELECT * FROM user WHERE id = ?', [1])
+
+  await connection.commitAsync()
+} catch (err) {
+  await connection.rollback()
+} finally {
+  connection.release()
+}
+```
+
+* `release()` emits a `warn` event if a transaction was started but neither committed nor rolled back
 </details>
 
 <details>
   <summary>Connection tag</summary>
 
-* pool of connection pool
-
 * limit max connection amount with same priority
 
 ```js
-// if equal or more than 5 connections which tagged `foo`, wait for releasing
-const connection = pool.connection({  limit: 5 })
+// if 5 or more connections with the same priority are in use, wait for releasing
+const connection = pool.connection({ limit: 5 })
 ```
 
 ```js
-// higher priority to get connection than 0
+// connections are counted per priority, default priority is 5
 const connection = pool.connection({ priority: 1 })
 ```
+
+* `limit` defaults to `connectionLimit`
+* When the limit is reached the request waits in a queue; it fails with `get connection request timeout` after 10 seconds
 
 </details>
 
@@ -167,6 +238,15 @@ const User = class user extends Schema {
     }
 }
 ```
+
+* The table name is the class name (`class posts` → table `posts`)
+* `Model.KEYS` returns the real columns as `table.column` strings, for `SELECT(...)`
+
+#### Types
+
+`Schema.Types`: `PK`, `FK(model, column)`, `ENUM(...values)`, `String`, `Number`, `NumberString`, `JSONString`, `Email`, `URL`, `Point`, `Polygon`, `UNIX_TIMESTAMP`, `DateTime`, `Base` (extend it for a custom validator, see `Validation`)
+
+* `Point`, `Polygon`, `JSONString`, `UNIX_TIMESTAMP`, `DateTime` and `FK` convert the value on `SET(object)`
 </details>
 
 <details>
@@ -179,9 +259,34 @@ await Posts
       .WHERE({id: 3})    //or you can use .WHERE('id = ?',3)
       .POPULATE('user') //query reference
       .PRINT()            //print sql statement, query time, connection id and works on writer/reader
-      .WRITER           //force query on writer
+      .WRITER()         //force query on writer
       .exec()
 ```
+
+* `exec(connection)` runs on the given connection (e.g. inside a transaction) and leaves it open; `exec()` gets a connection and releases it
+
+#### Builder reference
+
+| Method | Note |
+|---|---|
+| `SELECT(...columns)` / `FROM(table)` | default to all columns / the model's table |
+| `JOIN(on, values)` / `LEFTJOIN(on, values)` | |
+| `WHERE(obj)` / `WHERE(sql, values)` / `AND(...)` / `OR(...)` | pass `{ isExec: false }` as third argument of `AND` / `OR` to skip the condition |
+| `GROUP_BY(...columns)` / `HAVING(...conditions)` / `ORDER_BY(column, 'ASC' \| 'DESC')` | |
+| `LIMIT(n, defaultValue = 20)` / `OFFSET(n, defaultValue = 0)` | |
+| `FIRST()` | adds `LIMIT 1`, returns a single object instead of an array |
+| `Model.FIND(where)` | shortcut of `SELECT().FROM().WHERE(where)` |
+| `Model.FIND_PK(pk)` | find one by the `PK` column |
+| `NESTTABLES()` | rows come back as `{ tableA: {...}, tableB: {...} }` |
+| `MAP(cb)` / `FILTER(cb)` / `REDUCE(cb, initVal)` | transform results after the query |
+| `POPULATE(...fields)` | query references, see `Populate` |
+| `EX(seconds, options)` | redis cache, see `cache` |
+| `COMBINE()` | see `Combine queries` |
+| `DECRYPT(...columns)` / `ENCRYPT(...columns)` | see `Encryption` |
+| `WRITER()` / `PRINT()` / `ON_ERR(messageOrCallback)` | |
+| `FORMATTED()` | returns `{ query, values, formatted }` without querying |
+| `Model.native(connection, sql, values)` | run raw sql; `connection` may be omitted |
+| `instance.save()` | `UPDATE` the row by its `PK` with the instance's values |
 </details>
 
 <details>
@@ -301,7 +406,67 @@ await FOO.INSERT()
   .INTO('table (`id`, `some_one_field`)')
   .VALUES(array)
   .exec(connection)
+
+// INSERT IGNORE
+await FOO.INSERT(true).INTO().SET(obj).exec()
+
+// ON DUPLICATE KEY UPDATE
+await FOO.INSERT()
+  .INTO()
+  .SET(obj)
+  .DUPLICATE({ name: 'foo' }) //or .DUPLICATE('name = ?', 'foo')
+  .exec()
 ```
+
+* `SET(obj, undefined, { passUndefined: true })` drops `undefined` values from `obj` before validating
+</details>
+
+<details>
+  <summary>Delete</summary>
+
+```js
+await FOO.DELETE()
+  .FROM()
+  .WHERE({ id: 1 })
+  .AFFECTED_ROWS(1)
+  .exec()
+```
+</details>
+
+<details>
+  <summary>Encryption</summary>
+
+* AES-256-CBC with `DATA_ENCRYPTION_KEY` / `DATA_ENCRYPTION_IV` (both hex)
+* The IV is fixed, so the same plaintext always gives the same ciphertext. Lookups such as `WHERE({ phone: Encryption.encrypt(phone) })` rely on this
+* `encrypt` / `decrypt` return `''` instead of throwing when the input or key is invalid
+
+```js
+const { Encryption } = require('pool-mysql')
+
+const cipher = Encryption.encrypt('0912345678')  // hex string
+const plain = Encryption.decrypt(cipher)
+
+// with another key
+Encryption.encrypt(text, { key, iv })
+```
+
+```js
+// encrypt columns when writing
+await User.UPDATE()
+  .SET({ phone, email }, undefined, { encryption: ['phone', 'email'] })
+  .WHERE({ id })
+  .exec()
+
+// decrypt columns when reading
+await User.SELECT()
+  .FROM()
+  .WHERE({ id })
+  .DECRYPT('phone', 'email')
+  .exec()
+```
+
+* Only truthy values are encrypted / decrypted; `null` and `''` are left as is
+* Encryption applies to `SET(object)`, not to `SET('sql', values)` or `VALUES(array)`
 </details>
 
 <details>
@@ -342,22 +507,29 @@ const client = redis.createClient({
   db: ...
 })
 
-pool.redisClient = Redis
+pool.redisClient = client
 
 //...
 
-const connection = pool.connection
+const connection = pool.connection()
 
 await connection.q('SELECT id FROM user WHERE uid = ?', userID, {
   key: `api:user:id:${userID}`, //optional , default to queryString
   EX: process.env.NODE_ENV == 'production' ? 240 : 12, //default to 0 , it's required if need cache
-  isJSON: true, //default to true
+  shouldRefreshInCache: cached => cached.expired, //optional, return true to query again and overwrite the cache
+  redisPrint: true, //optional, log whether the result came from cache
 })
 
 await connection.q('SELECT id FROM user WHERE uid = ?', userID, { EX: 60})
 
 User.SELECT().FROM().WHERE('uid = ?',id).EX(60, { forceUpdate: true }).exec()
 ```
+
+* The client must provide `getAsync` / `setAsync` (e.g. promisified as above)
+* Without a `redisClient`, `EX` is ignored and the query runs normally
+* Results are stored as JSON. A `null` result is cached too
+* Without `key`, the cache key is the sql string prefixed with a namespace derived from the pool's writer host, port, database and user, so pools on different databases sharing one redis never read each other's cache. A custom `key` is used as given
+* Identical cached queries running at the same time are combined into one, see `Combine queries`
 </details>
 
 <details>
@@ -399,9 +571,9 @@ Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
 <details>
   <summary>Auto Free Connections</summary>
 
-* Every 300 seconds free half reader&writer connections
+* Every 300 seconds free half of the idle reader&writer connections
 
-* But will keep at least 10 reader&writer connections
+* But will keep at least `SQL_FREE_CONNECTIONS` (default 10) idle reader&writer connections
 </details>
 
 <details>
@@ -409,17 +581,19 @@ Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
 
 * `log` logs `not suggested to subscribe`
 
+* `print` sql and cost time of a query marked with `.print` / `.PRINT()`
+
+* `longQuery` a query slower than `QUERY_THRESHOLD_MS`
+
 * `get` called when connection got from pool
 
-* `create` called when connection created
+* `did_create` called when connection created
 
 * `release` called when connection released
 
-* `will_query`
+* `will_query` called before a query, with the formatted sql
 
-* `query` called when connection query
-
-* `did_query`
+* `did_query` called after a query
 
 * `amount` called when connection pool changes amount
 
@@ -427,7 +601,7 @@ Trips.SELECT().FROM().WHERE({ trip_id:1 }).COMBINE().exec().then().catch()
 
 * `request` request a connection but capped on connection limit
 
-* `recycle` free connection is back
+* `recycle` a released connection is handed to a waiting request
 
 * `warn` warning
 
@@ -514,42 +688,52 @@ module.exports = class driver_review_status extends Scheme {
 * every query return response from mock() and increase index
 
 * assign mock() to pool will reset index to 0
+
+* ignored when `NODE_ENV` is `production`
+
+```js
+pool.mock = (index, sql) => [{ id: 1 }]
+
+await pool.connection().q('SELECT * FROM user') // [{ id: 1 }], no database access
+
+pool.mock = undefined // back to real queries
+```
 </details>
 
 <details>
   <summary>Dry Run</summary>
 
-* rollback after execute
+* run in a transaction and rollback after execute
 
 ```js
 await Table.INSERT().INTO().rollback()
+
+// or on your own connection
+await Table.INSERT().INTO().rollback(connection)
 ```
 </details>
 
 <details>
-  <summary>Log level</summary>
+  <summary>Logging</summary>
 
-* `all` print logs anywhere
-
-* `error` print logs if error
-
-* `none` never print logs
-
-default to `error`
+* pool-mysql does not print anything by itself, subscribe to the events you need
 
 ```js
-pool.logger = 'error'
-// [3] Reader 1ms:  SELECT * FROM table
+pool.event.on('print', toPrint => console.log(toPrint))
+pool.event.on('longQuery', toPrint => console.warn(toPrint))
+pool.event.on('warn', (identity, message) => console.warn(identity, message))
+pool.event.on('err', (identity, error) => console.error(identity, error))
 ```
 
-#### Custom Logger
-
-```js
-pool._logger = (err, toPrint) => { }
-```
+* `pool.logger` accepts `'all'`, `'error'` or `'none'`, default to `error`
 </details>
 
 ### How to update declaration file  
   1. update jsdoc
   2. run `npm run build`
   3. if you need to update .d.ts directly you need add add `exclude` file in tsconfig.json, in case of overwriting
+
+### How to release
+  1. bump `version` in package.json in the PR
+  2. after merging to master, run `npm test`, then `npm publish` (needs an npm account listed in `npm owner ls pool-mysql`)
+  3. tag the commit: `git tag v{version} && git push origin v{version}`
