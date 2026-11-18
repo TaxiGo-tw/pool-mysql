@@ -2,7 +2,33 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/928cce8dd2ba4fcaa4d857552209fd16)](https://app.codacy.com/gh/TaxiGo-tw/pool-mysql?utm_source=github.com&utm_medium=referral&utm_content=TaxiGo-tw/pool-mysql&utm_campaign=Badge_Grade_Dashboard)
 
-![](./test/resource/UiYBH9U.png)
+```mermaid
+flowchart TD
+  Schema["Schema<br/>model / query builder"]
+
+  subgraph Connection["Connection (one per pool.connection())"]
+    direction LR
+    writer["writer<br/>INSERT / UPDATE / DELETE<br/>transaction, forceWriter"]
+    reader["reader<br/>SELECT"]
+  end
+
+  subgraph Pool["Pool (default pool, or one per createPool())"]
+    Manager["MySQLConnectionManager"]
+    WriterPool["MySQLConnectionPool (writer)"]
+    ReaderPool["MySQLConnectionPool (reader)"]
+    Manager --> WriterPool
+    Manager --> ReaderPool
+  end
+
+  WriterDB[("writer host")]
+  ReaderDB[("reader host")]
+
+  Schema -->|"exec()"| Connection
+  writer -->|"acquire / release"| Manager
+  reader -->|"acquire / release"| Manager
+  WriterPool --> WriterDB
+  ReaderPool --> ReaderDB
+```
 
 This is depend on [mysql](https://github.com/mysqljs/mysql)
 which made for migrating to features
